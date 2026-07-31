@@ -1,0 +1,271 @@
+import {
+  BrowserCacheLocation,
+  InteractionRequiredAuthError,
+  PublicClientApplication,
+  type AccountInfo,
+} from "@azure/msal-browser";
+import type { AppConfig, ControlRow, ReviewForm, UserProfile } from "../types";
+
+type GraphTableRow = { index: number; values: unknown[][] };
+type GraphPage<T> = { value: T[]; "@odata.nextLink"?: string };
+
+const GRAPH_ROOT = "https://graph.microsoft.com/v1.0";
+const SCOPES = ["openid", "profile", "User.Read", "Files.ReadWrite"];
+
+function encodeSharingUrl(url: string) {
+  const bytes = new TextEncoder().encode(url.trim());
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return `u!${btoa(binary).replace(/=/g, "").replace(/\//g, "_").replace(/\+/g, "-")}`;
+}
+
+function text(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+export function excelDateToIso(value: unknown) {
+  if (value === null || value === undefined || value === "") return "";
+  if (typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value))) {
+    const serial = Number(value);
+    if (serial > 1000 && serial < 100000) {
+      const date = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+      return date.toISOString().slice(0, 10);
+    }
+  }
+  const raw = String(value).trim();
+  const spanish = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (spanish) return `${spanish[3]}-${spanish[2].padStart(2, "0")}-${spanish[1].padStart(2, "0")}`;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+}
+
+function isoToExcelDate(value: string) {
+  if (!value) return "";
+  const timestamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isNaN(timestamp) ? "" : (timestamp - Date.UTC(1899, 11, 30)) / 86400000;
+}
+
+export function rowFromGraph(row: GraphTableRow): ControlRow {
+  const v = row.values?.[0] || [];
+  return {
+    tableIndex: row.index,
+    id: text(v[0]),
+    provider: text(v[1]),
+    taxId: text(v[2]),
+    farm: text(v[3]),
+    municipality: text(v[4]),
+    crop: text(v[5]),
+    campaign: text(v[6]),
+    contractSigned: text(v[7]),
+    contractStart: excelDateToIso(v[8]),
+    contractEnd: excelDateToIso(v[9]),
+    contractAlert: text(v[10]),
+    plannedCutDate: excelDateToIso(v[11]),
+    farmChecked: text(v[12]),
+    fieldNotebook: text(v[13]),
+    notebookReviewDate: excelDateToIso(v[14]),
+    analysisStatus: text(v[15]),
+    analysisDate: excelDateToIso(v[16]),
+    certificateType: text(v[17]),
+    certificateExpiry: excelDateToIso(v[18]),
+    otherDocuments: text(v[19]),
+    reviewer: text(v[20]),
+    lastReviewDate: excelDateToIso(v[21]),
+    canHarvest: text(v[22]),
+    blockageReason: text(v[23]),
+    documentPath: text(v[24]),
+    otherAgreements: text(v[25]),
+  };
+}
+
+export function reviewFromRow(row: ControlRow): ReviewForm {
+  return {
+    plannedCutDate: row.plannedCutDate,
+    farmChecked: row.farmChecked,
+    fieldNotebook: row.fieldNotebook,
+    notebookReviewDate: row.notebookReviewDate,
+    analysisStatus: row.analysisStatus,
+    analysisDate: row.analysisDate,
+    certificateType: row.certificateType,
+    certificateExpiry: row.certificateExpiry,
+    otherDocuments: row.otherDocuments,
+    reviewer: row.reviewer,
+    lastReviewDate: row.lastReviewDate,
+  };
+}
+
+function normalized(value: string) {
+  return value.trim().toLocaleLowerCase("es");
+}
+
+export function reviewBlockages(row: ControlRow, form: ReviewForm) {
+  const issues: string[] = [];
+  if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
+  if (!row.contractStart) issues.push("Falta el inicio del contrato");
+  if (!row.contractEnd) issues.push("Falta el fin del contrato");
+  if (!form.plannedCutDate) issues.push("Falta la fecha prevista de corte");
+  if (form.plannedCutDate && row.contractStart && form.plannedCutDate < row.contractStart) {
+    issues.push("El corte es anterior al inicio del contrato");
+  }
+  if (form.plannedCutDate && row.contractEnd && form.plannedCutDate > row.contractEnd) {
+    issues.push("El corte queda fuera de contrato");
+  }
+  if (normalized(form.farmChecked) !== "sí") issues.push("Finca o parcela sin comprobar");
+  if (normalized(form.fieldNotebook) !== "sí") issues.push("Cuaderno de campo no validado");
+  if (!form.notebookReviewDate) issues.push("Falta la fecha de revisión del cuaderno");
+  if (normalized(form.analysisStatus) !== "apto") issues.push("Análisis no apto o pendiente");
+  if (!form.analysisDate) issues.push("Falta la fecha del análisis");
+  const certificate = normalized(form.certificateType);
+  if (!certificate || certificate === "no localizado" || certificate === "pendiente de revisión") {
+    issues.push("Certificado no identificado");
+  }
+  if (!form.certificateExpiry) issues.push("Falta la caducidad del certificado");
+  if (form.plannedCutDate && form.certificateExpiry && form.certificateExpiry < form.plannedCutDate) {
+    issues.push("El certificado caduca antes del corte");
+  }
+  if (!["sí", "no aplica"].includes(normalized(form.otherDocuments))) {
+    issues.push("Otros documentos exigidos sin validar");
+  }
+  if (!form.reviewer.trim()) issues.push("Falta el responsable de revisión");
+  if (!form.lastReviewDate) issues.push("Falta la fecha de revisión");
+  return issues;
+}
+
+export class WorkbookClient {
+  private msal: PublicClientApplication;
+  private account: AccountInfo | null = null;
+  private driveId = "";
+  private itemId = "";
+
+  constructor(private config: AppConfig) {
+    const redirectUri = new URL(import.meta.env.BASE_URL, window.location.href).href;
+    this.msal = new PublicClientApplication({
+      auth: {
+        clientId: config.clientId,
+        authority: `https://login.microsoftonline.com/${config.tenantId}`,
+        redirectUri,
+        postLogoutRedirectUri: redirectUri,
+      },
+      cache: { cacheLocation: BrowserCacheLocation.LocalStorage },
+    });
+    this.driveId = config.workbookDriveId;
+    this.itemId = config.workbookItemId;
+  }
+
+  async initialize() {
+    await this.msal.initialize();
+    const redirectResult = await this.msal.handleRedirectPromise();
+    this.account = redirectResult?.account || this.msal.getAllAccounts()[0] || null;
+    if (this.account) this.msal.setActiveAccount(this.account);
+    return Boolean(this.account);
+  }
+
+  isSignedIn() {
+    return Boolean(this.account);
+  }
+
+  async signIn() {
+    await this.msal.loginRedirect({ scopes: SCOPES, prompt: "select_account" });
+  }
+
+  async signOut() {
+    await this.msal.logoutRedirect({ account: this.account || undefined });
+  }
+
+  private async accessToken() {
+    if (!this.account) throw new Error("Debes iniciar sesión con Microsoft 365.");
+    try {
+      const result = await this.msal.acquireTokenSilent({ account: this.account, scopes: SCOPES });
+      return result.accessToken;
+    } catch (error) {
+      if (error instanceof InteractionRequiredAuthError) {
+        await this.msal.acquireTokenRedirect({ account: this.account, scopes: SCOPES });
+      }
+      throw error;
+    }
+  }
+
+  private async graph<T>(pathOrUrl: string, init: RequestInit = {}) {
+    const token = await this.accessToken();
+    const response = await fetch(pathOrUrl.startsWith("https://") ? pathOrUrl : `${GRAPH_ROOT}${pathOrUrl}`, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...init.headers,
+      },
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => null);
+      const message = detail?.error?.message || `Microsoft 365 ha respondido con el error ${response.status}.`;
+      throw new Error(message);
+    }
+    if (response.status === 204) return undefined as T;
+    return response.json() as Promise<T>;
+  }
+
+  async profile(): Promise<UserProfile> {
+    return this.graph<UserProfile>("/me?$select=displayName,userPrincipalName");
+  }
+
+  private async ensureWorkbook() {
+    if (this.driveId && this.itemId) return;
+    if (!this.config.workbookShareUrl) throw new Error("Falta el enlace compartido del Excel.");
+    const shareId = encodeSharingUrl(this.config.workbookShareUrl);
+    const item = await this.graph<{ id: string; parentReference?: { driveId?: string } }>(`/shares/${shareId}/driveItem`);
+    this.itemId = item.id;
+    this.driveId = item.parentReference?.driveId || "";
+    if (!this.driveId) throw new Error("No se ha podido identificar la biblioteca de Microsoft 365.");
+  }
+
+  private async workbookPath() {
+    await this.ensureWorkbook();
+    return `/drives/${encodeURIComponent(this.driveId)}/items/${encodeURIComponent(this.itemId)}/workbook`;
+  }
+
+  async rows() {
+    const workbook = await this.workbookPath();
+    const table = encodeURIComponent(this.config.tableName);
+    let next: string | undefined = `${GRAPH_ROOT}${workbook}/tables/${table}/rows?$top=200`;
+    const all: GraphTableRow[] = [];
+    while (next && all.length < 1000) {
+      const page: GraphPage<GraphTableRow> = await this.graph<GraphPage<GraphTableRow>>(next);
+      all.push(...page.value);
+      next = page["@odata.nextLink"];
+    }
+    return all.map(rowFromGraph).filter((row) => row.provider);
+  }
+
+  async saveReview(row: ControlRow, review: ReviewForm) {
+    const workbook = await this.workbookPath();
+    const table = encodeURIComponent(this.config.tableName);
+    const rowRange = await this.graph<{ address: string }>(
+      `${workbook}/tables/${table}/rows/itemAt(index=${row.tableIndex})/range?$select=address`,
+    );
+    const match = rowRange.address.match(/!\$?[A-Z]+\$?(\d+)(?::|$)/i);
+    if (!match) throw new Error("No se ha podido localizar la fila seleccionada dentro del Excel.");
+    const excelRow = match[1];
+    const address = `L${excelRow}:V${excelRow}`;
+    const sheet = encodeURIComponent(this.config.worksheetName);
+    const values = [[
+      isoToExcelDate(review.plannedCutDate),
+      review.farmChecked,
+      review.fieldNotebook,
+      isoToExcelDate(review.notebookReviewDate),
+      review.analysisStatus,
+      isoToExcelDate(review.analysisDate),
+      review.certificateType,
+      isoToExcelDate(review.certificateExpiry),
+      review.otherDocuments,
+      review.reviewer.trim(),
+      isoToExcelDate(review.lastReviewDate),
+    ]];
+    await this.graph(`${workbook}/worksheets/${sheet}/range(address='${address}')`, {
+      method: "PATCH",
+      body: JSON.stringify({ values }),
+    });
+  }
+}

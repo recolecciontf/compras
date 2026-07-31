@@ -1,0 +1,103 @@
+# Control de recolección · PWA
+
+Aplicación móvil para consultar y completar el control documental previo a la recolección. La interfaz se publica en GitHub Pages y los datos permanecen en el Excel de Microsoft 365.
+
+## Qué permite hacer
+
+- Buscar por agricultor, expediente, finca, municipio o cultivo.
+- Filtrar expedientes autorizados y bloqueados.
+- Consultar contrato, vigencia, otros acuerdos y motivos de bloqueo.
+- Completar fecha de corte, finca comprobada, cuaderno de campo, análisis, certificado, otros documentos y responsable.
+- Ver el resultado previsto antes de guardar.
+- Guardar únicamente las columnas L:V; las fórmulas de las columnas W:X siguen protegidas en el Excel.
+- Instalar la web como aplicación en el móvil.
+- Probar todo con tres expedientes ficticios antes de conectar datos reales.
+
+## 1. Preparar el Excel
+
+1. Sube `control_documental_contratos_pdf_vigentes_31-07-2026.xlsx` a OneDrive para la Empresa o a una biblioteca de SharePoint.
+2. Conserva estos nombres:
+   - Hoja: `Control documental`
+   - Tabla: `TablaControlDocumental`
+3. Comparte el archivo solo con las personas que deban usar la aplicación y copia su enlace.
+
+La aplicación no puede abrir el libro si la cuenta que inicia sesión no tiene acceso al archivo.
+
+## 2. Registrar la aplicación en Microsoft Entra ID
+
+En el centro de administración de Microsoft Entra:
+
+1. Ve a **Aplicaciones > Registros de aplicaciones > Nuevo registro**.
+2. Registra una aplicación de tipo organizativo, por ejemplo `Control de recolección`.
+3. En **Autenticación**, añade la plataforma **Aplicación de página única (SPA)**.
+4. Añade la dirección exacta de GitHub Pages, con la barra final:
+
+   `https://USUARIO.github.io/REPOSITORIO/`
+
+5. En **Permisos de API > Microsoft Graph > Permisos delegados**, añade:
+   - `User.Read`
+   - `Files.ReadWrite`
+6. Si la política de la empresa lo exige, concede el consentimiento de administrador.
+
+No crees ni copies ningún secreto de cliente: una PWA pública no debe contenerlo.
+
+## 3. Configurar la PWA
+
+Edita `public/app-config.json`:
+
+```json
+{
+  "tenantId": "ID-DEL-DIRECTORIO",
+  "clientId": "ID-DE-LA-APLICACION",
+  "workbookShareUrl": "",
+  "workbookDriveId": "",
+  "workbookItemId": "",
+  "tableName": "TablaControlDocumental",
+  "worksheetName": "Control documental"
+}
+```
+
+`tenantId` y `clientId` son identificadores públicos, no contraseñas. Hay dos formas de indicar el Excel:
+
+- Recomendado si el repositorio es público: deja la ubicación del libro vacía y pega el enlace del Excel una vez desde **Ajustes** en cada móvil. Se conserva solo en ese dispositivo.
+- Más cómodo para todo el equipo: introduce `workbookShareUrl` en el archivo de configuración. El enlace no concede acceso por sí solo, pero quedará visible en el código publicado.
+
+También puedes usar `workbookDriveId` y `workbookItemId` en lugar del enlace compartido.
+
+## 4. Publicar en GitHub Pages
+
+1. Crea un repositorio en GitHub y sube el contenido completo de esta carpeta.
+2. Usa la rama `main`.
+3. En **Settings > Pages > Build and deployment**, selecciona **GitHub Actions**.
+4. El flujo `Publicar PWA en GitHub Pages` compilará y publicará la aplicación automáticamente.
+5. Añade la URL final de GitHub Pages como URI SPA en Microsoft Entra si no lo hiciste antes.
+
+## 5. Instalar en el móvil
+
+Abre la dirección de GitHub Pages:
+
+- Android/Chrome: menú del navegador > **Instalar aplicación** o **Añadir a pantalla de inicio**.
+- iPhone/Safari: botón **Compartir** > **Añadir a pantalla de inicio**.
+
+## Seguridad y funcionamiento
+
+- GitHub solo aloja la interfaz; el Excel no se copia al repositorio.
+- La contraseña se introduce exclusivamente en la pantalla oficial de Microsoft.
+- El acceso se realiza con permisos delegados: cada usuario solo ve archivos para los que ya tiene permiso.
+- La aplicación necesita conexión para consultar o guardar en Microsoft 365. La interfaz puede abrirse sin conexión, pero el botón de guardado queda desactivado.
+- Para evitar conflictos, conviene que dos personas no editen el mismo expediente al mismo tiempo.
+
+## Desarrollo local
+
+Requisitos: Node.js 22 y pnpm 11.
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Comprobación de producción:
+
+```bash
+pnpm build
+```
