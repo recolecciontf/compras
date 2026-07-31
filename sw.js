@@ -1,4 +1,4 @@
-const CACHE_NAME = "control-recoleccion-v2";
+const CACHE_NAME = "compras-de-campo-v3";
 const APP_SHELL = ["./", "./manifest.webmanifest", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {
