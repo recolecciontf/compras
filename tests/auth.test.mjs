@@ -8,9 +8,9 @@ const { default: worker } = await import(workerUrl.href);
 const env = {
   ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
   ALLOWED_ORIGINS: "https://recolecciontf.github.io",
-  ADMIN_USERNAME: "ADMIN COMPRAS",
+  ADMIN_USERNAME: "ADMINISTRADOR",
   ADMIN_PASSWORD_SHA256: createHash("sha256").update("admin-password").digest("hex"),
-  VIEWER_USERNAME: "USUARIO COMPRAS",
+  VIEWER_USERNAME: "CONSULTAS",
   VIEWER_PASSWORD_SHA256: createHash("sha256").update("viewer-password").digest("hex"),
   SESSION_SECRET: "test-session-secret-that-is-long-enough-for-tests",
   GOOGLE_SERVICE_ACCOUNT_EMAIL: "unused@example.invalid",
@@ -33,7 +33,7 @@ test("rechaza una contraseña incorrecta", async () => {
   const response = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: "https://recolecciontf.github.io" },
-    body: JSON.stringify({ username: "ADMIN COMPRAS", password: "incorrecta" }),
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "incorrecta" }),
   });
   assert.equal(response.status, 401);
 });
@@ -42,7 +42,7 @@ test("crea una sesión temporal y permite consultar el perfil", async () => {
   const login = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: "https://recolecciontf.github.io" },
-    body: JSON.stringify({ username: "admin compras", password: "admin-password" }),
+    body: JSON.stringify({ username: "administrador", password: "admin-password" }),
   });
   assert.equal(login.status, 200);
   assert.equal(login.headers.get("access-control-allow-origin"), "https://recolecciontf.github.io");
@@ -52,8 +52,8 @@ test("crea una sesión temporal y permite consultar el perfil", async () => {
   const profile = await api("/api/profile", { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(profile.status, 200);
   assert.deepEqual(await profile.json(), {
-    displayName: "Admin compras",
-    userPrincipalName: "ADMIN COMPRAS",
+    displayName: "Administrador",
+    userPrincipalName: "ADMINISTRADOR",
     role: "admin",
     canEdit: true,
   });
@@ -63,7 +63,7 @@ test("el usuario de consulta no puede guardar cambios", async () => {
   const login = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: "USUARIO COMPRAS", password: "viewer-password" }),
+    body: JSON.stringify({ username: "CONSULTAS", password: "viewer-password" }),
   });
   const { token, profile } = await login.json();
   assert.equal(profile.role, "viewer");
@@ -76,4 +76,36 @@ test("el usuario de consulta no puede guardar cambios", async () => {
   });
   assert.equal(save.status, 403);
   assert.match((await save.json()).error, /consulta/);
+});
+
+test("exige los datos obligatorios al crear una compra", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const create = await api("/api/rows", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ purchase: { provider: "Agricultor" } }),
+  });
+  assert.equal(create.status, 400);
+  assert.match((await create.json()).error, /campos obligatorios/);
+});
+
+test("solo permite archivar compras con corte y kilos", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const archive = await api("/api/rows/9/harvest", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ harvest: { cutStatus: "No", cutKgTotal: "", archived: "Sí" } }),
+  });
+  assert.equal(archive.status, 400);
+  assert.match((await archive.json()).error, /Solo se puede archivar/);
 });

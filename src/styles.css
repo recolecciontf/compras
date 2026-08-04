@@ -259,6 +259,20 @@ p {
   letter-spacing: -0.035em;
 }
 
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+.quick-actions .primary-button,
+.quick-actions .secondary-button {
+  min-height: 44px;
+  padding: 9px 10px;
+  font-size: 0.75rem;
+}
+
 .sync-caption {
   padding-bottom: 4px;
   color: var(--muted);
@@ -868,6 +882,307 @@ p {
   gap: 13px;
 }
 
+.three-columns {
+  display: grid;
+  gap: 13px;
+}
+
+.purchase-fieldset {
+  border-color: #bad4c3 !important;
+  background: linear-gradient(180deg, #fbfdfb 0%, #fff 100%) !important;
+}
+
+.purchase-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.field-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--green-950);
+}
+
+.field-section-heading > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #fff;
+  border-radius: 8px;
+  background: var(--green-700);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.field-section-heading strong,
+.field-section-heading small {
+  display: block;
+}
+
+.field-section-heading strong {
+  font-size: 0.8rem;
+}
+
+.field-section-heading small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.optional-fields {
+  padding-top: 4px;
+}
+
+.contract-workflow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 11px;
+  color: #718077;
+  border: 1px solid #d7e2da;
+  border-radius: 11px;
+  background: #f5f8f5;
+  font-size: 0.64rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.contract-workflow span {
+  padding: 5px 7px;
+  border-radius: 7px;
+}
+
+.contract-workflow span.active {
+  color: #fff;
+  background: var(--green-800);
+}
+
+.contract-workflow i {
+  color: #a8b3ab;
+  font-style: normal;
+}
+
+.page-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--green-700);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.page-title {
+  margin: 8px 0 7px;
+  color: var(--green-950);
+  font-size: clamp(1.45rem, 5vw, 2rem);
+  letter-spacing: -0.035em;
+}
+
+.page-subtitle {
+  max-width: 660px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.new-purchase-form .review-header,
+.harvest-page .review-header {
+  padding: 3px 2px 2px;
+}
+
+.single-action {
+  grid-template-columns: 1fr !important;
+}
+
+.harvest-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 17px 0 13px;
+}
+
+.harvest-summary article {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 13px 10px;
+  color: var(--green-800);
+  border: 1px solid #c9ddd0;
+  border-radius: 14px;
+  background: var(--green-50);
+}
+
+.harvest-summary span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.harvest-summary strong {
+  overflow: hidden;
+  font-size: clamp(0.95rem, 4vw, 1.35rem);
+  text-overflow: ellipsis;
+}
+
+.harvest-tabs {
+  overflow-x: auto;
+}
+
+.harvest-tabs button {
+  min-width: max-content;
+}
+
+.harvest-editor {
+  display: grid;
+  gap: 13px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 2px solid #7fad91;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(24, 71, 51, 0.11);
+}
+
+.harvest-editor .primary-button {
+  width: 100%;
+}
+
+.harvest-editor-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.harvest-editor-title span,
+.harvest-editor-title strong,
+.harvest-editor-title small {
+  display: block;
+}
+
+.harvest-editor-title span {
+  color: var(--green-700);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.harvest-editor-title strong {
+  margin: 3px 0;
+  color: var(--green-950);
+  font-size: 0.92rem;
+}
+
+.harvest-editor-title small {
+  color: var(--muted);
+}
+
+.harvest-editor-title > button {
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  color: var(--muted);
+  border: 0;
+  border-radius: 9px;
+  background: #eef3ef;
+  font-size: 1.25rem;
+}
+
+.harvest-list {
+  display: grid;
+  gap: 10px;
+}
+
+.harvest-card {
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(24, 49, 42, 0.045);
+}
+
+.harvest-card-main {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.harvest-card-main strong,
+.harvest-card-main span,
+.harvest-card-main small {
+  display: block;
+}
+
+.harvest-card-main strong {
+  color: var(--green-950);
+  font-size: 0.84rem;
+}
+
+.harvest-card-main span {
+  margin-top: 3px;
+  color: #53675c;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.harvest-card-main small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.cut-dot {
+  width: 11px;
+  height: 11px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.cut-dot.done { background: #2d9861; box-shadow: 0 0 0 4px #e1f2e8; }
+.cut-dot.pending { background: #d08a18; box-shadow: 0 0 0 4px #fff0cf; }
+
+.harvest-card-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: #f3f6f2;
+}
+
+.harvest-card-status span { color: var(--muted); font-size: 0.68rem; font-weight: 800; }
+.harvest-card-status strong { color: var(--green-900); font-size: 0.88rem; }
+
+.harvest-card-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+}
+
+.harvest-card-actions .secondary-button,
+.harvest-card-actions .text-button {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+}
+
+.archive-button { color: #8a5b0f; }
+.compact-empty { min-height: 190px; border: 1px dashed #cbd8cf; border-radius: 15px; background: rgba(255,255,255,.65); }
+
 .field {
   display: grid;
   gap: 6px;
@@ -1002,7 +1317,7 @@ p {
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(66px, 1fr));
   padding: 7px 10px calc(7px + env(safe-area-inset-bottom));
   border-top: 1px solid #d9e1da;
   background: rgba(255, 255, 255, 0.96);
@@ -1311,6 +1626,19 @@ p {
   .contract-strip,
   .two-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .three-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .harvest-card {
+    grid-template-columns: minmax(0, 1fr) 140px;
+    align-items: center;
+  }
+
+  .harvest-card-actions {
+    grid-column: 1 / -1;
   }
 
   .form-actions,

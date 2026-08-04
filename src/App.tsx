@@ -23,6 +23,8 @@ import {
   LogIn,
   LogOut,
   Menu,
+  PackageCheck,
+  Plus,
   RefreshCw,
   RotateCcw,
   Search,
@@ -32,10 +34,13 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { HarvestPanel } from "./components/HarvestPanel";
+import { NewPurchasePanel } from "./components/NewPurchasePanel";
+import { PurchaseFields } from "./components/PurchaseFields";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
-import { reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
-import type { AppConfig, AppView, ControlRow, RecordFilter, ReviewForm, UserProfile } from "./types";
+import { purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
+import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
 function formatDate(value: string) {
   if (!value) return "Sin fecha";
@@ -55,6 +60,14 @@ function mergeReview(row: ControlRow, review: ReviewForm, isAuthorized: boolean,
     canHarvest: isAuthorized ? "SÍ" : "NO",
     blockageReason: isAuthorized ? "" : reasons.join("; "),
   };
+}
+
+function mergePurchase(row: ControlRow, purchase: PurchaseForm): ControlRow {
+  return { ...row, ...purchase };
+}
+
+function isArchived(row: ControlRow) {
+  return row.archived.trim().toLocaleLowerCase("es") === "sí";
 }
 
 function StatusBadge({ ok, children }: { ok: boolean; children: ReactNode }) {
@@ -84,6 +97,7 @@ export default function App() {
   const [rows, setRows] = useState<ControlRow[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [review, setReview] = useState<ReviewForm | null>(null);
+  const [purchase, setPurchase] = useState<PurchaseForm | null>(null);
   const [view, setView] = useState<AppView>("records");
   const [filter, setFilter] = useState<RecordFilter>("all");
   const [query, setQuery] = useState("");
@@ -98,6 +112,7 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const autoSaveTimer = useRef<number | null>(null);
   const reviewFingerprint = useRef("");
+  const purchaseFingerprint = useRef("");
   const saveVersion = useRef(0);
   const loadedRowIndex = useRef<number | null>(null);
 
@@ -170,24 +185,33 @@ export default function App() {
 
   useEffect(() => {
     const nextReview = selected ? reviewFromRow(selected) : null;
+    const nextPurchase = selected ? purchaseFromRow(selected) : null;
     const nextFingerprint = nextReview ? JSON.stringify(nextReview) : "";
-    if (selected && loadedRowIndex.current === selected.tableIndex && reviewFingerprint.current === nextFingerprint) return;
+    const nextPurchaseFingerprint = nextPurchase ? JSON.stringify(nextPurchase) : "";
+    if (selected && loadedRowIndex.current === selected.tableIndex && reviewFingerprint.current === nextFingerprint && purchaseFingerprint.current === nextPurchaseFingerprint) return;
     loadedRowIndex.current = selected?.tableIndex ?? null;
     reviewFingerprint.current = nextFingerprint;
+    purchaseFingerprint.current = nextPurchaseFingerprint;
     setReview(nextReview);
+    setPurchase(nextPurchase);
     setAutoSaveStatus("idle");
   }, [selected]);
 
   useEffect(() => {
-    if (!selected || !review || !signedIn || !isOnline || view !== "review" || !canEdit) return;
+    if (!selected || !review || !purchase || !signedIn || !isOnline || view !== "review" || !canEdit) return;
     const nextFingerprint = JSON.stringify(review);
-    if (nextFingerprint === reviewFingerprint.current) return;
+    const nextPurchaseFingerprint = JSON.stringify(purchase);
+    const reviewChanged = nextFingerprint !== reviewFingerprint.current;
+    const purchaseChanged = nextPurchaseFingerprint !== purchaseFingerprint.current;
+    if (!reviewChanged && !purchaseChanged) return;
 
     if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     const version = ++saveVersion.current;
     const rowSnapshot = selected;
     const reviewSnapshot = review;
-    const issues = reviewBlockages(rowSnapshot, reviewSnapshot);
+    const purchaseSnapshot = purchase;
+    const mergedSnapshot = mergePurchase(rowSnapshot, purchaseSnapshot);
+    const issues = reviewBlockages(mergedSnapshot, reviewSnapshot);
     setAutoSaveStatus("pending");
 
     autoSaveTimer.current = window.setTimeout(async () => {
@@ -197,13 +221,14 @@ export default function App() {
           setRows((current) =>
             current.map((row) =>
               row.tableIndex === rowSnapshot.tableIndex
-                ? mergeReview(row, reviewSnapshot, issues.length === 0, issues)
+                ? mergeReview(mergePurchase(row, purchaseSnapshot), reviewSnapshot, issues.length === 0, issues)
                 : row,
             ),
           );
         } else {
           if (!client) throw new Error("No hay conexión con Google Sheets.");
-          await client.saveReview(rowSnapshot, reviewSnapshot);
+          if (purchaseChanged) await client.savePurchase(rowSnapshot, purchaseSnapshot);
+          if (reviewChanged) await client.saveReview(rowSnapshot, reviewSnapshot);
           if (version !== saveVersion.current) return;
           const nextRows = await client.rows();
           if (version !== saveVersion.current) return;
@@ -211,6 +236,7 @@ export default function App() {
         }
         if (version === saveVersion.current) {
           reviewFingerprint.current = JSON.stringify(reviewSnapshot);
+          purchaseFingerprint.current = JSON.stringify(purchaseSnapshot);
           setLastSyncedAt(new Date());
           setAutoSaveStatus("saved");
         }
@@ -225,10 +251,10 @@ export default function App() {
     return () => {
       if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     };
-  }, [review, selected, signedIn, isOnline, view, demoMode, client, canEdit]);
+  }, [review, purchase, selected, signedIn, isOnline, view, demoMode, client, canEdit]);
 
   useEffect(() => {
-    if (!client || !signedIn || demoMode || !isOnline || view !== "records") return;
+    if (!client || !signedIn || demoMode || !isOnline || !["records", "harvest"].includes(view)) return;
     const interval = window.setInterval(() => {
       void refresh(true);
     }, 15000);
@@ -238,6 +264,7 @@ export default function App() {
   const visibleRows = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
     return rows.filter((row) => {
+      if (isArchived(row)) return false;
       if (filter === "blocked" && authorized(row)) return false;
       if (filter === "authorized" && !authorized(row)) return false;
       if (!normalizedQuery) return true;
@@ -249,11 +276,13 @@ export default function App() {
   }, [rows, filter, query]);
 
   const counts = useMemo(() => {
-    const yes = rows.filter(authorized).length;
-    return { total: rows.length, authorized: yes, blocked: rows.length - yes };
+    const active = rows.filter((row) => !isArchived(row));
+    const yes = active.filter(authorized).length;
+    return { total: active.length, authorized: yes, blocked: active.length - yes };
   }, [rows]);
 
-  const predictedIssues = selected && review ? reviewBlockages(selected, review) : [];
+  const predictedRow = selected && purchase ? mergePurchase(selected, purchase) : selected;
+  const predictedIssues = predictedRow && review ? reviewBlockages(predictedRow, review) : [];
   const predictedAuthorized = Boolean(selected && review && predictedIssues.length === 0);
 
   async function refresh(silent = false) {
@@ -329,13 +358,14 @@ export default function App() {
   function selectRow(row: ControlRow) {
     setSelectedIndex(row.tableIndex);
     setReview(reviewFromRow(row));
+    setPurchase(purchaseFromRow(row));
     setView("review");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function submitReview(event: FormEvent) {
     event.preventDefault();
-    if (!selected || !review) return;
+    if (!selected || !review || !purchase) return;
     if (!canEdit) {
       setError("Este usuario es de consulta y no puede modificar los datos.");
       return;
@@ -349,17 +379,19 @@ export default function App() {
         setRows((current) =>
           current.map((row) =>
             row.tableIndex === selected.tableIndex
-              ? mergeReview(row, review, predictedAuthorized, predictedIssues)
+              ? mergeReview(mergePurchase(row, purchase), review, predictedAuthorized, predictedIssues)
               : row,
           ),
         );
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
+        await client.savePurchase(selected, purchase);
         await client.saveReview(selected, review);
         const nextRows = await client.rows();
         setRows(nextRows);
       }
       reviewFingerprint.current = JSON.stringify(review);
+      purchaseFingerprint.current = JSON.stringify(purchase);
       setLastSyncedAt(new Date());
       setAutoSaveStatus("saved");
       setToast(predictedAuthorized ? "Revisión finalizada: puede recolectarse" : "Datos obligatorios guardados: sigue bloqueado");
@@ -367,6 +399,85 @@ export default function App() {
     } catch (reason) {
       setAutoSaveStatus("error");
       setError(reason instanceof Error ? reason.message : "No se ha podido finalizar la revisión.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function createPurchase(nextPurchase: PurchaseForm) {
+    if (!canEdit) return;
+    setSaving(true);
+    setError("");
+    try {
+      let createdIndex: number;
+      if (demoMode) {
+        createdIndex = Math.max(0, ...rows.map((row) => row.tableIndex)) + 1;
+        const id = nextPurchase.id || `CMP-${nextPurchase.campaign}-${String(createdIndex).padStart(3, "0")}`;
+        const created: ControlRow = {
+          ...nextPurchase,
+          id,
+          tableIndex: createdIndex,
+          contractAlert: "VIGENTE",
+          plannedCutDate: "",
+          farmChecked: "",
+          fieldNotebook: "",
+          notebookReviewDate: "",
+          analysisStatus: "",
+          analysisDate: "",
+          certificateType: "",
+          certificateExpiry: "",
+          otherDocuments: "",
+          reviewer: "",
+          lastReviewDate: "",
+          canHarvest: "NO",
+          blockageReason: "Documentación pendiente",
+          cutStatus: "No",
+          cutKgTotal: "",
+          archived: "No",
+        };
+        setRows((current) => [...current, created]);
+        setSelectedIndex(createdIndex);
+        setPurchase(purchaseFromRow(created));
+        setReview(reviewFromRow(created));
+      } else {
+        if (!client) throw new Error("No hay conexión con Google Sheets.");
+        const created = await client.createPurchase(nextPurchase);
+        createdIndex = created.row;
+        const nextRows = await client.rows();
+        setRows(nextRows);
+        const createdRow = nextRows.find((row) => row.tableIndex === createdIndex);
+        if (createdRow) {
+          setPurchase(purchaseFromRow(createdRow));
+          setReview(reviewFromRow(createdRow));
+        }
+        setSelectedIndex(createdIndex);
+      }
+      setLastSyncedAt(new Date());
+      setToast("Compra creada. Completa ahora la revisión documental.");
+      setView("review");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se ha podido crear la compra.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveHarvest(row: ControlRow, harvest: HarvestForm) {
+    if (!canEdit) return;
+    setSaving(true);
+    setError("");
+    try {
+      if (demoMode) {
+        setRows((current) => current.map((item) => item.tableIndex === row.tableIndex ? { ...item, ...harvest } : item));
+      } else {
+        if (!client) throw new Error("No hay conexión con Google Sheets.");
+        await client.saveHarvest(row, harvest);
+        setRows(await client.rows());
+      }
+      setLastSyncedAt(new Date());
+      setToast(harvest.archived === "Sí" ? "Compra archivada" : "Estado del corte guardado");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se ha podido guardar el corte.");
     } finally {
       setSaving(false);
     }
@@ -440,7 +551,7 @@ export default function App() {
           />
         ) : (
           <div className="workspace">
-            <section className={`records-pane ${view === "review" ? "mobile-hidden" : ""}`}>
+            <section className={`records-pane ${view !== "records" ? "mobile-hidden" : ""}`}>
               <div className="welcome-row">
                 <div>
                   <p className="welcome">Hola, {profile?.displayName?.split(" ")[0] || "equipo"}</p>
@@ -449,6 +560,11 @@ export default function App() {
                 <span className="sync-caption">
                   {loading ? "Sincronizando…" : lastSyncedAt ? `Actualizado ${lastSyncedAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : `${counts.total} expedientes`}
                 </span>
+              </div>
+
+              <div className="quick-actions">
+                {canEdit && <button className="primary-button" onClick={() => setView("new")}><Plus size={18} /> Nueva compra</button>}
+                <button className="secondary-button" onClick={() => setView("harvest")}><PackageCheck size={18} /> Cortes y kilos</button>
               </div>
 
               <div className="summary-grid">
@@ -497,10 +613,11 @@ export default function App() {
                           <strong>{row.provider}</strong>
                           <StatusBadge ok={authorized(row)}>{authorized(row) ? "SÍ" : "NO"}</StatusBadge>
                         </span>
-                        <span className="record-crop">{row.crop || "Cultivo sin indicar"}</span>
+                        <span className="record-crop">{row.crop || "Especie sin indicar"}{row.variety ? ` · ${row.variety}` : ""}</span>
                         <span className="record-meta">
                           <span><Sprout size={15} /> {row.farm || "Finca sin indicar"}</span>
                           <span><CalendarDays size={15} /> {row.plannedCutDate ? formatDate(row.plannedCutDate) : "Corte pendiente"}</span>
+                          {row.expectedKg && <span><PackageCheck size={15} /> {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(Number(row.expectedKg))} kg previstos</span>}
                         </span>
                         {!authorized(row) && row.blockageReason && <span className="blockage-preview">{row.blockageReason}</span>}
                       </span>
@@ -517,20 +634,26 @@ export default function App() {
               </div>
             </section>
 
-            <section className={`review-pane ${view !== "review" ? "mobile-hidden" : ""}`}>
-              {selected && review ? (
+            <section className={`review-pane ${view === "records" ? "mobile-hidden" : ""}`}>
+              {view === "review" && selected && review && purchase ? (
                 <ReviewPanel
                   row={selected}
+                  purchase={purchase}
                   review={review}
                   issues={predictedIssues}
                   saving={saving}
                   autoSaveStatus={autoSaveStatus}
                   readOnly={!canEdit}
+                  onPurchaseChange={setPurchase}
                   onChange={setReview}
                   onSubmit={submitReview}
-                  onReset={() => setReview(reviewFromRow(selected))}
+                  onReset={() => { setReview(reviewFromRow(selected)); setPurchase(purchaseFromRow(selected)); }}
                   onBack={() => setView("records")}
                 />
+              ) : view === "new" && canEdit ? (
+                <NewPurchasePanel saving={saving} onCreate={createPurchase} onBack={() => setView("records")} />
+              ) : view === "harvest" ? (
+                <HarvestPanel rows={rows} readOnly={!canEdit} saving={saving} onSave={saveHarvest} onBack={() => setView("records")} />
               ) : (
                 <div className="select-prompt">
                   <ClipboardCheck size={40} />
@@ -550,6 +673,12 @@ export default function App() {
           </button>
           <button className={view === "review" ? "active" : ""} onClick={() => selected && setView("review")} disabled={!selected}>
             <ClipboardCheck size={21} /><span>{canEdit ? "Revisión" : "Consulta"}</span>
+          </button>
+          {canEdit && <button className={view === "new" ? "active" : ""} onClick={() => setView("new")}>
+            <Plus size={21} /><span>Nueva</span>
+          </button>}
+          <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}>
+            <PackageCheck size={21} /><span>Cortes</span>
           </button>
         </nav>
       )}
@@ -576,9 +705,9 @@ function ConnectPanel({
       <div className="connect-icon"><ShieldCheck size={36} /></div>
       <span className="eyebrow">Acceso seguro</span>
       <h1>Compras de campo</h1>
-      <p>Accede como ADMIN COMPRAS para modificar o como USUARIO COMPRAS para consultar el control documental.</p>
+      <p>Accede como ADMINISTRADOR para gestionar las compras o como CONSULTAS para revisar la información sin modificarla.</p>
       <form className="login-form" onSubmit={(event) => { event.preventDefault(); void onConnect(username, password); }}>
-        <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="ADMIN COMPRAS o USUARIO COMPRAS" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+        <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="ADMINISTRADOR o CONSULTAS" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
         <label className="field required-field"><span>Contraseña</span><input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
         <button className="primary-button" type="submit" disabled={loading || !username.trim() || !password}>
           <LogIn size={20} /> {loading ? "Comprobando…" : "Entrar"}
@@ -603,22 +732,26 @@ function ConfigurationUnavailablePanel({ onDemo }: { onDemo: () => void }) {
 
 function ReviewPanel({
   row,
+  purchase,
   review,
   issues,
   saving,
   autoSaveStatus,
   readOnly,
+  onPurchaseChange,
   onChange,
   onSubmit,
   onReset,
   onBack,
 }: {
   row: ControlRow;
+  purchase: PurchaseForm;
   review: ReviewForm;
   issues: string[];
   saving: boolean;
   autoSaveStatus: "idle" | "pending" | "saving" | "saved" | "error";
   readOnly: boolean;
+  onPurchaseChange: Dispatch<SetStateAction<PurchaseForm | null>>;
   onChange: Dispatch<SetStateAction<ReviewForm | null>>;
   onSubmit: (event: FormEvent) => void;
   onReset: () => void;
@@ -628,8 +761,9 @@ function ReviewPanel({
     onChange((current) => current ? { ...current, [key]: value } : current);
   }
 
-  const completedFields = Object.values(review).filter((value) => value.trim() !== "").length;
-  const requiredFields = Object.keys(review).length;
+  const requiredPurchaseFields: Array<keyof PurchaseForm> = ["provider", "farm", "municipality", "crop", "variety", "expectedKg", "campaign", "contractSigned", "contractStart", "contractEnd"];
+  const completedFields = Object.values(review).filter((value) => value.trim() !== "").length + requiredPurchaseFields.filter((key) => purchase[key].trim() !== "").length;
+  const requiredFields = Object.keys(review).length + requiredPurchaseFields.length;
 
   return (
     <form className="review-form" onSubmit={onSubmit}>
@@ -638,15 +772,15 @@ function ReviewPanel({
         <div className="review-title-row">
           <div>
             <span className="eyebrow">{row.id || "Expediente"}</span>
-            <h2>{row.provider}</h2>
-            <p>{row.crop || "Cultivo sin indicar"} · {row.farm || "Finca sin indicar"}</p>
+            <h2>{purchase.provider}</h2>
+            <p>{purchase.crop || "Especie sin indicar"}{purchase.variety ? ` · ${purchase.variety}` : ""} · {purchase.farm || "Finca sin indicar"}</p>
           </div>
           <StatusBadge ok={authorized(row)}>{authorized(row) ? "Autorizado" : "Bloqueado"}</StatusBadge>
         </div>
 
         <div className="contract-strip">
           <span><CalendarDays size={17} /><strong>Contrato</strong></span>
-          <span>{formatDate(row.contractStart)} — {formatDate(row.contractEnd)}</span>
+          <span>{formatDate(purchase.contractStart)} — {formatDate(purchase.contractEnd)}</span>
           <span className={`contract-alert ${row.contractAlert.includes("VIGENTE") ? "contract-ok" : "contract-warning"}`}>{row.contractAlert || "Sin estado"}</span>
         </div>
       </div>
@@ -664,6 +798,11 @@ function ReviewPanel({
         </span>
         <span className="completion-count">Obligatorios: {completedFields}/{requiredFields}</span>
       </div>
+
+      <fieldset className="purchase-fieldset" disabled={readOnly}>
+        <legend><span className="step-number">A</span><span>Compra y materia prima<small>Datos comerciales, fruta y vigencia contractual</small></span></legend>
+        <PurchaseFields value={purchase} onChange={(value) => onPurchaseChange(value)} disabled={readOnly} />
+      </fieldset>
 
       <div className={`result-panel ${issues.length ? "result-blocked" : "result-ok"}`}>
         {issues.length ? <AlertTriangle size={23} /> : <CheckCircle2 size={23} />}
@@ -684,7 +823,7 @@ function ReviewPanel({
       <fieldset disabled={readOnly}>
         <legend><span className="step-number">1</span><span>Planificación y finca<small>Fecha prevista y comprobación física</small></span></legend>
         <div className="two-columns">
-          <label className="field required-field"><span>Fecha prevista de corte</span><input required type="date" value={review.plannedCutDate} min={row.contractStart || undefined} max={row.contractEnd || undefined} onInput={(event) => update("plannedCutDate", event.currentTarget.value)} /></label>
+          <label className="field required-field"><span>Fecha prevista de corte</span><input required type="date" value={review.plannedCutDate} min={purchase.contractStart || undefined} max={purchase.contractEnd || undefined} onInput={(event) => update("plannedCutDate", event.currentTarget.value)} /></label>
           <label className="field required-field"><span>Finca / parcela comprobada</span><select required value={review.farmChecked} onChange={(event) => update("farmChecked", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option></select></label>
         </div>
       </fieldset>
@@ -722,7 +861,7 @@ function ReviewPanel({
         </div>
       </fieldset>
 
-      {row.otherAgreements && <div className="agreement-note"><FileCheck2 size={19} /><div><strong>Otros acuerdos</strong><p>{row.otherAgreements}</p></div></div>}
+      {purchase.otherAgreements && <div className="agreement-note"><FileCheck2 size={19} /><div><strong>Otros acuerdos</strong><p>{purchase.otherAgreements}</p></div></div>}
 
       {!readOnly && (
         <div className="form-actions">

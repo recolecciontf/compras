@@ -40,6 +40,31 @@ type ReviewPayload = {
   lastReviewDate: string;
 };
 
+type PurchasePayload = {
+  id: string;
+  provider: string;
+  taxId: string;
+  farm: string;
+  municipality: string;
+  crop: string;
+  variety: string;
+  expectedKg: string;
+  campaign: string;
+  contractSigned: string;
+  contractStart: string;
+  contractEnd: string;
+  documentPath: string;
+  otherAgreements: string;
+};
+
+type HarvestPayload = {
+  cutStatus: string;
+  cutKgTotal: string;
+  archived: string;
+};
+
+class InputError extends Error {}
+
 const encoder = new TextEncoder();
 let cachedGoogleToken = "";
 let cachedGoogleTokenExpiresAt = 0;
@@ -111,12 +136,12 @@ function normalizeUsername(value: string) {
 function configuredUsers(env: Env) {
   return [
     {
-      username: normalizeUsername(env.ADMIN_USERNAME || "ADMIN COMPRAS"),
+      username: normalizeUsername(env.ADMIN_USERNAME || "ADMINISTRADOR"),
       passwordHash: env.ADMIN_PASSWORD_SHA256 || "",
       role: "admin" as const,
     },
     {
-      username: normalizeUsername(env.VIEWER_USERNAME || "USUARIO COMPRAS"),
+      username: normalizeUsername(env.VIEWER_USERNAME || "CONSULTAS"),
       passwordHash: env.VIEWER_PASSWORD_SHA256 || "",
       role: "viewer" as const,
     },
@@ -125,7 +150,7 @@ function configuredUsers(env: Env) {
 
 function profileFor(session: Pick<Session, "sub" | "role">) {
   return {
-    displayName: session.role === "admin" ? "Admin compras" : "Usuario compras",
+    displayName: session.role === "admin" ? "Administrador" : "Consultas",
     userPrincipalName: session.sub,
     role: session.role,
     canEdit: session.role === "admin",
@@ -268,12 +293,123 @@ function sheetName(env: Env) {
 
 async function loadRows(env: Env) {
   const { start, end } = dataBounds(env);
-  const range = `'${sheetName(env)}'!A${start}:Z${end}`;
+  const range = `'${sheetName(env)}'!A${start}:AE${end}`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
   const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
   return (result.values || [])
     .map((values, offset) => ({ index: start + offset, values }))
     .filter((row) => String(row.values[1] || "").trim());
+}
+
+function cleanRecord<T extends Record<string, unknown>, K extends keyof T>(value: unknown, keys: readonly K[]) {
+  const source = (value && typeof value === "object" ? value : {}) as Partial<T>;
+  return Object.fromEntries(keys.map((key) => [key, String(source[key] ?? "").trim()])) as Pick<T, K>;
+}
+
+function purchaseValues(value: unknown): PurchasePayload {
+  return cleanRecord<PurchasePayload, keyof PurchasePayload>(value, [
+    "id", "provider", "taxId", "farm", "municipality", "crop", "variety", "expectedKg", "campaign",
+    "contractSigned", "contractStart", "contractEnd", "documentPath", "otherAgreements",
+  ]);
+}
+
+function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
+  const required: Array<[keyof PurchasePayload, string]> = [
+    ["provider", "agricultor o proveedor"],
+    ["farm", "finca o parcela"],
+    ["municipality", "municipio"],
+    ["crop", "especie"],
+    ["variety", "variedad"],
+    ["expectedKg", "kg previstos"],
+    ["campaign", "campaña"],
+    ["contractSigned", "estado del contrato"],
+    ["contractStart", "inicio del contrato"],
+    ["contractEnd", "fin del contrato"],
+  ];
+  if (requireComplete) {
+    const missing = required.filter(([key]) => !purchase[key]).map(([, label]) => label);
+    if (missing.length) throw new InputError(`Faltan campos obligatorios: ${missing.join(", ")}.`);
+  }
+  if (purchase.expectedKg) {
+    const expectedKg = Number(purchase.expectedKg.replace(",", "."));
+    if (!Number.isFinite(expectedKg) || expectedKg <= 0) throw new InputError("Los kg previstos deben ser superiores a cero.");
+  }
+  if (purchase.contractStart && purchase.contractEnd && purchase.contractStart > purchase.contractEnd) {
+    throw new InputError("El fin del contrato no puede ser anterior al inicio.");
+  }
+}
+
+function harvestValues(value: unknown): HarvestPayload {
+  const harvest = cleanRecord<HarvestPayload, keyof HarvestPayload>(value, ["cutStatus", "cutKgTotal", "archived"]);
+  const cutStatus = harvest.cutStatus.toLocaleLowerCase("es") === "sí" ? "Sí" : "No";
+  const archived = harvest.archived.toLocaleLowerCase("es") === "sí" ? "Sí" : "No";
+  const kg = Number(harvest.cutKgTotal.replace(",", "."));
+  if (cutStatus === "Sí" && (!Number.isFinite(kg) || kg <= 0)) {
+    throw new InputError("Indica los kg cortados totales antes de marcar el corte como realizado.");
+  }
+  if (archived === "Sí" && cutStatus !== "Sí") {
+    throw new InputError("Solo se puede archivar una compra cuyo corte esté realizado.");
+  }
+  return { cutStatus, cutKgTotal: cutStatus === "Sí" ? String(kg) : "", archived };
+}
+
+async function batchSave(env: Env, data: Array<{ range: string; values: unknown[][] }>) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values:batchUpdate`;
+  await sheetsRequest(env, url, {
+    method: "POST",
+    body: JSON.stringify({ valueInputOption: "USER_ENTERED", data }),
+  });
+}
+
+async function firstAvailableRow(env: Env) {
+  const { start, end } = dataBounds(env);
+  const range = `'${sheetName(env)}'!B${start}:B${end}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE`;
+  const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
+  const values = result.values || [];
+  for (let row = start; row <= end; row += 1) {
+    if (!String(values[row - start]?.[0] ?? "").trim()) return row;
+  }
+  throw new Error("No quedan filas libres en el control documental.");
+}
+
+async function savePurchase(env: Env, row: number, purchase: PurchasePayload, create = false) {
+  const { start, end } = dataBounds(env);
+  if (!Number.isInteger(row) || row < start || row > end) throw new Error("La fila seleccionada no es válida.");
+  validatePurchase(purchase, create);
+  const normalizedKg = purchase.expectedKg ? String(Number(purchase.expectedKg.replace(",", "."))) : "";
+  const generatedId = purchase.id || `CMP-${purchase.campaign}-${String(row).padStart(3, "0")}`;
+  const sheet = sheetName(env);
+  const data = [
+    {
+      range: `'${sheet}'!A${row}:J${row}`,
+      values: [[generatedId, purchase.provider, purchase.taxId, purchase.farm, purchase.municipality, purchase.crop,
+        purchase.campaign, purchase.contractSigned, purchase.contractStart, purchase.contractEnd]],
+    },
+    {
+      range: `'${sheet}'!Y${row}:Z${row}`,
+      values: [[purchase.documentPath, purchase.otherAgreements]],
+    },
+    {
+      range: `'${sheet}'!AD${row}:AE${row}`,
+      values: [[purchase.variety, normalizedKg]],
+    },
+  ];
+  if (create) data.push({ range: `'${sheet}'!AA${row}:AC${row}`, values: [["No", "", "No"]] });
+  await batchSave(env, data);
+  return generatedId;
+}
+
+async function saveHarvest(env: Env, row: number, value: unknown) {
+  const { start, end } = dataBounds(env);
+  if (!Number.isInteger(row) || row < start || row > end) throw new Error("La fila seleccionada no es válida.");
+  const harvest = harvestValues(value);
+  const range = `'${sheetName(env)}'!AA${row}:AC${row}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  await sheetsRequest(env, url, {
+    method: "PUT",
+    body: JSON.stringify({ range, majorDimension: "ROWS", values: [[harvest.cutStatus, harvest.cutKgTotal, harvest.archived]] }),
+  });
 }
 
 function reviewValues(value: unknown): ReviewPayload {
@@ -364,6 +500,16 @@ async function handleApi(request: Request, env: Env) {
     return json(request, env, { rows: await loadRows(env) });
   }
 
+  if (url.pathname === "/api/rows" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede añadir compras." }, 403);
+    const body = (await request.json().catch(() => ({}))) as { purchase?: unknown };
+    const purchase = purchaseValues(body.purchase);
+    validatePurchase(purchase);
+    const row = await firstAvailableRow(env);
+    const id = await savePurchase(env, row, purchase, true);
+    return json(request, env, { ok: true, row, id }, 201);
+  }
+
   const reviewMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/review$/);
   if (reviewMatch && request.method === "PATCH") {
     if (session.role !== "admin") {
@@ -371,6 +517,22 @@ async function handleApi(request: Request, env: Env) {
     }
     const body = (await request.json().catch(() => ({}))) as { review?: unknown };
     await saveReview(env, Number(reviewMatch[1]), reviewValues(body.review));
+    return json(request, env, { ok: true });
+  }
+
+  const purchaseMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/purchase$/);
+  if (purchaseMatch && request.method === "PATCH") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede modificar compras." }, 403);
+    const body = (await request.json().catch(() => ({}))) as { purchase?: unknown };
+    await savePurchase(env, Number(purchaseMatch[1]), purchaseValues(body.purchase));
+    return json(request, env, { ok: true });
+  }
+
+  const harvestMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/harvest$/);
+  if (harvestMatch && request.method === "PATCH") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede modificar cortes." }, 403);
+    const body = (await request.json().catch(() => ({}))) as { harvest?: unknown };
+    await saveHarvest(env, Number(harvestMatch[1]), body.harvest);
     return json(request, env, { ok: true });
   }
 
@@ -388,7 +550,7 @@ export default {
       return serveEmbeddedAsset(request);
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se ha podido completar la operación.";
-      return json(request, env, { error: message }, 500);
+      return json(request, env, { error: message }, error instanceof InputError ? 400 : 500);
     }
   },
 };

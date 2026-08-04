@@ -10,7 +10,12 @@ Aplicación móvil para consultar y completar el control documental previo a la 
 - La hoja permanece privada y solo se comparte con la cuenta de servicio utilizada por la aplicación.
 - Los cambios se guardan automáticamente y el listado se actualiza cada 15 segundos.
 - Todos los campos obligatorios se validan antes de finalizar una revisión.
+- El usuario ADMINISTRADOR puede crear compras y completar agricultor, finca, contrato y materia prima.
+- Especie y variedad usan listas relacionadas; la opción «Otra» obliga a escribir el valor exacto.
+- La pestaña «Cortes» registra si la fruta se ha cortado, los kilos totales y permite archivar o restaurar compras terminadas.
+- El usuario CONSULTAS puede revisar toda la información, pero nunca modificarla.
 - Las columnas W:X de la hoja conservan las fórmulas que calculan «Puede recolectarse» y «Motivo del bloqueo».
+- Las columnas AA:AE almacenan corte realizado, kilos cortados, archivo, variedad y kilos previstos.
 
 ## Configuración pública
 
@@ -49,6 +54,8 @@ El flujo de GitHub Actions compila la carpeta `dist`. Antes de publicar en GitHu
 ## Uso diario
 
 - Abre la aplicación desde el móvil e inicia sesión con el acceso común.
+- Pulsa «Nueva compra» para registrar un agricultor o una materia prima nueva.
 - Selecciona un agricultor y completa la revisión.
+- En «Cortes», anota los kilos reales y archiva la compra cuando la recolección haya terminado.
 - Los avances incompletos se guardan, pero el expediente seguirá bloqueado hasta cumplir todos los requisitos.
 - Solo se puede recolectar cuando el resultado muestre «SÍ PUEDE RECOLECTARSE».

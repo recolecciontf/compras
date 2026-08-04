@@ -1,4 +1,4 @@
-import type { AppConfig, ControlRow, ReviewForm, UserProfile } from "../types";
+import type { AppConfig, ControlRow, HarvestForm, PurchaseForm, ReviewForm, UserProfile } from "../types";
 
 type ApiSheetRow = { index: number; values: unknown[] };
 type ApiError = { error?: string };
@@ -26,8 +26,19 @@ export function excelDateToIso(value: unknown) {
   return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
 }
 
+function contractStatus(start: string, end: string) {
+  if (!start || !end) return "SIN FECHAS";
+  const today = new Date().toISOString().slice(0, 10);
+  if (today < start) return "PENDIENTE";
+  if (today > end) return "FUERA DE PLAZO";
+  const days = Math.ceil((new Date(`${end}T12:00:00`).getTime() - new Date(`${today}T12:00:00`).getTime()) / 86400000);
+  return days <= 15 ? `VENCE EN ${days} DÍAS` : "VIGENTE";
+}
+
 export function rowFromValues(row: ApiSheetRow): ControlRow {
   const v = row.values || [];
+  const contractStart = excelDateToIso(v[8]);
+  const contractEnd = excelDateToIso(v[9]);
   return {
     tableIndex: row.index,
     id: text(v[0]),
@@ -38,9 +49,9 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
     crop: text(v[5]),
     campaign: text(v[6]),
     contractSigned: text(v[7]),
-    contractStart: excelDateToIso(v[8]),
-    contractEnd: excelDateToIso(v[9]),
-    contractAlert: text(v[10]),
+    contractStart,
+    contractEnd,
+    contractAlert: text(v[10]) || contractStatus(contractStart, contractEnd),
     plannedCutDate: excelDateToIso(v[11]),
     farmChecked: text(v[12]),
     fieldNotebook: text(v[13]),
@@ -56,6 +67,38 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
     blockageReason: text(v[23]),
     documentPath: text(v[24]),
     otherAgreements: text(v[25]),
+    cutStatus: text(v[26]),
+    cutKgTotal: text(v[27]),
+    archived: text(v[28]),
+    variety: text(v[29]),
+    expectedKg: text(v[30]),
+  };
+}
+
+export function purchaseFromRow(row: ControlRow): PurchaseForm {
+  return {
+    id: row.id,
+    provider: row.provider,
+    taxId: row.taxId,
+    farm: row.farm,
+    municipality: row.municipality,
+    crop: row.crop,
+    variety: row.variety,
+    expectedKg: row.expectedKg,
+    campaign: row.campaign,
+    contractSigned: row.contractSigned,
+    contractStart: row.contractStart,
+    contractEnd: row.contractEnd,
+    documentPath: row.documentPath,
+    otherAgreements: row.otherAgreements,
+  };
+}
+
+export function harvestFromRow(row: ControlRow): HarvestForm {
+  return {
+    cutStatus: normalized(row.cutStatus) === "sí" ? "Sí" : "No",
+    cutKgTotal: row.cutKgTotal,
+    archived: normalized(row.archived) === "sí" ? "Sí" : "No",
   };
 }
 
@@ -188,6 +231,27 @@ export class WorkbookClient {
     await this.request<{ ok: true }>(`/api/rows/${row.tableIndex}/review`, {
       method: "PATCH",
       body: JSON.stringify({ review }),
+    });
+  }
+
+  async createPurchase(purchase: PurchaseForm) {
+    return this.request<{ ok: true; row: number; id: string }>("/api/rows", {
+      method: "POST",
+      body: JSON.stringify({ purchase }),
+    });
+  }
+
+  async savePurchase(row: ControlRow, purchase: PurchaseForm) {
+    await this.request<{ ok: true }>(`/api/rows/${row.tableIndex}/purchase`, {
+      method: "PATCH",
+      body: JSON.stringify({ purchase }),
+    });
+  }
+
+  async saveHarvest(row: ControlRow, harvest: HarvestForm) {
+    await this.request<{ ok: true }>(`/api/rows/${row.tableIndex}/harvest`, {
+      method: "PATCH",
+      body: JSON.stringify({ harvest }),
     });
   }
 }

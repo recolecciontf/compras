@@ -9,9 +9,9 @@ const { default: worker } = await import(new URL(`../dist/server/index.js?check=
 
 const env = {
   ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
-  ADMIN_USERNAME: "ADMIN COMPRAS",
+  ADMIN_USERNAME: "ADMINISTRADOR",
   ADMIN_PASSWORD_SHA256: createHash("sha256").update("connection-check").digest("hex"),
-  VIEWER_USERNAME: "USUARIO COMPRAS",
+  VIEWER_USERNAME: "CONSULTAS",
   VIEWER_PASSWORD_SHA256: createHash("sha256").update("viewer-check").digest("hex"),
   SESSION_SECRET: "connection-check-session-secret",
   GOOGLE_SERVICE_ACCOUNT_EMAIL: key.client_email,
@@ -26,7 +26,7 @@ const login = await worker.fetch(
   new Request("https://app.example/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: "ADMIN COMPRAS", password: "connection-check" }),
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "connection-check" }),
   }),
   env,
 );

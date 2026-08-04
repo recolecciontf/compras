@@ -1,4 +1,4 @@
-const CACHE_NAME = "compras-de-campo-v4";
+const CACHE_NAME = "compras-de-campo-v5";
 const APP_SHELL = ["./", "./manifest.webmanifest", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {

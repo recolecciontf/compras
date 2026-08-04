@@ -37,7 +37,32 @@ export type ControlRow = {
   blockageReason: string;
   documentPath: string;
   otherAgreements: string;
+  cutStatus: string;
+  cutKgTotal: string;
+  archived: string;
+  variety: string;
+  expectedKg: string;
 };
+
+export type PurchaseForm = Pick<
+  ControlRow,
+  | "id"
+  | "provider"
+  | "taxId"
+  | "farm"
+  | "municipality"
+  | "crop"
+  | "variety"
+  | "expectedKg"
+  | "campaign"
+  | "contractSigned"
+  | "contractStart"
+  | "contractEnd"
+  | "documentPath"
+  | "otherAgreements"
+>;
+
+export type HarvestForm = Pick<ControlRow, "cutStatus" | "cutKgTotal" | "archived">;
 
 export type ReviewForm = Pick<
   ControlRow,
@@ -54,5 +79,5 @@ export type ReviewForm = Pick<
   | "lastReviewDate"
 >;
 
-export type AppView = "records" | "review";
+export type AppView = "records" | "review" | "new" | "harvest";
 export type RecordFilter = "all" | "blocked" | "authorized";
