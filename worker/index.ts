@@ -1,0 +1,367 @@
+type Fetcher = { fetch(request: Request): Promise<Response> };
+
+interface Env {
+  ASSETS: Fetcher;
+  ALLOWED_ORIGINS?: string;
+  ADMIN_USERNAME: string;
+  ADMIN_PASSWORD_SHA256: string;
+  VIEWER_USERNAME: string;
+  VIEWER_PASSWORD_SHA256: string;
+  SESSION_SECRET: string;
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: string;
+  GOOGLE_PRIVATE_KEY: string;
+  GOOGLE_SPREADSHEET_ID: string;
+  GOOGLE_WORKSHEET_NAME?: string;
+  GOOGLE_DATA_START_ROW?: string;
+  GOOGLE_DATA_END_ROW?: string;
+}
+
+type UserRole = "admin" | "viewer";
+
+type Session = {
+  sub: string;
+  role: UserRole;
+  exp: number;
+};
+
+type ReviewPayload = {
+  plannedCutDate: string;
+  farmChecked: string;
+  fieldNotebook: string;
+  notebookReviewDate: string;
+  analysisStatus: string;
+  analysisDate: string;
+  certificateType: string;
+  certificateExpiry: string;
+  otherDocuments: string;
+  reviewer: string;
+  lastReviewDate: string;
+};
+
+const encoder = new TextEncoder();
+let cachedGoogleToken = "";
+let cachedGoogleTokenExpiresAt = 0;
+
+function base64Url(bytes: Uint8Array) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeBase64Url(value: string) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function sha256Hex(value: string) {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(value)));
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function safeEqual(left: string, right: string) {
+  const length = Math.max(left.length, right.length);
+  let difference = left.length ^ right.length;
+  for (let index = 0; index < length; index += 1) {
+    difference |= (left.charCodeAt(index) || 0) ^ (right.charCodeAt(index) || 0);
+  }
+  return difference === 0;
+}
+
+async function sessionKey(secret: string) {
+  return crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+
+async function issueSession(env: Env, sub: string, role: UserRole) {
+  const payload = base64Url(encoder.encode(JSON.stringify({ sub, role, exp: Date.now() + 8 * 60 * 60 * 1000 })));
+  const signature = new Uint8Array(await crypto.subtle.sign("HMAC", await sessionKey(env.SESSION_SECRET), encoder.encode(payload)));
+  return `${payload}.${base64Url(signature)}`;
+}
+
+async function verifySession(token: string, env: Env) {
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) return null;
+  const valid = await crypto.subtle.verify(
+    "HMAC",
+    await sessionKey(env.SESSION_SECRET),
+    decodeBase64Url(signature),
+    encoder.encode(payload),
+  );
+  if (!valid) return null;
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload))) as Partial<Session>;
+    if (
+      typeof parsed.sub !== "string" ||
+      (parsed.role !== "admin" && parsed.role !== "viewer") ||
+      typeof parsed.exp !== "number" ||
+      parsed.exp <= Date.now()
+    ) return null;
+    return parsed as Session;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeUsername(value: string) {
+  return value.trim().toLocaleUpperCase("es");
+}
+
+function configuredUsers(env: Env) {
+  return [
+    {
+      username: normalizeUsername(env.ADMIN_USERNAME || "ADMIN COMPRAS"),
+      passwordHash: env.ADMIN_PASSWORD_SHA256 || "",
+      role: "admin" as const,
+    },
+    {
+      username: normalizeUsername(env.VIEWER_USERNAME || "USUARIO COMPRAS"),
+      passwordHash: env.VIEWER_PASSWORD_SHA256 || "",
+      role: "viewer" as const,
+    },
+  ];
+}
+
+function profileFor(session: Pick<Session, "sub" | "role">) {
+  return {
+    displayName: session.role === "admin" ? "Admin compras" : "Usuario compras",
+    userPrincipalName: session.sub,
+    role: session.role,
+    canEdit: session.role === "admin",
+  };
+}
+
+function requestToken(request: Request) {
+  const authorization = request.headers.get("Authorization") || "";
+  return authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+}
+
+function allowedOrigin(request: Request, env: Env) {
+  const origin = request.headers.get("Origin");
+  if (!origin) return "";
+  if (origin === new URL(request.url).origin) return origin;
+  const configured = (env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  return configured.includes(origin.replace(/\/$/, "")) ? origin : "";
+}
+
+function corsHeaders(request: Request, env: Env) {
+  const origin = allowedOrigin(request, env);
+  return origin
+    ? {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+        Vary: "Origin",
+      }
+    : {};
+}
+
+function json(request: Request, env: Env, body: unknown, status = 200) {
+  return Response.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store", ...corsHeaders(request, env) },
+  });
+}
+
+function pemToBytes(pem: string) {
+  const clean = pem
+    .replace(/\\n/g, "\n")
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\s/g, "");
+  return Uint8Array.from(atob(clean), (char) => char.charCodeAt(0));
+}
+
+async function googleAccessToken(env: Env) {
+  if (cachedGoogleToken && cachedGoogleTokenExpiresAt > Date.now() + 60_000) return cachedGoogleToken;
+
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64Url(encoder.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claims = base64Url(
+    encoder.encode(
+      JSON.stringify({
+        iss: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        scope: "https://www.googleapis.com/auth/spreadsheets",
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+      }),
+    ),
+  );
+  const unsigned = `${header}.${claims}`;
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    pemToBytes(env.GOOGLE_PRIVATE_KEY),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = new Uint8Array(
+    await crypto.subtle.sign({ name: "RSASSA-PKCS1-v1_5" }, key, encoder.encode(unsigned)),
+  );
+  const assertion = `${unsigned}.${base64Url(signature)}`;
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion }),
+  });
+  const tokenBody = (await tokenResponse.json()) as { access_token?: string; expires_in?: number; error_description?: string };
+  if (!tokenResponse.ok || !tokenBody.access_token) {
+    throw new Error(tokenBody.error_description || "No se ha podido conectar con Google Sheets.");
+  }
+  cachedGoogleToken = tokenBody.access_token;
+  cachedGoogleTokenExpiresAt = Date.now() + (tokenBody.expires_in || 3600) * 1000;
+  return cachedGoogleToken;
+}
+
+async function sheetsRequest<T>(env: Env, url: string, init: RequestInit = {}) {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${await googleAccessToken(env)}`,
+      "Content-Type": "application/json",
+      ...init.headers,
+    },
+  });
+  const body = (await response.json().catch(() => ({}))) as T & { error?: { message?: string } };
+  if (!response.ok) throw new Error(body.error?.message || "Google Sheets no ha podido completar la operación.");
+  return body;
+}
+
+function dataBounds(env: Env) {
+  const start = Number(env.GOOGLE_DATA_START_ROW || "9");
+  const end = Number(env.GOOGLE_DATA_END_ROW || "108");
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
+    throw new Error("La configuración de filas de Google Sheets no es válida.");
+  }
+  return { start, end };
+}
+
+function sheetName(env: Env) {
+  return (env.GOOGLE_WORKSHEET_NAME || "Control documental").replace(/'/g, "''");
+}
+
+async function loadRows(env: Env) {
+  const { start, end } = dataBounds(env);
+  const range = `'${sheetName(env)}'!A${start}:Z${end}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
+  const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
+  return (result.values || [])
+    .map((values, offset) => ({ index: start + offset, values }))
+    .filter((row) => String(row.values[1] || "").trim());
+}
+
+function reviewValues(value: unknown): ReviewPayload {
+  const review = (value && typeof value === "object" ? value : {}) as Partial<Record<keyof ReviewPayload, unknown>>;
+  const stringValue = (key: keyof ReviewPayload) => String(review[key] ?? "").trim();
+  return {
+    plannedCutDate: stringValue("plannedCutDate"),
+    farmChecked: stringValue("farmChecked"),
+    fieldNotebook: stringValue("fieldNotebook"),
+    notebookReviewDate: stringValue("notebookReviewDate"),
+    analysisStatus: stringValue("analysisStatus"),
+    analysisDate: stringValue("analysisDate"),
+    certificateType: stringValue("certificateType"),
+    certificateExpiry: stringValue("certificateExpiry"),
+    otherDocuments: stringValue("otherDocuments"),
+    reviewer: stringValue("reviewer"),
+    lastReviewDate: stringValue("lastReviewDate"),
+  };
+}
+
+async function saveReview(env: Env, row: number, review: ReviewPayload) {
+  const { start, end } = dataBounds(env);
+  if (!Number.isInteger(row) || row < start || row > end) throw new Error("La fila seleccionada no es válida.");
+  const range = `'${sheetName(env)}'!L${row}:V${row}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  await sheetsRequest(env, url, {
+    method: "PUT",
+    body: JSON.stringify({
+      range,
+      majorDimension: "ROWS",
+      values: [[
+        review.plannedCutDate,
+        review.farmChecked,
+        review.fieldNotebook,
+        review.notebookReviewDate,
+        review.analysisStatus,
+        review.analysisDate,
+        review.certificateType,
+        review.certificateExpiry,
+        review.otherDocuments,
+        review.reviewer,
+        review.lastReviewDate,
+      ]],
+    }),
+  });
+}
+
+async function handleApi(request: Request, env: Env) {
+  const url = new URL(request.url);
+
+  if (request.method === "OPTIONS") {
+    if (request.headers.get("Origin") && !allowedOrigin(request, env)) return json(request, env, { error: "Origen no permitido." }, 403);
+    return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+  }
+
+  if (url.pathname === "/api/health" && request.method === "GET") {
+    return json(request, env, { ok: true });
+  }
+
+  if (url.pathname === "/api/login" && request.method === "POST") {
+    if (request.headers.get("Origin") && !allowedOrigin(request, env)) return json(request, env, { error: "Origen no permitido." }, 403);
+    const body = (await request.json().catch(() => ({}))) as { username?: string; password?: string };
+    const suppliedUser = normalizeUsername(String(body.username || ""));
+    const suppliedHash = await sha256Hex(String(body.password || ""));
+    const user = configuredUsers(env).find(
+      (candidate) =>
+        Boolean(candidate.passwordHash) &&
+        safeEqual(suppliedUser, candidate.username) &&
+        safeEqual(suppliedHash, candidate.passwordHash),
+    );
+    if (!user) {
+      return json(request, env, { error: "Usuario o contraseña incorrectos." }, 401);
+    }
+    const profile = profileFor({ sub: user.username, role: user.role });
+    return json(request, env, { token: await issueSession(env, user.username, user.role), profile });
+  }
+
+  const session = await verifySession(requestToken(request), env);
+  if (!session) {
+    return json(request, env, { error: "La sesión ha caducado. Vuelve a iniciar sesión." }, 401);
+  }
+
+  if (url.pathname === "/api/profile" && request.method === "GET") {
+    return json(request, env, profileFor(session));
+  }
+
+  if (url.pathname === "/api/rows" && request.method === "GET") {
+    return json(request, env, { rows: await loadRows(env) });
+  }
+
+  const reviewMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/review$/);
+  if (reviewMatch && request.method === "PATCH") {
+    if (session.role !== "admin") {
+      return json(request, env, { error: "Este usuario es de consulta y no puede modificar los datos." }, 403);
+    }
+    const body = (await request.json().catch(() => ({}))) as { review?: unknown };
+    await saveReview(env, Number(reviewMatch[1]), reviewValues(body.review));
+    return json(request, env, { ok: true });
+  }
+
+  return json(request, env, { error: "Operación no encontrada." }, 404);
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      if (new URL(request.url).pathname.startsWith("/api/")) return await handleApi(request, env);
+      return env.ASSETS.fetch(request);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se ha podido completar la operación.";
+      return json(request, env, { error: message }, 500);
+    }
+  },
+};
