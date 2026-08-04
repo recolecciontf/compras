@@ -1,7 +1,9 @@
+import { STATIC_ASSETS } from "./static-assets.generated";
+
 type Fetcher = { fetch(request: Request): Promise<Response> };
 
 interface Env {
-  ASSETS: Fetcher;
+  ASSETS?: Fetcher;
   ALLOWED_ORIGINS?: string;
   ADMIN_USERNAME: string;
   ADMIN_PASSWORD_SHA256: string;
@@ -162,6 +164,27 @@ function json(request: Request, env: Env, body: unknown, status = 200) {
   return Response.json(body, {
     status,
     headers: { "Cache-Control": "no-store", ...corsHeaders(request, env) },
+  });
+}
+
+function embeddedAssetPath(pathname: string) {
+  if (pathname === "/" || pathname === "/index.html") return "/index.html";
+  if (pathname === "/compras" || pathname === "/compras/") return "/index.html";
+  return pathname.startsWith("/compras/") ? pathname.slice("/compras".length) : pathname;
+}
+
+function serveEmbeddedAsset(request: Request) {
+  const path = embeddedAssetPath(new URL(request.url).pathname);
+  const asset = STATIC_ASSETS[path as keyof typeof STATIC_ASSETS];
+  if (!asset) return new Response("No encontrado", { status: 404 });
+  const binary = atob(asset.body);
+  const body = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const shouldRevalidate = path === "/index.html" || path === "/app-config.json" || path === "/sw.js";
+  return new Response(body, {
+    headers: {
+      "Content-Type": asset.contentType,
+      "Cache-Control": shouldRevalidate ? "no-cache" : "public, max-age=31536000, immutable",
+    },
   });
 }
 
@@ -358,7 +381,11 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
       if (new URL(request.url).pathname.startsWith("/api/")) return await handleApi(request, env);
-      return env.ASSETS.fetch(request);
+      if (env.ASSETS) {
+        const response = await env.ASSETS.fetch(request);
+        if (response.status !== 404) return response;
+      }
+      return serveEmbeddedAsset(request);
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se ha podido completar la operación.";
       return json(request, env, { error: message }, 500);

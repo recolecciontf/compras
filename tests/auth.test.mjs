@@ -22,6 +22,13 @@ function api(path, init = {}) {
   return worker.fetch(new Request(`https://app.example${path}`, init), env);
 }
 
+test("sirve la PWA aunque el alojamiento no inyecte los archivos estÃ¡ticos", async () => {
+  const response = await api("/");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /text\/html/);
+  assert.match(await response.text(), /Compras de campo/);
+});
+
 test("rechaza una contraseña incorrecta", async () => {
   const response = await api("/api/login", {
     method: "POST",
