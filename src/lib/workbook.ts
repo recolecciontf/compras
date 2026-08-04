@@ -124,6 +124,14 @@ function normalized(value: string) {
 
 export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   const issues: string[] = [];
+  if (!row.provider.trim()) issues.push("Falta el agricultor o proveedor");
+  if (!row.taxId.trim()) issues.push("Falta el NIF o CIF");
+  if (!row.farm.trim()) issues.push("Falta la finca o parcela");
+  if (!row.municipality.trim()) issues.push("Falta el municipio");
+  if (!row.crop.trim()) issues.push("Falta la especie");
+  if (!row.variety.trim()) issues.push("Falta la variedad");
+  if (!row.expectedKg.trim()) issues.push("Faltan los kg previstos");
+  if (!row.campaign.trim()) issues.push("Falta la campaña");
   if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
   if (!row.contractStart) issues.push("Falta el inicio del contrato");
   if (!row.contractEnd) issues.push("Falta el fin del contrato");

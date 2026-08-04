@@ -1,4 +1,4 @@
-import { ArrowLeft, PlusCircle, ShoppingBasket } from "lucide-react";
+import { ArrowLeft, CircleCheck, PlusCircle, ShoppingBasket } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { PurchaseForm } from "../types";
 import { EMPTY_PURCHASE, PurchaseFields } from "./PurchaseFields";
@@ -24,6 +24,11 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
         <div className="page-kicker"><ShoppingBasket size={18} /> Alta de compra</div>
         <h2 className="page-title">Nueva compra de campo</h2>
         <p className="page-subtitle">Registra al agricultor, la materia prima y el contrato. El expediente se crea bloqueado hasta completar toda la documentación.</p>
+      </div>
+
+      <div className="required-intro">
+        <CircleCheck size={20} />
+        <div><strong>Datos necesarios para crear la compra</strong><span>Los campos marcados con * son obligatorios y están siempre visibles. El número de expediente se genera automáticamente.</span></div>
       </div>
 
       <fieldset className="purchase-fieldset" disabled={saving}>

@@ -319,6 +319,7 @@ export default function App() {
       setSelectedIndex(workbookRows[0]?.tableIndex ?? null);
       setLastSyncedAt(new Date());
       setView("records");
+      window.scrollTo({ top: 0, behavior: "auto" });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido iniciar sesión.");
     } finally {
@@ -343,6 +344,7 @@ export default function App() {
     setProfile({ displayName: "Modo demostración", userPrincipalName: "Datos ficticios", role: "admin", canEdit: true });
     setSignedIn(true);
     setView("records");
+    window.scrollTo({ top: 0, behavior: "auto" });
     setError("");
   }
 
@@ -496,13 +498,26 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark"><Sprout size={23} /></div>
-          <div>
-            <span className="eyebrow">Control previo</span>
+          <img
+            className="brand-logo"
+            src="https://tonifruit.com/wp-content/uploads/2020/06/tonifruit-logo-1-250x90.png"
+            alt="Toñifruit"
+          />
+          <span className="brand-divider" aria-hidden="true" />
+          <div className="brand-app-name">
+            <span>Departamento de compras</span>
             <strong>Compras de campo</strong>
           </div>
         </div>
+        {(signedIn || demoMode) && (
+          <nav className="desktop-nav" aria-label="Navegación principal">
+            <button className={view === "records" || view === "review" ? "active" : ""} onClick={() => setView("records")}><ListChecks size={17} /> Expedientes</button>
+            {canEdit && <button className={view === "new" ? "active" : ""} onClick={() => setView("new")}><Plus size={17} /> Nueva compra</button>}
+            <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}><PackageCheck size={17} /> Cortes</button>
+          </nav>
+        )}
         <div className="topbar-actions">
+          {(signedIn || demoMode) && <span className="role-pill">{canEdit ? "Administrador" : "Consultas"}</span>}
           <span className={`connection ${isOnline ? "online" : "offline"}`} title={isOnline ? "Con conexión" : "Sin conexión"}>
             {isOnline ? <Wifi size={17} /> : <CloudOff size={17} />}
           </span>
@@ -552,10 +567,15 @@ export default function App() {
         ) : (
           <div className="workspace">
             <section className={`records-pane ${view !== "records" ? "mobile-hidden" : ""}`}>
+              <div className="dashboard-hero">
+                <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo: control documental, materia prima y cortes" />
+                <span className="hero-status"><span /> Sistema operativo</span>
+              </div>
+
               <div className="welcome-row">
                 <div>
                   <p className="welcome">Hola, {profile?.displayName?.split(" ")[0] || "equipo"}</p>
-                  <h1>Control documental</h1>
+                  <h1>Expedientes activos</h1>
                 </div>
                 <span className="sync-caption">
                   {loading ? "Sincronizando…" : lastSyncedAt ? `Actualizado ${lastSyncedAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : `${counts.total} expedientes`}
@@ -563,8 +583,8 @@ export default function App() {
               </div>
 
               <div className="quick-actions">
-                {canEdit && <button className="primary-button" onClick={() => setView("new")}><Plus size={18} /> Nueva compra</button>}
-                <button className="secondary-button" onClick={() => setView("harvest")}><PackageCheck size={18} /> Cortes y kilos</button>
+                {canEdit && <button className="action-card action-card-primary" onClick={() => setView("new")}><span className="action-icon"><Plus size={20} /></span><span><strong>Nueva compra</strong><small>Agricultor, fruta y contrato</small></span><ChevronRight size={19} /></button>}
+                <button className="action-card" onClick={() => setView("harvest")}><span className="action-icon"><PackageCheck size={20} /></span><span><strong>Cortes y kilos</strong><small>Seguimiento de recolección</small></span><ChevronRight size={19} /></button>
               </div>
 
               <div className="summary-grid">
@@ -701,19 +721,33 @@ function ConnectPanel({
   const [password, setPassword] = useState("");
 
   return (
-    <section className="connect-card">
-      <div className="connect-icon"><ShieldCheck size={36} /></div>
-      <span className="eyebrow">Acceso seguro</span>
-      <h1>Compras de campo</h1>
-      <p>Accede como ADMINISTRADOR para gestionar las compras o como CONSULTAS para revisar la información sin modificarla.</p>
-      <form className="login-form" onSubmit={(event) => { event.preventDefault(); void onConnect(username, password); }}>
-        <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="ADMINISTRADOR o CONSULTAS" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
-        <label className="field required-field"><span>Contraseña</span><input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
-        <button className="primary-button" type="submit" disabled={loading || !username.trim() || !password}>
-          <LogIn size={20} /> {loading ? "Comprobando…" : "Entrar"}
-        </button>
-      </form>
-      <button className="secondary-button" onClick={onDemo}>Ver demostración</button>
+    <section className="login-layout">
+      <div className="login-visual">
+        <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo de Toñifruit" />
+        <div className="login-visual-caption">
+          <span>Gestión de origen</span>
+          <strong>La compra empieza con toda la información bajo control.</strong>
+        </div>
+      </div>
+      <div className="connect-card">
+        <div className="connect-brand">
+          <img src="https://tonifruit.com/wp-content/uploads/2020/06/tonifruit-logo-1-250x90.png" alt="Toñifruit" />
+          <span>Herramienta interna</span>
+        </div>
+        <div className="connect-icon"><ShieldCheck size={30} /></div>
+        <span className="eyebrow">Acceso seguro</span>
+        <h1>Compras de campo</h1>
+        <p>Gestiona contratos, documentación, materia prima y cortes desde un único lugar.</p>
+        <form className="login-form" onSubmit={(event) => { event.preventDefault(); void onConnect(username, password); }}>
+          <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="ADMINISTRADOR o CONSULTAS" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+          <label className="field required-field"><span>Contraseña</span><input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+          <button className="primary-button" type="submit" disabled={loading || !username.trim() || !password}>
+            <LogIn size={20} /> {loading ? "Comprobando…" : "Entrar"}
+          </button>
+        </form>
+        <button className="secondary-button" onClick={onDemo}>Ver demostración</button>
+        <div className="security-note"><ShieldCheck size={17} /><span>Acceso restringido al departamento de Compras. Los datos se sincronizan con el registro central.</span></div>
+      </div>
     </section>
   );
 }
@@ -761,7 +795,7 @@ function ReviewPanel({
     onChange((current) => current ? { ...current, [key]: value } : current);
   }
 
-  const requiredPurchaseFields: Array<keyof PurchaseForm> = ["provider", "farm", "municipality", "crop", "variety", "expectedKg", "campaign", "contractSigned", "contractStart", "contractEnd"];
+  const requiredPurchaseFields: Array<keyof PurchaseForm> = ["provider", "taxId", "farm", "municipality", "crop", "variety", "expectedKg", "campaign", "contractSigned", "contractStart", "contractEnd"];
   const completedFields = Object.values(review).filter((value) => value.trim() !== "").length + requiredPurchaseFields.filter((key) => purchase[key].trim() !== "").length;
   const requiredFields = Object.keys(review).length + requiredPurchaseFields.length;
 

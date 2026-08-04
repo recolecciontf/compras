@@ -316,6 +316,7 @@ function purchaseValues(value: unknown): PurchasePayload {
 function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
   const required: Array<[keyof PurchasePayload, string]> = [
     ["provider", "agricultor o proveedor"],
+    ["taxId", "NIF o CIF"],
     ["farm", "finca o parcela"],
     ["municipality", "municipio"],
     ["crop", "especie"],

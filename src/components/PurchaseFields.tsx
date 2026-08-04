@@ -1,14 +1,25 @@
 import type { PurchaseForm } from "../types";
 
 const VARIETIES: Record<string, string[]> = {
-  "Limón": ["Fino", "Verna", "Rodrejo", "Fino verde", "Eureka", "Meyer", "Lisbon", "Femminello"],
-  "Naranja": ["Navelina", "Navel", "Navelate", "Lane Late", "Valencia Late", "Salustiana", "Powell", "Barnfield", "Rohde"],
-  "Mandarina": ["Clemenules", "Oronules", "Clemenvilla", "Tango", "Nadorcott", "Orri", "Satsuma", "Hernandina", "Orogros", "Ortanique"],
-  "Clementina": ["Clemenules", "Oronules", "Marisol", "Arrufatina", "Hernandina", "Orogrande", "Esbal"],
-  "Pomelo": ["Star Ruby", "Rio Red", "Marsh", "Ruby Red"],
-  "Lima": ["Persa", "Bearss", "Mexicana", "Kaffir"],
-  "Uva": ["Crimson Seedless", "Autumn Royal", "Red Globe", "Superior Seedless", "Thompson Seedless", "Victoria", "Itumfifteen"],
-  "Granada": ["Mollar de Elche", "Wonderful", "Acco", "Smith"],
+  "Limón": ["Fino / Primofiori 49", "Fino / Primofiori 95", "Verna", "Rodrejo / Verdelli", "Eureka", "Meyer", "Lisbon", "Femminello"],
+  "Lima": ["Bearss", "Persa", "Mexicana", "Kaffir"],
+  "Naranja": ["Navelina", "Navel", "Navelate", "Lane Late", "Valencia Late", "Salustiana", "Midknight", "Summer Navel Powell", "Summer Navel Chislett", "Sanguina"],
+  "Mandarina": ["Clemenvilla / Nova", "Tango", "Nadorcott", "Orri", "Murcott Seedless", "Satsuma Iwasaki", "Ortanique"],
+  "Clementina": ["Clemenruby", "Oronules", "Clemenules", "Marisol", "Arrufatina", "Hernandina", "Orogrande", "Esbal"],
+  "Pomelo": ["Redblush", "Star Ruby", "Rio Red", "Marsh", "Ruby Red"],
+  "Kumquat": ["Kumquat"],
+  "Caviar cítrico": ["Caviar cítrico"],
+  "Granada": ["Smith", "Acco", "Valenciana", "Rubí", "Wonderful", "Mollar"],
+  "Uva": ["Itum 17 Blanca", "Sugraone Blanca", "Itum 5 Blanca", "Itum 15 Roja", "Red Globe", "Red Crimson", "Crimson Seedless", "Autumn Royal"],
+  "Paraguayo": ["Zodiac", "Carioca", "Samantha", "Contessa", "Babylone"],
+  "Nectarina": ["Flariba", "Patagonia", "Garcima", "Copacabana"],
+  "Melocotón": ["Astoria", "Pompadour", "Artemis"],
+  "Albaricoque": ["Cebas Red", "Mirlo Naranja", "Flopria", "Lady Cot"],
+  "Brócoli": [],
+  "Calabacín": [],
+  "Pepino": [],
+  "Patata": [],
+  "Sandía": [],
   "Caqui": ["Rojo Brillante", "Triumph", "Fuyu"],
   "Aguacate": ["Hass", "Lamb Hass", "Fuerte", "Bacon", "Reed"],
   "Almendra": ["Guara", "Penta", "Lauranne", "Marcona", "Largueta"],
@@ -59,11 +70,11 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
       <div className="field-section-heading">
         <span>1</span>
         <div><strong>Agricultor y finca</strong><small>Identificación del proveedor y origen de la fruta</small></div>
+        <em>Obligatorio</em>
       </div>
       <div className="two-columns">
-        <label className="field"><span>N.º de expediente</span><input disabled={disabled} value={value.id} onChange={(event) => update("id", event.target.value)} placeholder="Se genera automáticamente" /></label>
         <label className="field required-field"><span>Agricultor / proveedor</span><input required disabled={disabled} value={value.provider} onChange={(event) => update("provider", event.target.value)} placeholder="Nombre o razón social" /></label>
-        <label className="field"><span>NIF / CIF</span><input disabled={disabled} value={value.taxId} onChange={(event) => update("taxId", event.target.value)} placeholder="Documento fiscal" /></label>
+        <label className="field required-field"><span>NIF / CIF</span><input required disabled={disabled} value={value.taxId} onChange={(event) => update("taxId", event.target.value)} placeholder="Documento fiscal" /></label>
         <label className="field required-field"><span>Finca / parcela</span><input required disabled={disabled} value={value.farm} onChange={(event) => update("farm", event.target.value)} placeholder="Nombre o referencia SIGPAC" /></label>
         <label className="field required-field"><span>Municipio</span><input required disabled={disabled} value={value.municipality} onChange={(event) => update("municipality", event.target.value)} placeholder="Localidad" /></label>
         <label className="field required-field"><span>Campaña</span><input required disabled={disabled} value={value.campaign} onChange={(event) => update("campaign", event.target.value)} placeholder="2026/27" /></label>
@@ -72,6 +83,7 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
       <div className="field-section-heading section-divider">
         <span>2</span>
         <div><strong>Materia prima</strong><small>Especie, variedad y volumen previsto</small></div>
+        <em>Obligatorio</em>
       </div>
       <div className="three-columns">
         <label className="field required-field"><span>Especie</span><select required disabled={disabled} value={speciesSelection} onChange={(event) => selectSpecies(event.target.value)}><option value="">Seleccionar especie</option>{species.map((item) => <option key={item} value={item}>{item}</option>)}<option value={OTHER}>Otra especie</option></select></label>
@@ -84,6 +96,7 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
       <div className="field-section-heading section-divider">
         <span>3</span>
         <div><strong>Rellenar contrato</strong><small>Preparación, vigencia y acuerdos de la compra</small></div>
+        <em>Obligatorio</em>
       </div>
       <div className="contract-workflow" aria-label="Flujo del contrato">
         <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i><span>Firmar</span><i>→</i><span>Descargar</span>
@@ -92,6 +105,11 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
         <label className="field required-field"><span>Estado del contrato</span><select required disabled={disabled} value={value.contractSigned} onChange={(event) => update("contractSigned", event.target.value)}><option value="">Seleccionar</option><option>Pendiente de cumplimentar</option><option>Pendiente de firma</option><option value="Sí">Firmado</option></select></label>
         <label className="field required-field"><span>Inicio del contrato</span><input required disabled={disabled} type="date" value={value.contractStart} onChange={(event) => update("contractStart", event.target.value)} /></label>
         <label className="field required-field"><span>Fin del contrato</span><input required disabled={disabled} type="date" min={value.contractStart || undefined} value={value.contractEnd} onChange={(event) => update("contractEnd", event.target.value)} /></label>
+      </div>
+      <div className="field-section-heading section-divider optional-section-heading">
+        <span>4</span>
+        <div><strong>Información complementaria</strong><small>Solo cuando exista documentación o acuerdos adicionales</small></div>
+        <em>Opcional</em>
       </div>
       <div className="two-columns optional-fields">
         <label className="field"><span>Ruta o enlace de documentos</span><input disabled={disabled} value={value.documentPath} onChange={(event) => update("documentPath", event.target.value)} placeholder="Carpeta, enlace o referencia" /></label>
