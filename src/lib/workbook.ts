@@ -1,4 +1,5 @@
-import type { AppConfig, ControlRow, HarvestForm, PurchaseForm, ReviewForm, UserProfile } from "../types";
+import { canonicalMaterial, materialSummary } from "./catalog";
+import type { AppConfig, ContractDetails, ControlRow, HarvestForm, MaterialItem, PurchaseForm, ReviewForm, UserProfile } from "../types";
 
 type ApiSheetRow = { index: number; values: unknown[] };
 type ApiError = { error?: string };
@@ -39,6 +40,7 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
   const v = row.values || [];
   const contractStart = excelDateToIso(v[8]);
   const contractEnd = excelDateToIso(v[9]);
+  const legacyMaterial = canonicalMaterial(text(v[5]), text(v[29]));
   return {
     tableIndex: row.index,
     id: text(v[0]),
@@ -46,7 +48,7 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
     taxId: text(v[2]),
     farm: text(v[3]),
     municipality: text(v[4]),
-    crop: text(v[5]),
+    crop: legacyMaterial.crop,
     campaign: text(v[6]),
     contractSigned: text(v[7]),
     contractStart,
@@ -70,27 +72,110 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
     cutStatus: text(v[26]),
     cutKgTotal: text(v[27]),
     archived: text(v[28]),
-    variety: text(v[29]),
+    variety: legacyMaterial.variety,
     expectedKg: text(v[30]),
+    materialsJson: text(v[31]),
+    registeredIca: text(v[32]),
+    contractDetailsJson: text(v[34]),
   };
 }
 
+const CONTRACT_DEFAULTS: ContractDetails = {
+  buyerCompany: "",
+  signatureDate: new Date().toISOString().slice(0, 10),
+  contractNumber: "",
+  sellerRepresentative: "",
+  sellerDni: "",
+  sellerAddress: "",
+  organicOperatorCode: "",
+  certifierCode: "",
+  ailimpoRegepaCode: "",
+  modality: "A KILOS",
+  collectionBy: "Comprador",
+  transportBy: "Comprador",
+  pricePerKg: "",
+  totalPrice: "",
+  ivaPercent: "",
+  irpfPercent: "",
+  advancePayment: "",
+  paymentDays: "30",
+  insuranceProvider: "Agroseguro",
+  insurancePolicy: "",
+  applyDestrio: "No",
+  destrioLocation: "",
+  destrioDefects: "",
+  destrioPrice: "",
+};
+
+function materialsFromRow(row: ControlRow): MaterialItem[] {
+  if (row.materialsJson) {
+    try {
+      const parsed = JSON.parse(row.materialsJson) as Partial<MaterialItem>[];
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed.map((item, index) => {
+          const canonical = canonicalMaterial(text(item.crop), text(item.variety));
+          return {
+            id: text(item.id) || `material-${row.tableIndex}-${index}`,
+            crop: canonical.crop,
+            variety: canonical.variety,
+            expectedKg: text(item.expectedKg),
+            situation: text(item.situation),
+            municipality: text(item.municipality) || row.municipality,
+            paraje: text(item.paraje),
+            polygon: text(item.polygon),
+            plot: text(item.plot),
+            hectares: text(item.hectares),
+          };
+        });
+      }
+    } catch {
+      // Conserva la compatibilidad con las filas creadas antes del formato multiespecie.
+    }
+  }
+  const canonical = canonicalMaterial(row.crop, row.variety);
+  return [{
+    id: `material-${row.tableIndex}-0`,
+    crop: canonical.crop,
+    variety: canonical.variety,
+    expectedKg: row.expectedKg,
+    situation: "",
+    municipality: row.municipality,
+    paraje: row.farm,
+    polygon: "",
+    plot: "",
+    hectares: "",
+  }];
+}
+
+function contractDetailsFromRow(row: ControlRow): ContractDetails {
+  if (!row.contractDetailsJson) return { ...CONTRACT_DEFAULTS };
+  try {
+    const parsed = JSON.parse(row.contractDetailsJson) as Partial<ContractDetails>;
+    return { ...CONTRACT_DEFAULTS, ...parsed };
+  } catch {
+    return { ...CONTRACT_DEFAULTS };
+  }
+}
+
 export function purchaseFromRow(row: ControlRow): PurchaseForm {
+  const materials = materialsFromRow(row);
+  const summary = materialSummary(materials);
   return {
     id: row.id,
     provider: row.provider,
     taxId: row.taxId,
     farm: row.farm,
     municipality: row.municipality,
-    crop: row.crop,
-    variety: row.variety,
-    expectedKg: row.expectedKg,
+    ...summary,
+    materials,
     campaign: row.campaign,
+    registeredIca: row.registeredIca,
     contractSigned: row.contractSigned,
     contractStart: row.contractStart,
     contractEnd: row.contractEnd,
     documentPath: row.documentPath,
     otherAgreements: row.otherAgreements,
+    contractDetails: contractDetailsFromRow(row),
   };
 }
 
@@ -132,6 +217,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   if (!row.variety.trim()) issues.push("Falta la variedad");
   if (!row.expectedKg.trim()) issues.push("Faltan los kg previstos");
   if (!row.campaign.trim()) issues.push("Falta la campaña");
+  if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("No consta registrado en ICA");
   if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
   if (!row.contractStart) issues.push("Falta el inicio del contrato");
   if (!row.contractEnd) issues.push("Falta el fin del contrato");
@@ -159,7 +245,6 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     issues.push("Otros documentos exigidos sin validar");
   }
   if (!form.reviewer.trim()) issues.push("Falta el responsable de revisión");
-  if (!form.lastReviewDate) issues.push("Falta la fecha de revisión");
   return issues;
 }
 
@@ -261,5 +346,17 @@ export class WorkbookClient {
       method: "PATCH",
       body: JSON.stringify({ harvest }),
     });
+  }
+
+  async contractTemplate(name: string) {
+    const response = await fetch(this.endpoint(`/api/contract-templates/${encodeURIComponent(name)}`), {
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido abrir el modelo contractual.");
+    }
+    return response.arrayBuffer();
   }
 }

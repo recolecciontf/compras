@@ -8,7 +8,17 @@ const key = JSON.parse(await readFile(keyPath, "utf8"));
 const spreadsheetId = "1MIvuzaAvFeo748yd2keFoMsm4YlI9URJg3-GlNBFL2Y";
 const sheetName = "Control documental";
 const headerRow = 8;
-const headers = ["Corte realizado", "Kg cortados totales", "Archivado", "Variedad", "Kg previstos"];
+const headers = [
+  "Corte realizado",
+  "Kg cortados totales",
+  "Archivado",
+  "Variedad",
+  "Kg previstos",
+  "Materias primas (JSON)",
+  "Registrado en ICA",
+  "Certificaciones (reservado)",
+  "Datos contrato (JSON)",
+];
 
 function base64Url(value) {
   return Buffer.from(value).toString("base64url");
@@ -40,7 +50,7 @@ const metadata = await metadataResponse.json();
 if (!metadataResponse.ok) throw new Error(metadata.error?.message || "No se pudo revisar la estructura de la hoja.");
 const sheet = metadata.sheets?.find((item) => item.properties?.title === sheetName)?.properties;
 if (!sheet) throw new Error(`No existe la pestaña ${sheetName}.`);
-const missingColumns = Math.max(0, 31 - Number(sheet.gridProperties?.columnCount || 0));
+const missingColumns = Math.max(0, 35 - Number(sheet.gridProperties?.columnCount || 0));
 if (missingColumns > 0) {
   const expandResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
     method: "POST",
@@ -51,7 +61,7 @@ if (missingColumns > 0) {
   if (!expandResponse.ok) throw new Error(expandBody.error?.message || "No se pudo ampliar la hoja.");
 }
 
-const range = `'${sheetName}'!AA${headerRow}:AE${headerRow}`;
+const range = `'${sheetName}'!AA${headerRow}:AI${headerRow}`;
 const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
 const currentResponse = await fetch(endpoint, { headers: requestHeaders });
 const currentBody = await currentResponse.json();

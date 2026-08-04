@@ -1,4 +1,5 @@
 import { STATIC_ASSETS } from "./static-assets.generated";
+import { CONTRACT_ASSETS } from "./contract-assets.generated";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 
@@ -16,6 +17,7 @@ interface Env {
   GOOGLE_WORKSHEET_NAME?: string;
   GOOGLE_DATA_START_ROW?: string;
   GOOGLE_DATA_END_ROW?: string;
+  CONTRACT_TEMPLATE_KEY: string;
 }
 
 type UserRole = "admin" | "viewer";
@@ -55,6 +57,20 @@ type PurchasePayload = {
   contractEnd: string;
   documentPath: string;
   otherAgreements: string;
+  registeredIca: string;
+  materials: Array<{
+    id: string;
+    crop: string;
+    variety: string;
+    expectedKg: string;
+    situation: string;
+    municipality: string;
+    paraje: string;
+    polygon: string;
+    plot: string;
+    hectares: string;
+  }>;
+  contractDetails: Record<string, string>;
 };
 
 type HarvestPayload = {
@@ -68,6 +84,7 @@ class InputError extends Error {}
 const encoder = new TextEncoder();
 let cachedGoogleToken = "";
 let cachedGoogleTokenExpiresAt = 0;
+let sheetSchemaReady = false;
 
 function base64Url(bytes: Uint8Array) {
   let binary = "";
@@ -192,6 +209,16 @@ function json(request: Request, env: Env, body: unknown, status = 200) {
   });
 }
 
+async function contractTemplate(name: string, env: Env) {
+  const encrypted = CONTRACT_ASSETS[name as keyof typeof CONTRACT_ASSETS];
+  if (!encrypted) return null;
+  const keyBytes = Uint8Array.from(atob(env.CONTRACT_TEMPLATE_KEY || ""), (character) => character.charCodeAt(0));
+  if (keyBytes.length !== 32) throw new Error("La clave de los modelos contractuales no está configurada.");
+  const bytes = Uint8Array.from(atob(encrypted), (character) => character.charCodeAt(0));
+  const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes.slice(0, 12) }, key, bytes.slice(12));
+}
+
 function embeddedAssetPath(pathname: string) {
   if (pathname === "/" || pathname === "/index.html") return "/index.html";
   if (pathname === "/compras" || pathname === "/compras/") return "/index.html";
@@ -291,9 +318,40 @@ function sheetName(env: Env) {
   return (env.GOOGLE_WORKSHEET_NAME || "Control documental").replace(/'/g, "''");
 }
 
+async function ensureSheetSchema(env: Env) {
+  if (sheetSchemaReady) return;
+  const spreadsheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}?fields=sheets.properties`;
+  const metadata = await sheetsRequest<{ sheets?: Array<{ properties?: { sheetId?: number; title?: string; gridProperties?: { columnCount?: number } } }> }>(env, spreadsheetUrl);
+  const title = env.GOOGLE_WORKSHEET_NAME || "Control documental";
+  const sheet = metadata.sheets?.find((item) => item.properties?.title === title)?.properties;
+  if (typeof sheet?.sheetId !== "number") throw new Error(`No existe la pestaña ${title}.`);
+  const missingColumns = Math.max(0, 35 - Number(sheet.gridProperties?.columnCount || 0));
+  if (missingColumns) {
+    await sheetsRequest(env, `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}:batchUpdate`, {
+      method: "POST",
+      body: JSON.stringify({ requests: [{ appendDimension: { sheetId: sheet.sheetId, dimension: "COLUMNS", length: missingColumns } }] }),
+    });
+  }
+  const headerRow = Math.max(1, dataBounds(env).start - 1);
+  const headerRange = `'${sheetName(env)}'!AF${headerRow}:AI${headerRow}`;
+  const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(headerRange)}`;
+  const current = await sheetsRequest<{ values?: unknown[][] }>(env, headerUrl);
+  const proposed = ["Materias primas (JSON)", "Registrado en ICA", "Certificaciones (reservado)", "Datos contrato (JSON)"];
+  const headers = proposed.map((header, index) => {
+    const existing = String(current.values?.[0]?.[index] ?? "").trim();
+    return !existing || /^Column \d+$/i.test(existing) ? header : existing;
+  });
+  await sheetsRequest(env, `${headerUrl}?valueInputOption=RAW`, {
+    method: "PUT",
+    body: JSON.stringify({ range: headerRange, majorDimension: "ROWS", values: [headers] }),
+  });
+  sheetSchemaReady = true;
+}
+
 async function loadRows(env: Env) {
+  await ensureSheetSchema(env);
   const { start, end } = dataBounds(env);
-  const range = `'${sheetName(env)}'!A${start}:AE${end}`;
+  const range = `'${sheetName(env)}'!A${start}:AI${end}`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
   const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
   return (result.values || [])
@@ -307,10 +365,22 @@ function cleanRecord<T extends Record<string, unknown>, K extends keyof T>(value
 }
 
 function purchaseValues(value: unknown): PurchasePayload {
-  return cleanRecord<PurchasePayload, keyof PurchasePayload>(value, [
+  const source = (value && typeof value === "object" ? value : {}) as Partial<Record<keyof PurchasePayload, unknown>>;
+  const base = cleanRecord<PurchasePayload, Exclude<keyof PurchasePayload, "materials" | "contractDetails">>(value, [
     "id", "provider", "taxId", "farm", "municipality", "crop", "variety", "expectedKg", "campaign",
-    "contractSigned", "contractStart", "contractEnd", "documentPath", "otherAgreements",
+    "contractSigned", "contractStart", "contractEnd", "documentPath", "otherAgreements", "registeredIca",
   ]);
+  const materialKeys = ["id", "crop", "variety", "expectedKg", "situation", "municipality", "paraje", "polygon", "plot", "hectares"] as const;
+  const materials = Array.isArray(source.materials)
+    ? source.materials.slice(0, 12).map((item) => cleanRecord<Record<(typeof materialKeys)[number], unknown>, (typeof materialKeys)[number]>(item, materialKeys))
+    : [];
+  const contractSource = source.contractDetails && typeof source.contractDetails === "object"
+    ? source.contractDetails as Record<string, unknown>
+    : {};
+  const contractDetails = Object.fromEntries(
+    Object.entries(contractSource).slice(0, 40).map(([key, entry]) => [key, String(entry ?? "").trim()]),
+  );
+  return { ...base, materials, contractDetails } as PurchasePayload;
 }
 
 function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
@@ -326,6 +396,7 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     ["contractSigned", "estado del contrato"],
     ["contractStart", "inicio del contrato"],
     ["contractEnd", "fin del contrato"],
+    ["registeredIca", "registro en ICA"],
   ];
   if (requireComplete) {
     const missing = required.filter(([key]) => !purchase[key]).map(([, label]) => label);
@@ -334,6 +405,30 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
   if (purchase.expectedKg) {
     const expectedKg = Number(purchase.expectedKg.replace(",", "."));
     if (!Number.isFinite(expectedKg) || expectedKg <= 0) throw new InputError("Los kg previstos deben ser superiores a cero.");
+  }
+  if (requireComplete) {
+    if (!purchase.materials.length) throw new InputError("Añade al menos una especie y variedad.");
+    const incompleteMaterial = purchase.materials.find((item) => !item.crop || !item.variety || !item.expectedKg);
+    if (incompleteMaterial) throw new InputError("Completa la especie, variedad y kg de todas las materias primas.");
+    const requiredContractFields = [
+      ["buyerCompany", "empresa compradora"],
+      ["signatureDate", "fecha de firma"],
+      ["sellerRepresentative", "representante del vendedor"],
+      ["sellerDni", "DNI del representante"],
+      ["sellerAddress", "domicilio del vendedor"],
+      ["organicOperatorCode", "código de operador ecológico"],
+      ["modality", "modalidad"],
+      ["collectionBy", "responsable de recolección"],
+      ["transportBy", "responsable de transporte"],
+      ["paymentDays", "plazo de pago"],
+    ];
+    requiredContractFields.push(purchase.contractDetails.modality === "POR TANTO" ? ["totalPrice", "precio total"] : ["pricePerKg", "precio por kg"]);
+    const missingContract = requiredContractFields.filter(([key]) => !purchase.contractDetails[key]).map(([, label]) => label);
+    if (missingContract.length) throw new InputError(`Faltan datos del contrato: ${missingContract.join(", ")}.`);
+    if (purchase.contractDetails.applyDestrio === "Sí") {
+      const missingDestrio = ["destrioLocation", "destrioDefects", "destrioPrice"].filter((key) => !purchase.contractDetails[key]);
+      if (missingDestrio.length) throw new InputError("Completa el lugar, los defectos y el precio del destrío.");
+    }
   }
   if (purchase.contractStart && purchase.contractEnd && purchase.contractStart > purchase.contractEnd) {
     throw new InputError("El fin del contrato no puede ser anterior al inicio.");
@@ -378,13 +473,21 @@ async function savePurchase(env: Env, row: number, purchase: PurchasePayload, cr
   const { start, end } = dataBounds(env);
   if (!Number.isInteger(row) || row < start || row > end) throw new Error("La fila seleccionada no es válida.");
   validatePurchase(purchase, create);
-  const normalizedKg = purchase.expectedKg ? String(Number(purchase.expectedKg.replace(",", "."))) : "";
+  await ensureSheetSchema(env);
+  const materials = purchase.materials.length ? purchase.materials : [{
+    id: `material-${row}-0`, crop: purchase.crop, variety: purchase.variety, expectedKg: purchase.expectedKg,
+    situation: "", municipality: purchase.municipality, paraje: purchase.farm, polygon: "", plot: "", hectares: "",
+  }];
+  const crops = [...new Set(materials.map((item) => item.crop).filter(Boolean))].join(" + ");
+  const varieties = materials.map((item) => item.variety).filter(Boolean).join(" · ");
+  const totalKg = materials.reduce((total, item) => total + (Number(item.expectedKg.replace(",", ".")) || 0), 0);
+  const normalizedKg = totalKg ? String(totalKg) : "";
   const generatedId = purchase.id || `CMP-${purchase.campaign}-${String(row).padStart(3, "0")}`;
   const sheet = sheetName(env);
   const data = [
     {
       range: `'${sheet}'!A${row}:J${row}`,
-      values: [[generatedId, purchase.provider, purchase.taxId, purchase.farm, purchase.municipality, purchase.crop,
+      values: [[generatedId, purchase.provider, purchase.taxId, purchase.farm, purchase.municipality, crops,
         purchase.campaign, purchase.contractSigned, purchase.contractStart, purchase.contractEnd]],
     },
     {
@@ -393,7 +496,15 @@ async function savePurchase(env: Env, row: number, purchase: PurchasePayload, cr
     },
     {
       range: `'${sheet}'!AD${row}:AE${row}`,
-      values: [[purchase.variety, normalizedKg]],
+      values: [[varieties, normalizedKg]],
+    },
+    {
+      range: `'${sheet}'!AF${row}:AG${row}`,
+      values: [[JSON.stringify(materials), purchase.registeredIca]],
+    },
+    {
+      range: `'${sheet}'!AI${row}:AI${row}`,
+      values: [[JSON.stringify(purchase.contractDetails)]],
     },
   ];
   if (create) data.push({ range: `'${sheet}'!AA${row}:AC${row}`, values: [["No", "", "No"]] });
@@ -452,7 +563,7 @@ async function saveReview(env: Env, row: number, review: ReviewPayload) {
         review.certificateExpiry,
         review.otherDocuments,
         review.reviewer,
-        review.lastReviewDate,
+        new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid" }).format(new Date()),
       ]],
     }),
   });
@@ -495,6 +606,20 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
+  }
+
+  const templateMatch = url.pathname.match(/^\/api\/contract-templates\/([a-z0-9-]+\.docx)$/);
+  if (templateMatch && request.method === "GET") {
+    const body = await contractTemplate(templateMatch[1], env);
+    if (!body) return json(request, env, { error: "Modelo contractual no encontrado." }, 404);
+    return new Response(body, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": `attachment; filename="${templateMatch[1]}"`,
+        "Cache-Control": "private, no-store",
+        ...corsHeaders(request, env),
+      },
+    });
   }
 
   if (url.pathname === "/api/rows" && request.method === "GET") {

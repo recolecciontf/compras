@@ -468,6 +468,257 @@ h3,
   background: var(--brand-lime-light);
 }
 
+.materials-list {
+  display: grid;
+  gap: 12px;
+}
+
+.material-card {
+  padding: 15px;
+  border: 1px solid #d5e2cf;
+  border-radius: 13px;
+  background: #f9fcf7;
+}
+
+.material-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+
+.material-card-heading strong,
+.material-card-heading small {
+  display: block;
+}
+
+.material-card-heading strong {
+  color: var(--green-900);
+  font-size: 0.78rem;
+}
+
+.material-card-heading small,
+.catalog-source-note {
+  margin-top: 2px;
+  color: #738075;
+  font-size: 0.62rem;
+}
+
+.icon-button.danger-icon {
+  color: #a33b34;
+  border-color: #efd3cf;
+  background: #fff8f7;
+}
+
+.add-material-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 43px;
+  padding: 0 15px;
+  color: var(--green-800);
+  border: 1px dashed #9fbd91;
+  border-radius: 10px;
+  background: #f5faef;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.parcel-details,
+.contract-data-details {
+  margin-top: 13px;
+  border-top: 1px solid #dce6d8;
+}
+
+.parcel-details summary,
+.contract-data-details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 3px;
+  color: #49664b;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.parcel-details .three-columns,
+.contract-data-grid {
+  margin-top: 11px;
+}
+
+.contract-data-details {
+  padding: 0 14px 14px;
+  border: 1px solid #d7e2d1;
+  border-radius: 13px;
+  background: #f9fbf7;
+}
+
+.contract-data-details summary {
+  padding: 14px 0;
+  color: var(--green-850);
+  font-size: 0.75rem;
+}
+
+.field-span {
+  grid-column: 1 / -1;
+}
+
+.destrio-box {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #eadfbc;
+  border-radius: 11px;
+  background: #fffaf0;
+}
+
+.destrio-box > .field {
+  max-width: 280px;
+}
+
+.destrio-box p {
+  margin: 0;
+  color: #786a3b;
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
+.catalog-source-note {
+  line-height: 1.5;
+}
+
+.certification-checks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.certification-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.certification-check > span {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  color: #57645a;
+  border: 1px solid #d3ddd0;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.67rem;
+  font-weight: 750;
+}
+
+.certification-check svg {
+  color: #aeb8ae;
+}
+
+.certification-check.checked > span {
+  color: #244c2a;
+  border-color: #88b77a;
+  background: #edf7e7;
+}
+
+.certification-check.checked svg {
+  color: #43833d;
+}
+
+.certification-validity {
+  margin-top: 12px;
+}
+
+.field-help-card,
+.automatic-review-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 11px 13px;
+  color: #5d6d60;
+  border: 1px solid #d7e2d3;
+  border-radius: 9px;
+  background: #f4f8f1;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.field-help-card svg,
+.automatic-review-date svg {
+  flex: 0 0 auto;
+  color: #477546;
+}
+
+.automatic-review-date strong,
+.automatic-review-date span {
+  display: block;
+}
+
+.automatic-review-date strong {
+  color: #3e5741;
+  font-size: 0.67rem;
+}
+
+.automatic-review-date span {
+  margin-top: 2px;
+  color: #6d786e;
+  font-size: 0.63rem;
+}
+
+.contract-download-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 17px;
+  color: #345538;
+  border: 1px solid #bdd5b5;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #edf7e8, #f8fbf5);
+}
+
+.contract-download-panel > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.contract-download-panel > div > svg {
+  flex: 0 0 auto;
+  color: #477d3e;
+}
+
+.contract-download-panel strong,
+.contract-download-panel small {
+  display: block;
+}
+
+.contract-download-panel strong {
+  font-size: 0.74rem;
+}
+
+.contract-download-panel small {
+  max-width: 470px;
+  margin-top: 3px;
+  color: #657468;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.contract-download-panel .secondary-button {
+  flex: 0 0 auto;
+  min-width: 210px;
+}
+
 .primary-button {
   color: #fff;
   border-color: var(--green-900);
@@ -503,42 +754,43 @@ h3,
   box-shadow: 0 24px 70px rgba(32, 60, 35, 0.14);
 }
 
-.login-visual {
-  position: relative;
-  min-height: 230px;
+.login-showcase {
+  display: grid;
   overflow: hidden;
   background: var(--green-950);
 }
 
+.login-visual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  background: #0b3020;
+}
+
 .login-visual > img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
-.login-visual::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: linear-gradient(180deg, transparent 45%, rgba(12, 44, 24, 0.88));
-}
-
-.login-visual-caption {
-  position: absolute;
-  z-index: 1;
-  right: 20px;
-  bottom: 18px;
-  left: 20px;
+.login-showcase-copy {
+  display: grid;
+  align-content: center;
+  padding: 28px 34px 34px;
   color: #fff;
+  background: linear-gradient(145deg, #123e25, #20502f);
 }
 
-.login-visual-caption span,
-.login-visual-caption strong {
+.login-showcase-copy > span,
+.login-showcase-copy > strong {
   display: block;
 }
 
-.login-visual-caption span {
-  margin-bottom: 5px;
+.login-showcase-copy > span {
+  margin-bottom: 7px;
   color: var(--brand-lime-light);
   font-size: 0.65rem;
   font-weight: 900;
@@ -546,11 +798,35 @@ h3,
   text-transform: uppercase;
 }
 
-.login-visual-caption strong {
+.login-showcase-copy > strong {
   max-width: 500px;
   font-family: "Montserrat", "Segoe UI", sans-serif;
-  font-size: clamp(1rem, 3vw, 1.45rem);
-  line-height: 1.25;
+  font-size: clamp(1.25rem, 2.5vw, 1.7rem);
+  line-height: 1.28;
+}
+
+.showcase-points {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.showcase-points > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  color: #e8f2e5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.showcase-points svg {
+  flex: 0 0 auto;
+  color: var(--brand-lime-light);
 }
 
 .login-layout .connect-card {
@@ -613,6 +889,29 @@ h3,
 }
 
 @media (max-width: 619px) {
+  .contract-download-panel {
+    display: grid;
+  }
+
+  .contract-download-panel .secondary-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .certification-checks {
+    grid-template-columns: 1fr;
+  }
+
+  .add-material-button {
+    width: 100%;
+  }
+
+  .material-card,
+  .contract-data-details {
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+
   .brand-logo {
     width: 96px;
   }
@@ -659,7 +958,11 @@ h3,
   }
 
   .login-visual {
-    min-height: 190px;
+    min-height: 0;
+  }
+
+  .login-showcase-copy {
+    display: none;
   }
 }
 
@@ -668,7 +971,7 @@ h3,
     grid-template-columns: minmax(0, 1.12fr) minmax(380px, 0.88fr);
   }
 
-  .login-visual {
+  .login-showcase {
     min-height: 620px;
   }
 

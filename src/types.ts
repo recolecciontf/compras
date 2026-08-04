@@ -9,6 +9,46 @@ export type UserProfile = {
   canEdit: boolean;
 };
 
+export type MaterialItem = {
+  id: string;
+  crop: string;
+  variety: string;
+  expectedKg: string;
+  situation: string;
+  municipality: string;
+  paraje: string;
+  polygon: string;
+  plot: string;
+  hectares: string;
+};
+
+export type ContractDetails = {
+  buyerCompany: "" | "MR. ORGÁNICA, S.L." | "TOÑIFRUIT, S.L.";
+  signatureDate: string;
+  contractNumber: string;
+  sellerRepresentative: string;
+  sellerDni: string;
+  sellerAddress: string;
+  organicOperatorCode: string;
+  certifierCode: string;
+  ailimpoRegepaCode: string;
+  modality: "" | "A KILOS" | "POR TANTO";
+  collectionBy: "" | "Vendedor" | "Comprador";
+  transportBy: "" | "Vendedor" | "Comprador";
+  pricePerKg: string;
+  totalPrice: string;
+  ivaPercent: string;
+  irpfPercent: string;
+  advancePayment: string;
+  paymentDays: string;
+  insuranceProvider: string;
+  insurancePolicy: string;
+  applyDestrio: "No" | "Sí";
+  destrioLocation: "" | "Campo" | "Almacén";
+  destrioDefects: string;
+  destrioPrice: string;
+};
+
 export type ControlRow = {
   tableIndex: number;
   id: string;
@@ -42,6 +82,9 @@ export type ControlRow = {
   archived: string;
   variety: string;
   expectedKg: string;
+  materialsJson: string;
+  registeredIca: string;
+  contractDetailsJson: string;
 };
 
 export type PurchaseForm = Pick<
@@ -60,7 +103,11 @@ export type PurchaseForm = Pick<
   | "contractEnd"
   | "documentPath"
   | "otherAgreements"
->;
+  | "registeredIca"
+> & {
+  materials: MaterialItem[];
+  contractDetails: ContractDetails;
+};
 
 export type HarvestForm = Pick<ControlRow, "cutStatus" | "cutKgTotal" | "archived">;
 

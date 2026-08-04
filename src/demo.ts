@@ -34,6 +34,9 @@ export const DEMO_ROWS: ControlRow[] = [
     archived: "No",
     variety: "Rodrejo",
     expectedKg: "20000",
+    materialsJson: "",
+    registeredIca: "Sí",
+    contractDetailsJson: "",
   },
   {
     tableIndex: 1,
@@ -68,6 +71,9 @@ export const DEMO_ROWS: ControlRow[] = [
     archived: "No",
     variety: "Fino",
     expectedKg: "32000",
+    materialsJson: "",
+    registeredIca: "Sí",
+    contractDetailsJson: "",
   },
   {
     tableIndex: 2,
@@ -100,7 +106,10 @@ export const DEMO_ROWS: ControlRow[] = [
     cutStatus: "Sí",
     cutKgTotal: "12780",
     archived: "Sí",
-    variety: "Eureka",
+    variety: "Fino",
     expectedKg: "15000",
+    materialsJson: "",
+    registeredIca: "No",
+    contractDetailsJson: "",
   },
 ];

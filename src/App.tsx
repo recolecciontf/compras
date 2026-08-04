@@ -39,6 +39,8 @@ import { NewPurchasePanel } from "./components/NewPurchasePanel";
 import { PurchaseFields } from "./components/PurchaseFields";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
+import { CERTIFICATIONS } from "./lib/catalog";
+import { downloadContracts } from "./lib/contractGenerator";
 import { purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
 import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
@@ -49,8 +51,17 @@ function formatDate(value: string) {
   );
 }
 
+function localToday() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+
 function authorized(row: ControlRow) {
-  return row.canHarvest.trim().toLocaleUpperCase("es") === "SÍ";
+  return reviewBlockages(row, reviewFromRow(row)).length === 0;
+}
+
+function currentBlockageReason(row: ControlRow) {
+  return reviewBlockages(row, reviewFromRow(row)).join("; ");
 }
 
 function mergeReview(row: ControlRow, review: ReviewForm, isAuthorized: boolean, reasons: string[]): ControlRow {
@@ -63,7 +74,12 @@ function mergeReview(row: ControlRow, review: ReviewForm, isAuthorized: boolean,
 }
 
 function mergePurchase(row: ControlRow, purchase: PurchaseForm): ControlRow {
-  return { ...row, ...purchase };
+  return {
+    ...row,
+    ...purchase,
+    materialsJson: JSON.stringify(purchase.materials),
+    contractDetailsJson: JSON.stringify(purchase.contractDetails),
+  };
 }
 
 function isArchived(row: ControlRow) {
@@ -376,23 +392,25 @@ export default function App() {
     saveVersion.current += 1;
     if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     setError("");
+    const completedReview = { ...review, lastReviewDate: localToday() };
     try {
       if (demoMode) {
         setRows((current) =>
           current.map((row) =>
             row.tableIndex === selected.tableIndex
-              ? mergeReview(mergePurchase(row, purchase), review, predictedAuthorized, predictedIssues)
+              ? mergeReview(mergePurchase(row, purchase), completedReview, predictedAuthorized, predictedIssues)
               : row,
           ),
         );
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
         await client.savePurchase(selected, purchase);
-        await client.saveReview(selected, review);
+        await client.saveReview(selected, completedReview);
         const nextRows = await client.rows();
         setRows(nextRows);
       }
-      reviewFingerprint.current = JSON.stringify(review);
+      setReview(completedReview);
+      reviewFingerprint.current = JSON.stringify(completedReview);
       purchaseFingerprint.current = JSON.stringify(purchase);
       setLastSyncedAt(new Date());
       setAutoSaveStatus("saved");
@@ -436,6 +454,8 @@ export default function App() {
           cutStatus: "No",
           cutKgTotal: "",
           archived: "No",
+          materialsJson: JSON.stringify(nextPurchase.materials),
+          contractDetailsJson: JSON.stringify(nextPurchase.contractDetails),
         };
         setRows((current) => [...current, created]);
         setSelectedIndex(createdIndex);
@@ -480,6 +500,21 @@ export default function App() {
       setToast(harvest.archived === "Sí" ? "Compra archivada" : "Estado del corte guardado");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido guardar el corte.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function downloadPurchaseContracts() {
+    if (!purchase) return;
+    setSaving(true);
+    setError("");
+    try {
+      if (!client || demoMode) throw new Error("Inicia sesión con el usuario real para descargar los modelos contractuales protegidos.");
+      const count = await downloadContracts(purchase, (name) => client.contractTemplate(name));
+      setToast(count === 1 ? "Contrato Word descargado" : `${count} contratos incluidos en el ZIP`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se ha podido generar el contrato.");
     } finally {
       setSaving(false);
     }
@@ -639,7 +674,7 @@ export default function App() {
                           <span><CalendarDays size={15} /> {row.plannedCutDate ? formatDate(row.plannedCutDate) : "Corte pendiente"}</span>
                           {row.expectedKg && <span><PackageCheck size={15} /> {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(Number(row.expectedKg))} kg previstos</span>}
                         </span>
-                        {!authorized(row) && row.blockageReason && <span className="blockage-preview">{row.blockageReason}</span>}
+                        {!authorized(row) && <span className="blockage-preview">{currentBlockageReason(row)}</span>}
                       </span>
                       <ChevronRight className="record-chevron" size={20} />
                     </button>
@@ -668,6 +703,7 @@ export default function App() {
                   onChange={setReview}
                   onSubmit={submitReview}
                   onReset={() => { setReview(reviewFromRow(selected)); setPurchase(purchaseFromRow(selected)); }}
+                  onContractDownload={downloadPurchaseContracts}
                   onBack={() => setView("records")}
                 />
               ) : view === "new" && canEdit ? (
@@ -722,11 +758,18 @@ function ConnectPanel({
 
   return (
     <section className="login-layout">
-      <div className="login-visual">
-        <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo de Toñifruit" />
-        <div className="login-visual-caption">
+      <div className="login-showcase">
+        <div className="login-visual">
+          <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo de Toñifruit" />
+        </div>
+        <div className="login-showcase-copy">
           <span>Gestión de origen</span>
           <strong>La compra empieza con toda la información bajo control.</strong>
+          <div className="showcase-points">
+            <div><FileCheck2 size={19} /><span>Contratos y documentación</span></div>
+            <div><Sprout size={19} /><span>Materia prima y fincas</span></div>
+            <div><PackageCheck size={19} /><span>Cortes y kilos recolectados</span></div>
+          </div>
         </div>
       </div>
       <div className="connect-card">
@@ -776,6 +819,7 @@ function ReviewPanel({
   onChange,
   onSubmit,
   onReset,
+  onContractDownload,
   onBack,
 }: {
   row: ControlRow;
@@ -789,15 +833,30 @@ function ReviewPanel({
   onChange: Dispatch<SetStateAction<ReviewForm | null>>;
   onSubmit: (event: FormEvent) => void;
   onReset: () => void;
+  onContractDownload: () => Promise<void>;
   onBack: () => void;
 }) {
   function update<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
     onChange((current) => current ? { ...current, [key]: value } : current);
   }
 
-  const requiredPurchaseFields: Array<keyof PurchaseForm> = ["provider", "taxId", "farm", "municipality", "crop", "variety", "expectedKg", "campaign", "contractSigned", "contractStart", "contractEnd"];
-  const completedFields = Object.values(review).filter((value) => value.trim() !== "").length + requiredPurchaseFields.filter((key) => purchase[key].trim() !== "").length;
-  const requiredFields = Object.keys(review).length + requiredPurchaseFields.length;
+  const requiredPurchaseFields = [purchase.provider, purchase.taxId, purchase.farm, purchase.municipality, purchase.campaign, purchase.registeredIca, purchase.contractSigned, purchase.contractStart, purchase.contractEnd];
+  const requiredContractFields = [purchase.contractDetails.buyerCompany, purchase.contractDetails.signatureDate, purchase.contractDetails.sellerRepresentative, purchase.contractDetails.sellerDni, purchase.contractDetails.sellerAddress, purchase.contractDetails.organicOperatorCode, purchase.contractDetails.modality, purchase.contractDetails.collectionBy, purchase.contractDetails.transportBy, purchase.contractDetails.modality === "POR TANTO" ? purchase.contractDetails.totalPrice : purchase.contractDetails.pricePerKg, purchase.contractDetails.paymentDays];
+  const completeMaterials = purchase.materials.filter((item) => item.crop && item.variety && item.expectedKg).length;
+  const reviewValues = Object.entries(review).filter(([key]) => key !== "lastReviewDate").map(([, value]) => value);
+  const completedFields = requiredPurchaseFields.filter(Boolean).length + requiredContractFields.filter(Boolean).length + completeMaterials + reviewValues.filter(Boolean).length;
+  const requiredFields = requiredPurchaseFields.length + requiredContractFields.length + purchase.materials.length + reviewValues.length;
+  const selectedCertifications = review.certificateType
+    .split(/[;,]/)
+    .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
+    .filter(Boolean);
+
+  function toggleCertification(certificate: string, checked: boolean) {
+    const next = checked
+      ? [...new Set([...selectedCertifications, certificate])]
+      : selectedCertifications.filter((item) => item !== certificate);
+    update("certificateType", next.join("; "));
+  }
 
   return (
     <form className="review-form" onSubmit={onSubmit}>
@@ -837,6 +896,11 @@ function ReviewPanel({
         <legend><span className="step-number">A</span><span>Compra y materia prima<small>Datos comerciales, fruta y vigencia contractual</small></span></legend>
         <PurchaseFields value={purchase} onChange={(value) => onPurchaseChange(value)} disabled={readOnly} />
       </fieldset>
+
+      <div className="contract-download-panel">
+        <div><FileCheck2 size={21} /><span><strong>Contrato listo para generar</strong><small>Se completa una copia del modelo original. Si hay varias especies, se descarga un contrato por especie.</small></span></div>
+        <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar contrato Word"}</button>
+      </div>
 
       <div className={`result-panel ${issues.length ? "result-blocked" : "result-ok"}`}>
         {issues.length ? <AlertTriangle size={23} /> : <CheckCircle2 size={23} />}
@@ -880,9 +944,12 @@ function ReviewPanel({
 
       <fieldset disabled={readOnly}>
         <legend><span className="step-number">4</span><span>Certificación<small>Tipo y vigencia en la fecha de corte</small></span></legend>
-        <div className="two-columns">
-          <label className="field required-field"><span>Tipo de certificado</span><input required list="certificate-types" value={review.certificateType} onChange={(event) => update("certificateType", event.target.value)} placeholder="ECO, Naturland, Demeter…" /><datalist id="certificate-types"><option value="ECO" /><option value="Naturland" /><option value="Demeter" /><option value="GlobalG.A.P." /><option value="GRASP" /><option value="Bio Suisse" /><option value="Pendiente de revisión" /><option value="No localizado" /></datalist></label>
-          <label className="field required-field"><span>Caducidad del certificado</span><input required type="date" value={review.certificateExpiry} onInput={(event) => update("certificateExpiry", event.currentTarget.value)} /></label>
+        <div className="certification-checks" role="group" aria-label="Certificaciones de la finca">
+          {CERTIFICATIONS.map((certificate) => <label key={certificate} className={`certification-check ${selectedCertifications.includes(certificate) ? "checked" : ""}`}><input type="checkbox" checked={selectedCertifications.includes(certificate)} onChange={(event) => toggleCertification(certificate, event.target.checked)} /><span><Check size={16} />{certificate}</span></label>)}
+        </div>
+        <div className="two-columns certification-validity">
+          <label className="field required-field"><span>Caducidad más próxima</span><input required type="date" value={review.certificateExpiry} onInput={(event) => update("certificateExpiry", event.currentTarget.value)} /></label>
+          <div className="field-help-card"><ShieldCheck size={18} /><span>Marca todas las certificaciones vigentes de la finca. La fecha más próxima es la que controla la autorización de corte.</span></div>
         </div>
       </fieldset>
 
@@ -891,7 +958,7 @@ function ReviewPanel({
         <div className="two-columns">
           <label className="field required-field"><span>Otros documentos exigidos</span><select required value={review.otherDocuments} onChange={(event) => update("otherDocuments", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option><option>Pendiente de revisión</option><option>No aplica</option></select></label>
           <label className="field required-field"><span>Responsable de revisión</span><input required value={review.reviewer} onChange={(event) => update("reviewer", event.target.value)} placeholder="Nombre y apellidos" /></label>
-          <label className="field required-field"><span>Fecha de última revisión</span><input required type="date" value={review.lastReviewDate} onInput={(event) => update("lastReviewDate", event.currentTarget.value)} /></label>
+          <div className="automatic-review-date"><CalendarDays size={18} /><div><strong>Última fecha de revisión</strong><span>{readOnly && review.lastReviewDate ? formatDate(review.lastReviewDate) : "Se asignará automáticamente al guardar"}</span></div></div>
         </div>
       </fieldset>
 
