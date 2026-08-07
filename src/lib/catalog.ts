@@ -3,7 +3,7 @@ import type { MaterialItem } from "../types";
 // Catálogo publicado por Toñifruit. "Otra" se conserva únicamente como vía
 // controlada para altas excepcionales que todavía no aparezcan en la web.
 export const PRODUCT_CATALOG: Record<string, string[]> = {
-  "Limón": ["Fino / Primofiori 49 y 95", "Fino / Primofiori", "Rodrejo / Verdelli", "Verna"],
+  "Limón": ["Fino", "Fino chaparro", "Primofiori", "Fino 49", "Fino 95", "Rodrejo", "Verdelli", "Verna", "Segundos", "Segundos rodrejos"],
   "Lima": ["Bearss"],
   "Naranja": [
     "Navelina",
@@ -15,7 +15,7 @@ export const PRODUCT_CATALOG: Record<string, string[]> = {
     "Summer Navel Chislett",
     "Sanguina",
   ],
-  "Mandarina / Clementina": [
+  "Mandarina": [
     "Satsuma Iwasaki",
     "Clemenruby",
     "Oronules",
@@ -51,42 +51,8 @@ export const CERTIFICATIONS = [
 
 export const OTHER_VALUE = "__other__";
 
-function normalized(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLocaleLowerCase("es");
-}
-
 export function canonicalMaterial(crop: string, variety: string) {
-  const normalizedCrop = normalized(crop);
-  const normalizedVariety = normalized(variety);
-  const lemonVarieties = ["rodrejo", "rodrejos", "verdelli", "fino", "primofiori", "eureka"];
-
-  let nextCrop = crop.trim();
-  let nextVariety = variety.trim();
-  if (
-    lemonVarieties.some((item) => normalizedCrop.includes(item)) ||
-    (["", "otra", "otra especie"].includes(normalizedCrop) && lemonVarieties.some((item) => normalizedVariety.includes(item)))
-  ) {
-    nextCrop = "Limón";
-    if (!nextVariety || ["otra", "otra variedad"].includes(normalizedVariety)) nextVariety = crop;
-  }
-
-  const normalizedNextVariety = normalized(nextVariety);
-  if (normalizedNextVariety === "rodrejo" || normalizedNextVariety === "rodrejos" || normalizedNextVariety === "verdelli") {
-    nextVariety = "Rodrejo / Verdelli";
-  } else if (normalizedNextVariety === "fino" || normalizedNextVariety === "primofiori") {
-    nextVariety = "Fino / Primofiori";
-  } else if (normalizedNextVariety === "fino 49" || normalizedNextVariety === "fino 95") {
-    nextVariety = "Fino / Primofiori 49 y 95";
-  }
-
-  if (normalized(nextCrop) === "mandarina" || normalized(nextCrop) === "clementina") {
-    nextCrop = "Mandarina / Clementina";
-  }
-  return { crop: nextCrop, variety: nextVariety };
+  return { crop: crop.trim(), variety: variety.trim() };
 }
 
 export function emptyMaterial(seed: Partial<MaterialItem> = {}): MaterialItem {

@@ -65,7 +65,7 @@ export const EMPTY_PURCHASE: PurchaseForm = {
   expectedKg: "",
   materials: [emptyMaterial()],
   campaign: String(new Date().getFullYear()),
-  registeredIca: "",
+  registeredIca: "Pendiente",
   contractSigned: "",
   contractStart: "",
   contractEnd: "",
@@ -165,7 +165,6 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
         <label className="field required-field"><span>Finca / explotación</span><input required disabled={disabled} value={value.farm} onChange={(event) => update("farm", event.target.value)} placeholder="Nombre o referencia SIGPAC" /></label>
         <label className="field required-field"><span>Municipio</span><input required disabled={disabled} value={value.municipality} onChange={(event) => update("municipality", event.target.value)} placeholder="Localidad" /></label>
         <label className="field required-field"><span>Campaña</span><input required disabled={disabled} value={value.campaign} onChange={(event) => update("campaign", event.target.value)} placeholder="2026/27" /></label>
-        <label className="field required-field"><span>Registrado en ICA</span><select required disabled={disabled} value={value.registeredIca} onChange={(event) => update("registeredIca", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option></select></label>
       </div>
 
       <div className="field-section-heading section-divider">

@@ -42,7 +42,7 @@ import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS } from "./lib/catalog";
 import { downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
-import { purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
+import { ArchiveUnavailableError, purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
 import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
 function formatDate(value: string) {
@@ -475,10 +475,24 @@ export default function App() {
         const artifact = contractSubmission.mode === "existing"
           ? { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name }
           : await generateContractPackage(nextPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
-        const archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
+        let archived;
+        try {
+          archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
+        } catch (reason) {
+          if (!(reason instanceof ArchiveUnavailableError)) throw reason;
+          triggerDownload(artifact.blob, artifact.filename);
+          archived = {
+            archiveId: "",
+            archiveFilename: artifact.filename,
+            archivedAt: "",
+            emailStatus: "pending_configuration" as const,
+          };
+        }
         preparedPurchase = {
           ...nextPurchase,
-          documentPath: `Archivo central: ${archived.archiveFilename}`,
+          documentPath: archived.archiveId
+            ? `Archivo central: ${archived.archiveFilename}`
+            : `Pendiente de archivar: ${archived.archiveFilename}`,
           contractDetails: { ...nextPurchase.contractDetails, ...archived },
         };
       }
@@ -529,7 +543,11 @@ export default function App() {
         setSelectedIndex(createdIndex);
       }
       setLastSyncedAt(new Date());
-      setToast(preparedPurchase.contractDetails.emailStatus === "sent" ? "Compra creada, contrato archivado y copias enviadas." : "Compra creada y contrato firmado archivado.");
+      setToast(preparedPurchase.contractDetails.emailStatus === "sent"
+        ? "Compra creada, contrato archivado y copias enviadas."
+        : preparedPurchase.contractDetails.archiveId
+          ? "Compra creada y contrato firmado archivado."
+          : "Compra creada. Contrato descargado y pendiente de archivo central.");
       setView("review");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido crear la compra.");
@@ -592,20 +610,35 @@ export default function App() {
         if (Date.now() - waitStartedAt > 15_000) throw new Error("El guardado anterior está tardando demasiado. Espera unos segundos y vuelve a adjuntar el contrato.");
         await new Promise((resolve) => window.setTimeout(resolve, 60));
       }
-      const archived = demoMode
-        ? {
-            archiveId: crypto.randomUUID(),
+      let archived;
+      if (demoMode) {
+        archived = {
+          archiveId: crypto.randomUUID(),
+          archiveFilename: file.name,
+          archivedAt: new Date().toISOString(),
+          emailStatus: "pending_configuration" as const,
+        };
+      } else if (client) {
+        try {
+          archived = await client.archiveContract(file, file.name, purchase);
+        } catch (reason) {
+          if (!(reason instanceof ArchiveUnavailableError)) throw reason;
+          archived = {
+            archiveId: "",
             archiveFilename: file.name,
-            archivedAt: new Date().toISOString(),
+            archivedAt: "",
             emailStatus: "pending_configuration" as const,
-          }
-        : client
-          ? await client.archiveContract(file, file.name, purchase)
-          : (() => { throw new Error("No hay conexión con Google Sheets."); })();
+          };
+        }
+      } else {
+        throw new Error("No hay conexión con Google Sheets.");
+      }
       const updated: PurchaseForm = {
         ...purchase,
         contractSigned: "Sí",
-        documentPath: `Archivo central: ${archived.archiveFilename}`,
+        documentPath: archived.archiveId
+          ? `Archivo central: ${archived.archiveFilename}`
+          : `Pendiente de archivar: ${archived.archiveFilename}`,
         contractDetails: {
           ...purchase.contractDetails,
           contractOrigin: "existing",
@@ -617,7 +650,11 @@ export default function App() {
       purchaseFingerprint.current = JSON.stringify(updated);
       setPurchase(updated);
       setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? mergePurchase(row, updated) : row));
-      setToast(archived.emailStatus === "sent" ? "Contrato firmado archivado y copias enviadas" : "Contrato firmado archivado");
+      setToast(archived.emailStatus === "sent"
+        ? "Contrato firmado archivado y copias enviadas"
+        : archived.archiveId
+          ? "Contrato firmado archivado"
+          : "Contrato registrado; pendiente de archivo central");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido adjuntar el contrato firmado.");
     } finally {
@@ -948,6 +985,10 @@ function ReviewPanel({
     onChange((current) => current ? { ...current, [key]: value } : current);
   }
 
+  function updatePurchase<K extends keyof PurchaseForm>(key: K, value: PurchaseForm[K]) {
+    onPurchaseChange((current) => current ? { ...current, [key]: value } : current);
+  }
+
   const hasSignedContract = ["sí", "si"].includes(purchase.contractSigned.trim().toLocaleLowerCase("es"));
   const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
   const selectedCertifications = review.certificateType
@@ -1062,10 +1103,11 @@ function ReviewPanel({
       )}
 
       <fieldset disabled={readOnly}>
-        <legend><span className="step-number">1</span><span>Planificación y finca<small>Fecha prevista y comprobación física</small></span></legend>
-        <div className="two-columns">
+        <legend><span className="step-number">1</span><span>Planificación, finca e ICA<small>Comprobaciones posteriores a la firma y anteriores al corte</small></span></legend>
+        <div className="three-columns">
           <label className="field required-field"><span>Fecha prevista de corte</span><input required type="date" value={review.plannedCutDate} min={purchase.contractStart || undefined} max={purchase.contractEnd || undefined} onInput={(event) => update("plannedCutDate", event.currentTarget.value)} /></label>
           <label className="field required-field"><span>Finca / parcela comprobada</span><select required value={review.farmChecked} onChange={(event) => update("farmChecked", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option></select></label>
+          <label className="field required-field"><span>Situación en ICA</span><select required value={purchase.registeredIca || "Pendiente"} onChange={(event) => updatePurchase("registeredIca", event.target.value)}><option value="Pendiente">Pendiente de alta o validación</option><option value="Sí">Sí, registrado</option><option value="No">No registrado</option></select></label>
         </div>
       </fieldset>
 
