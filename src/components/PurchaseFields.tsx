@@ -1,11 +1,13 @@
 import { FileText, Plus, Trash2 } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 import { CERTIFICATIONS, OTHER_VALUE, PRODUCT_CATALOG, emptyMaterial, materialSummary } from "../lib/catalog";
 import type { ContractDetails, MaterialItem, PurchaseForm } from "../types";
 
 type Props = {
   value: PurchaseForm;
-  onChange: (value: PurchaseForm) => void;
+  onChange: Dispatch<SetStateAction<PurchaseForm>>;
   disabled?: boolean;
+  contractMode?: "existing" | "generated" | "editing";
 };
 
 function localToday() {
@@ -15,6 +17,7 @@ function localToday() {
 }
 
 export const EMPTY_CONTRACT_DETAILS: ContractDetails = {
+  contractOrigin: "",
   buyerCompany: "",
   signatureDate: localToday(),
   contractNumber: "",
@@ -39,6 +42,16 @@ export const EMPTY_CONTRACT_DETAILS: ContractDetails = {
   destrioLocation: "",
   destrioDefects: "",
   destrioPrice: "",
+  sellerEmail: "",
+  companyEmail: "",
+  buyerRepresentative: "",
+  archiveId: "",
+  archiveFilename: "",
+  archivedAt: "",
+  emailStatus: "",
+  sellerSignedAt: "",
+  buyerSignedAt: "",
+  signatureMethod: "",
 };
 
 export const EMPTY_PURCHASE: PurchaseForm = {
@@ -117,18 +130,23 @@ function MaterialFields({
   );
 }
 
-export function PurchaseFields({ value, onChange, disabled = false }: Props) {
+export function PurchaseFields({ value, onChange, disabled = false, contractMode = "editing" }: Props) {
   function update<K extends keyof PurchaseForm>(key: K, nextValue: PurchaseForm[K]) {
-    onChange({ ...value, [key]: nextValue });
+    onChange((current) => ({ ...current, [key]: nextValue }));
   }
 
   function updateContract<K extends keyof ContractDetails>(key: K, nextValue: ContractDetails[K]) {
-    onChange({ ...value, contractDetails: { ...value.contractDetails, [key]: nextValue } });
+    onChange((current) => ({
+      ...current,
+      contractDetails: { ...current.contractDetails, [key]: nextValue },
+    }));
   }
 
-  function updateMaterials(materials: MaterialItem[]) {
-    const summary = materialSummary(materials);
-    onChange({ ...value, materials, ...summary });
+  function changeMaterials(change: (materials: MaterialItem[]) => MaterialItem[]) {
+    onChange((current) => {
+      const materials = change(current.materials);
+      return { ...current, materials, ...materialSummary(materials) };
+    });
   }
 
   const contract = value.contractDetails;
@@ -163,18 +181,19 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
             index={index}
             total={value.materials.length}
             disabled={disabled}
-            onUpdate={(nextItem) => updateMaterials(value.materials.map((current) => current.id === item.id ? nextItem : current))}
-            onRemove={() => updateMaterials(value.materials.filter((current) => current.id !== item.id))}
+            onUpdate={(nextItem) => changeMaterials((materials) => materials.map((current) => current.id === item.id ? nextItem : current))}
+            onRemove={() => changeMaterials((materials) => materials.filter((current) => current.id !== item.id))}
           />
         ))}
       </div>
-      <button className="add-material-button" type="button" disabled={disabled} onClick={() => updateMaterials([...value.materials, emptyMaterial({ municipality: value.municipality })])}><Plus size={18} /> Añadir especie o variedad</button>
+      <button className="add-material-button" type="button" disabled={disabled} onClick={() => changeMaterials((materials) => [...materials, emptyMaterial({ municipality: value.municipality })])}><Plus size={18} /> Añadir especie o variedad</button>
 
       <div className="field-section-heading section-divider">
         <span>3</span>
-        <div><strong>Rellenar contrato</strong><small>Los modelos originales se completan sin modificar el clausulado</small></div>
+        <div><strong>{contractMode === "existing" ? "Contrato firmado existente" : "Rellenar contrato"}</strong><small>{contractMode === "existing" ? "Registra la vigencia y archiva la copia firmada" : "Los modelos originales se completan sin modificar el clausulado"}</small></div>
         <em>Obligatorio</em>
       </div>
+      {contractMode !== "existing" ? <>
       <div className="contract-workflow" aria-label="Flujo del contrato">
         <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i><span>Firmar</span><i>→</i><span>Descargar</span>
       </div>
@@ -182,7 +201,7 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
         <label className="field required-field"><span>Empresa compradora</span><select required disabled={disabled} value={contract.buyerCompany} onChange={(event) => updateContract("buyerCompany", event.target.value as ContractDetails["buyerCompany"])}><option value="">Seleccionar</option><option>MR. ORGÁNICA, S.L.</option><option>TOÑIFRUIT, S.L.</option></select></label>
         <label className="field required-field"><span>Fecha de firma</span><input required disabled={disabled} type="date" value={contract.signatureDate} onInput={(event) => updateContract("signatureDate", event.currentTarget.value)} /></label>
         <label className="field"><span>N.º de contrato</span><input disabled={disabled} value={contract.contractNumber} onChange={(event) => updateContract("contractNumber", event.target.value)} placeholder="Si se deja vacío se usa el expediente" /></label>
-        <label className="field required-field"><span>Estado del contrato</span><select required disabled={disabled} value={value.contractSigned} onChange={(event) => update("contractSigned", event.target.value)}><option value="">Seleccionar</option><option>Pendiente de cumplimentar</option><option>Pendiente de firma</option><option value="Sí">Firmado</option></select></label>
+        <div className="contract-status-card"><FileText size={18} /><span><strong>Estado al finalizar</strong><small>Firmado por vendedor y comprador</small></span></div>
         <label className="field required-field"><span>Inicio del contrato</span><input required disabled={disabled} type="date" value={value.contractStart} onInput={(event) => update("contractStart", event.currentTarget.value)} /></label>
         <label className="field required-field"><span>Fin del contrato</span><input required disabled={disabled} type="date" min={value.contractStart || undefined} value={value.contractEnd} onInput={(event) => update("contractEnd", event.currentTarget.value)} /></label>
       </div>
@@ -192,6 +211,9 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
         <div className="two-columns contract-data-grid">
           <label className="field required-field"><span>Representante del vendedor</span><input required disabled={disabled} value={contract.sellerRepresentative} onChange={(event) => updateContract("sellerRepresentative", event.target.value)} placeholder="Nombre y apellidos" /></label>
           <label className="field required-field"><span>DNI del representante</span><input required disabled={disabled} value={contract.sellerDni} onChange={(event) => updateContract("sellerDni", event.target.value)} /></label>
+          <label className="field required-field"><span>Representante de la empresa</span><input required disabled={disabled} value={contract.buyerRepresentative} onChange={(event) => updateContract("buyerRepresentative", event.target.value)} placeholder="Nombre y apellidos" /></label>
+          <label className="field required-field"><span>Correo del agricultor</span><input required disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} placeholder="agricultor@correo.es" /></label>
+          <label className="field required-field"><span>Correo de la empresa</span><input required disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} placeholder="compras@empresa.es" /></label>
           <label className="field required-field field-span"><span>Domicilio del vendedor</span><input required disabled={disabled} value={contract.sellerAddress} onChange={(event) => updateContract("sellerAddress", event.target.value)} /></label>
           <label className="field required-field"><span>Código operador ecológico</span><input required disabled={disabled} value={contract.organicOperatorCode} onChange={(event) => updateContract("organicOperatorCode", event.target.value)} /></label>
           <label className="field"><span>Código certificadora</span><input disabled={disabled} value={contract.certifierCode} onChange={(event) => updateContract("certifierCode", event.target.value)} /></label>
@@ -220,6 +242,18 @@ export function PurchaseFields({ value, onChange, disabled = false }: Props) {
           {contract.applyDestrio === "Sí" && <p>El generador tachará las condiciones estándar de minoración y añadirá el acuerdo de destrío, siguiendo el contrato de ejemplo.</p>}
         </div>
       </details>
+      </> : <>
+        <div className="contract-existing-note"><FileText size={20} /><div><strong>El contrato ya está firmado</strong><span>Adjunta la copia firmada al terminar este formulario. Quedará guardada en el archivo central y disponible para descargar.</span></div></div>
+        <div className="three-columns">
+          <label className="field required-field"><span>Empresa compradora</span><select required disabled={disabled} value={contract.buyerCompany} onChange={(event) => updateContract("buyerCompany", event.target.value as ContractDetails["buyerCompany"])}><option value="">Seleccionar</option><option>MR. ORGÁNICA, S.L.</option><option>TOÑIFRUIT, S.L.</option></select></label>
+          <label className="field required-field"><span>Fecha de firma</span><input required disabled={disabled} type="date" value={contract.signatureDate} onInput={(event) => updateContract("signatureDate", event.currentTarget.value)} /></label>
+          <label className="field"><span>N.º de contrato</span><input disabled={disabled} value={contract.contractNumber} onChange={(event) => updateContract("contractNumber", event.target.value)} /></label>
+          <label className="field required-field"><span>Inicio del contrato</span><input required disabled={disabled} type="date" value={value.contractStart} onInput={(event) => update("contractStart", event.currentTarget.value)} /></label>
+          <label className="field required-field"><span>Fin del contrato</span><input required disabled={disabled} type="date" min={value.contractStart || undefined} value={value.contractEnd} onInput={(event) => update("contractEnd", event.currentTarget.value)} /></label>
+          <label className="field required-field"><span>Correo del agricultor</span><input required disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} /></label>
+          <label className="field required-field"><span>Correo de la empresa</span><input required disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} /></label>
+        </div>
+      </>}
 
       <div className="field-section-heading section-divider optional-section-heading">
         <span>4</span>

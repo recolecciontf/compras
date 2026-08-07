@@ -19,6 +19,7 @@ import {
   CloudOff,
   Download,
   FileCheck2,
+  FileUp,
   ListChecks,
   LogIn,
   LogOut,
@@ -35,12 +36,12 @@ import {
   XCircle,
 } from "lucide-react";
 import { HarvestPanel } from "./components/HarvestPanel";
-import { NewPurchasePanel } from "./components/NewPurchasePanel";
+import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurchasePanel";
 import { PurchaseFields } from "./components/PurchaseFields";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS } from "./lib/catalog";
-import { downloadContracts } from "./lib/contractGenerator";
+import { downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
 import { purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
 import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
@@ -86,6 +87,14 @@ function isArchived(row: ControlRow) {
   return row.archived.trim().toLocaleLowerCase("es") === "sí";
 }
 
+type AutoSaveTask = {
+  row: ControlRow;
+  review: ReviewForm;
+  purchase: PurchaseForm;
+  reviewChanged: boolean;
+  purchaseChanged: boolean;
+};
+
 function StatusBadge({ ok, children }: { ok: boolean; children: ReactNode }) {
   return (
     <span className={`status-badge ${ok ? "status-ok" : "status-blocked"}`}>
@@ -127,9 +136,10 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const autoSaveTimer = useRef<number | null>(null);
+  const autoSaveBusy = useRef(false);
+  const pendingAutoSave = useRef<AutoSaveTask | null>(null);
   const reviewFingerprint = useRef("");
   const purchaseFingerprint = useRef("");
-  const saveVersion = useRef(0);
   const loadedRowIndex = useRef<number | null>(null);
 
   useEffect(() => {
@@ -200,11 +210,17 @@ export default function App() {
   const canEdit = demoMode || profile?.canEdit === true;
 
   useEffect(() => {
+    if (!selected) {
+      loadedRowIndex.current = null;
+      setReview(null);
+      setPurchase(null);
+      return;
+    }
+    if (loadedRowIndex.current === selected.tableIndex) return;
     const nextReview = selected ? reviewFromRow(selected) : null;
     const nextPurchase = selected ? purchaseFromRow(selected) : null;
     const nextFingerprint = nextReview ? JSON.stringify(nextReview) : "";
     const nextPurchaseFingerprint = nextPurchase ? JSON.stringify(nextPurchase) : "";
-    if (selected && loadedRowIndex.current === selected.tableIndex && reviewFingerprint.current === nextFingerprint && purchaseFingerprint.current === nextPurchaseFingerprint) return;
     loadedRowIndex.current = selected?.tableIndex ?? null;
     reviewFingerprint.current = nextFingerprint;
     purchaseFingerprint.current = nextPurchaseFingerprint;
@@ -213,8 +229,42 @@ export default function App() {
     setAutoSaveStatus("idle");
   }, [selected]);
 
+  async function runAutoSaveQueue() {
+    if (autoSaveBusy.current) return;
+    autoSaveBusy.current = true;
+    try {
+      while (pendingAutoSave.current) {
+        const task = pendingAutoSave.current;
+        pendingAutoSave.current = null;
+        const mergedPurchase = mergePurchase(task.row, task.purchase);
+        const issues = reviewBlockages(mergedPurchase, task.review);
+        setAutoSaveStatus("saving");
+
+        if (!demoMode) {
+          if (!client) throw new Error("No hay conexión con Google Sheets.");
+          if (task.purchaseChanged) await client.savePurchase(task.row, task.purchase);
+          if (task.reviewChanged) await client.saveReview(task.row, task.review);
+        }
+
+        const merged = mergeReview(mergedPurchase, task.review, issues.length === 0, issues);
+        setRows((current) => current.map((row) => row.tableIndex === task.row.tableIndex ? merged : row));
+        reviewFingerprint.current = JSON.stringify(task.review);
+        purchaseFingerprint.current = JSON.stringify(task.purchase);
+        setLastSyncedAt(new Date());
+      }
+      setAutoSaveStatus("saved");
+    } catch (reason) {
+      pendingAutoSave.current = null;
+      setAutoSaveStatus("error");
+      setError(reason instanceof Error ? reason.message : "No se ha podido guardar el avance.");
+    } finally {
+      autoSaveBusy.current = false;
+      if (pendingAutoSave.current) void runAutoSaveQueue();
+    }
+  }
+
   useEffect(() => {
-    if (!selected || !review || !purchase || !signedIn || !isOnline || view !== "review" || !canEdit) return;
+    if (!selected || !review || !purchase || (!signedIn && !demoMode) || !isOnline || view !== "review" || !canEdit) return;
     const nextFingerprint = JSON.stringify(review);
     const nextPurchaseFingerprint = JSON.stringify(purchase);
     const reviewChanged = nextFingerprint !== reviewFingerprint.current;
@@ -222,46 +272,20 @@ export default function App() {
     if (!reviewChanged && !purchaseChanged) return;
 
     if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
-    const version = ++saveVersion.current;
     const rowSnapshot = selected;
     const reviewSnapshot = review;
     const purchaseSnapshot = purchase;
-    const mergedSnapshot = mergePurchase(rowSnapshot, purchaseSnapshot);
-    const issues = reviewBlockages(mergedSnapshot, reviewSnapshot);
     setAutoSaveStatus("pending");
 
-    autoSaveTimer.current = window.setTimeout(async () => {
-      setAutoSaveStatus("saving");
-      try {
-        if (demoMode) {
-          setRows((current) =>
-            current.map((row) =>
-              row.tableIndex === rowSnapshot.tableIndex
-                ? mergeReview(mergePurchase(row, purchaseSnapshot), reviewSnapshot, issues.length === 0, issues)
-                : row,
-            ),
-          );
-        } else {
-          if (!client) throw new Error("No hay conexión con Google Sheets.");
-          if (purchaseChanged) await client.savePurchase(rowSnapshot, purchaseSnapshot);
-          if (reviewChanged) await client.saveReview(rowSnapshot, reviewSnapshot);
-          if (version !== saveVersion.current) return;
-          const nextRows = await client.rows();
-          if (version !== saveVersion.current) return;
-          setRows(nextRows);
-        }
-        if (version === saveVersion.current) {
-          reviewFingerprint.current = JSON.stringify(reviewSnapshot);
-          purchaseFingerprint.current = JSON.stringify(purchaseSnapshot);
-          setLastSyncedAt(new Date());
-          setAutoSaveStatus("saved");
-        }
-      } catch (reason) {
-        if (version === saveVersion.current) {
-          setAutoSaveStatus("error");
-          setError(reason instanceof Error ? reason.message : "No se ha podido guardar el avance.");
-        }
-      }
+    autoSaveTimer.current = window.setTimeout(() => {
+      pendingAutoSave.current = {
+        row: rowSnapshot,
+        review: reviewSnapshot,
+        purchase: purchaseSnapshot,
+        reviewChanged,
+        purchaseChanged,
+      };
+      void runAutoSaveQueue();
     }, 850);
 
     return () => {
@@ -388,8 +412,12 @@ export default function App() {
       setError("Este usuario es de consulta y no puede modificar los datos.");
       return;
     }
+    if (autoSaveBusy.current || autoSaveStatus === "pending") {
+      setError("Espera a que termine el guardado automático antes de finalizar la revisión.");
+      return;
+    }
     setSaving(true);
-    saveVersion.current += 1;
+    pendingAutoSave.current = null;
     if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     setError("");
     const completedReview = { ...review, lastReviewDate: localToday() };
@@ -424,17 +452,43 @@ export default function App() {
     }
   }
 
-  async function createPurchase(nextPurchase: PurchaseForm) {
+  async function createPurchase(nextPurchase: PurchaseForm, contractSubmission: ContractSubmission) {
     if (!canEdit) return;
     setSaving(true);
     setError("");
     try {
+      let preparedPurchase = nextPurchase;
+      if (demoMode) {
+        preparedPurchase = {
+          ...nextPurchase,
+          documentPath: "Archivo central de demostración",
+          contractDetails: {
+            ...nextPurchase.contractDetails,
+            archiveId: crypto.randomUUID(),
+            archiveFilename: contractSubmission.mode === "existing" ? contractSubmission.file.name : "contrato-firmado-demo.docx",
+            archivedAt: new Date().toISOString(),
+            emailStatus: "pending_configuration",
+          },
+        };
+      } else {
+        if (!client) throw new Error("No hay conexión con Google Sheets.");
+        const artifact = contractSubmission.mode === "existing"
+          ? { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name }
+          : await generateContractPackage(nextPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
+        const archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
+        preparedPurchase = {
+          ...nextPurchase,
+          documentPath: `Archivo central: ${archived.archiveFilename}`,
+          contractDetails: { ...nextPurchase.contractDetails, ...archived },
+        };
+      }
+
       let createdIndex: number;
       if (demoMode) {
         createdIndex = Math.max(0, ...rows.map((row) => row.tableIndex)) + 1;
-        const id = nextPurchase.id || `CMP-${nextPurchase.campaign}-${String(createdIndex).padStart(3, "0")}`;
+        const id = preparedPurchase.id || `CMP-${preparedPurchase.campaign}-${String(createdIndex).padStart(3, "0")}`;
         const created: ControlRow = {
-          ...nextPurchase,
+          ...preparedPurchase,
           id,
           tableIndex: createdIndex,
           contractAlert: "VIGENTE",
@@ -454,8 +508,8 @@ export default function App() {
           cutStatus: "No",
           cutKgTotal: "",
           archived: "No",
-          materialsJson: JSON.stringify(nextPurchase.materials),
-          contractDetailsJson: JSON.stringify(nextPurchase.contractDetails),
+          materialsJson: JSON.stringify(preparedPurchase.materials),
+          contractDetailsJson: JSON.stringify(preparedPurchase.contractDetails),
         };
         setRows((current) => [...current, created]);
         setSelectedIndex(createdIndex);
@@ -463,7 +517,7 @@ export default function App() {
         setReview(reviewFromRow(created));
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
-        const created = await client.createPurchase(nextPurchase);
+        const created = await client.createPurchase(preparedPurchase);
         createdIndex = created.row;
         const nextRows = await client.rows();
         setRows(nextRows);
@@ -475,7 +529,7 @@ export default function App() {
         setSelectedIndex(createdIndex);
       }
       setLastSyncedAt(new Date());
-      setToast("Compra creada. Completa ahora la revisión documental.");
+      setToast(preparedPurchase.contractDetails.emailStatus === "sent" ? "Compra creada, contrato archivado y copias enviadas." : "Compra creada y contrato firmado archivado.");
       setView("review");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido crear la compra.");
@@ -511,10 +565,61 @@ export default function App() {
     setError("");
     try {
       if (!client || demoMode) throw new Error("Inicia sesión con el usuario real para descargar los modelos contractuales protegidos.");
+      if (purchase.contractDetails.archiveId) {
+        const archived = await client.archivedContract(purchase.contractDetails.archiveId);
+        triggerDownload(archived.blob, archived.filename);
+        setToast("Contrato firmado descargado");
+        return;
+      }
       const count = await downloadContracts(purchase, (name) => client.contractTemplate(name));
       setToast(count === 1 ? "Contrato Word descargado" : `${count} contratos incluidos en el ZIP`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido generar el contrato.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function attachSignedContract(file: File) {
+    if (!purchase || !selected) return;
+    setSaving(true);
+    setError("");
+    try {
+      if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
+      pendingAutoSave.current = null;
+      const waitStartedAt = Date.now();
+      while (autoSaveBusy.current) {
+        if (Date.now() - waitStartedAt > 15_000) throw new Error("El guardado anterior está tardando demasiado. Espera unos segundos y vuelve a adjuntar el contrato.");
+        await new Promise((resolve) => window.setTimeout(resolve, 60));
+      }
+      const archived = demoMode
+        ? {
+            archiveId: crypto.randomUUID(),
+            archiveFilename: file.name,
+            archivedAt: new Date().toISOString(),
+            emailStatus: "pending_configuration" as const,
+          }
+        : client
+          ? await client.archiveContract(file, file.name, purchase)
+          : (() => { throw new Error("No hay conexión con Google Sheets."); })();
+      const updated: PurchaseForm = {
+        ...purchase,
+        contractSigned: "Sí",
+        documentPath: `Archivo central: ${archived.archiveFilename}`,
+        contractDetails: {
+          ...purchase.contractDetails,
+          contractOrigin: "existing",
+          signatureMethod: "uploaded",
+          ...archived,
+        },
+      };
+      if (!demoMode) await client!.savePurchase(selected, updated);
+      purchaseFingerprint.current = JSON.stringify(updated);
+      setPurchase(updated);
+      setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? mergePurchase(row, updated) : row));
+      setToast(archived.emailStatus === "sent" ? "Contrato firmado archivado y copias enviadas" : "Contrato firmado archivado");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se ha podido adjuntar el contrato firmado.");
     } finally {
       setSaving(false);
     }
@@ -704,6 +809,7 @@ export default function App() {
                   onSubmit={submitReview}
                   onReset={() => { setReview(reviewFromRow(selected)); setPurchase(purchaseFromRow(selected)); }}
                   onContractDownload={downloadPurchaseContracts}
+                  onContractUpload={attachSignedContract}
                   onBack={() => setView("records")}
                 />
               ) : view === "new" && canEdit ? (
@@ -820,6 +926,7 @@ function ReviewPanel({
   onSubmit,
   onReset,
   onContractDownload,
+  onContractUpload,
   onBack,
 }: {
   row: ControlRow;
@@ -834,18 +941,15 @@ function ReviewPanel({
   onSubmit: (event: FormEvent) => void;
   onReset: () => void;
   onContractDownload: () => Promise<void>;
+  onContractUpload: (file: File) => Promise<void>;
   onBack: () => void;
 }) {
   function update<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
     onChange((current) => current ? { ...current, [key]: value } : current);
   }
 
-  const requiredPurchaseFields = [purchase.provider, purchase.taxId, purchase.farm, purchase.municipality, purchase.campaign, purchase.registeredIca, purchase.contractSigned, purchase.contractStart, purchase.contractEnd];
-  const requiredContractFields = [purchase.contractDetails.buyerCompany, purchase.contractDetails.signatureDate, purchase.contractDetails.sellerRepresentative, purchase.contractDetails.sellerDni, purchase.contractDetails.sellerAddress, purchase.contractDetails.organicOperatorCode, purchase.contractDetails.modality, purchase.contractDetails.collectionBy, purchase.contractDetails.transportBy, purchase.contractDetails.modality === "POR TANTO" ? purchase.contractDetails.totalPrice : purchase.contractDetails.pricePerKg, purchase.contractDetails.paymentDays];
-  const completeMaterials = purchase.materials.filter((item) => item.crop && item.variety && item.expectedKg).length;
-  const reviewValues = Object.entries(review).filter(([key]) => key !== "lastReviewDate").map(([, value]) => value);
-  const completedFields = requiredPurchaseFields.filter(Boolean).length + requiredContractFields.filter(Boolean).length + completeMaterials + reviewValues.filter(Boolean).length;
-  const requiredFields = requiredPurchaseFields.length + requiredContractFields.length + purchase.materials.length + reviewValues.length;
+  const hasSignedContract = ["sí", "si"].includes(purchase.contractSigned.trim().toLocaleLowerCase("es"));
+  const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
   const selectedCertifications = review.certificateType
     .split(/[;,]/)
     .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
@@ -868,7 +972,7 @@ function ReviewPanel({
             <h2>{purchase.provider}</h2>
             <p>{purchase.crop || "Especie sin indicar"}{purchase.variety ? ` · ${purchase.variety}` : ""} · {purchase.farm || "Finca sin indicar"}</p>
           </div>
-          <StatusBadge ok={authorized(row)}>{authorized(row) ? "Autorizado" : "Bloqueado"}</StatusBadge>
+          <StatusBadge ok={issues.length === 0}>{issues.length === 0 ? "Autorizado" : "Bloqueado"}</StatusBadge>
         </div>
 
         <div className="contract-strip">
@@ -889,17 +993,56 @@ function ReviewPanel({
           {autoSaveStatus === "idle" && <FileCheck2 size={16} />}
           {readOnly ? "Datos en modo consulta" : autoSaveStatus === "saving" ? "Guardando en Google Sheets…" : autoSaveStatus === "pending" ? "Cambio pendiente de guardar" : autoSaveStatus === "saved" ? "Guardado automáticamente" : autoSaveStatus === "error" ? "Error al guardar" : "Los cambios se guardan automáticamente"}
         </span>
-        <span className="completion-count">Obligatorios: {completedFields}/{requiredFields}</span>
+        <span className={`completion-count ${issues.length ? "has-pending" : "is-complete"}`}>
+          {issues.length ? `${issues.length} pendiente${issues.length === 1 ? "" : "s"}` : "Todos los obligatorios completos"}
+        </span>
       </div>
 
       <fieldset className="purchase-fieldset" disabled={readOnly}>
         <legend><span className="step-number">A</span><span>Compra y materia prima<small>Datos comerciales, fruta y vigencia contractual</small></span></legend>
-        <PurchaseFields value={purchase} onChange={(value) => onPurchaseChange(value)} disabled={readOnly} />
+        <PurchaseFields
+          value={purchase}
+          contractMode={purchase.contractDetails.contractOrigin === "existing" ? "existing" : "editing"}
+          onChange={(next) => onPurchaseChange((current) => current
+            ? typeof next === "function" ? next(current) : next
+            : current)}
+          disabled={readOnly}
+        />
       </fieldset>
 
-      <div className="contract-download-panel">
-        <div><FileCheck2 size={21} /><span><strong>Contrato listo para generar</strong><small>Se completa una copia del modelo original. Si hay varias especies, se descarga un contrato por especie.</small></span></div>
-        <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar contrato Word"}</button>
+      <div className={`contract-download-panel ${hasArchivedContract ? "contract-archived" : hasSignedContract ? "contract-awaiting-file" : "contract-draft"}`}>
+        <div>
+          {hasArchivedContract ? <FileCheck2 size={21} /> : hasSignedContract ? <FileUp size={21} /> : <FileCheck2 size={21} />}
+          <span>
+            <strong>{hasArchivedContract ? "Contrato firmado archivado" : hasSignedContract ? "Falta archivar la copia firmada" : "Contrato listo para generar"}</strong>
+            <small>
+              {hasArchivedContract
+                ? `Copia central: ${purchase.contractDetails.archiveFilename || "contrato firmado"}. Disponible para los usuarios autorizados.`
+                : hasSignedContract
+                  ? "Adjunta el PDF o Word firmado para completar el expediente y permitir su descarga."
+                  : "Se completa una copia del modelo original. Si hay varias especies, se descarga un contrato por especie."}
+            </small>
+          </span>
+        </div>
+        {hasArchivedContract ? (
+          <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Descargando…" : "Descargar contrato firmado"}</button>
+        ) : hasSignedContract && !readOnly ? (
+          <label className={`secondary-button contract-upload-button ${saving ? "disabled" : ""}`}>
+            <FileUp size={18} /> {saving ? "Archivando…" : "Adjuntar contrato firmado"}
+            <input
+              type="file"
+              disabled={saving}
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.currentTarget.value = "";
+                if (file) void onContractUpload(file);
+              }}
+            />
+          </label>
+        ) : !hasSignedContract ? (
+          <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador Word"}</button>
+        ) : null}
       </div>
 
       <div className={`result-panel ${issues.length ? "result-blocked" : "result-ok"}`}>
@@ -967,7 +1110,7 @@ function ReviewPanel({
       {!readOnly && (
         <div className="form-actions">
           <button className="secondary-button" type="button" onClick={onReset} disabled={saving}><RotateCcw size={18} /> Deshacer cambios</button>
-          <button className="primary-button" type="submit" disabled={saving || autoSaveStatus === "saving" || !navigator.onLine}><ShieldCheck size={19} /> {saving ? "Finalizando…" : "Finalizar revisión"}</button>
+          <button className="primary-button" type="submit" disabled={saving || autoSaveStatus === "saving" || autoSaveStatus === "pending" || !navigator.onLine}><ShieldCheck size={19} /> {saving ? "Finalizando…" : "Finalizar revisión"}</button>
         </div>
       )}
     </form>

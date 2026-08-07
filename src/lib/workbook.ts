@@ -81,6 +81,7 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
 }
 
 const CONTRACT_DEFAULTS: ContractDetails = {
+  contractOrigin: "",
   buyerCompany: "",
   signatureDate: new Date().toISOString().slice(0, 10),
   contractNumber: "",
@@ -105,6 +106,16 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   destrioLocation: "",
   destrioDefects: "",
   destrioPrice: "",
+  sellerEmail: "",
+  companyEmail: "",
+  buyerRepresentative: "",
+  archiveId: "",
+  archiveFilename: "",
+  archivedAt: "",
+  emailStatus: "",
+  sellerSignedAt: "",
+  buyerSignedAt: "",
+  signatureMethod: "",
 };
 
 function materialsFromRow(row: ControlRow): MaterialItem[] {
@@ -148,10 +159,16 @@ function materialsFromRow(row: ControlRow): MaterialItem[] {
 }
 
 function contractDetailsFromRow(row: ControlRow): ContractDetails {
-  if (!row.contractDetailsJson) return { ...CONTRACT_DEFAULTS };
+  if (!row.contractDetailsJson) {
+    return { ...CONTRACT_DEFAULTS, contractOrigin: normalized(row.contractSigned) === "sí" ? "existing" : "" };
+  }
   try {
     const parsed = JSON.parse(row.contractDetailsJson) as Partial<ContractDetails>;
-    return { ...CONTRACT_DEFAULTS, ...parsed };
+    return {
+      ...CONTRACT_DEFAULTS,
+      ...parsed,
+      contractOrigin: parsed.contractOrigin || (normalized(row.contractSigned) === "sí" ? "existing" : ""),
+    };
   } catch {
     return { ...CONTRACT_DEFAULTS };
   }
@@ -209,6 +226,8 @@ function normalized(value: string) {
 
 export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   const issues: string[] = [];
+  const contract = contractDetailsFromRow(row);
+  const materials = materialsFromRow(row);
   if (!row.provider.trim()) issues.push("Falta el agricultor o proveedor");
   if (!row.taxId.trim()) issues.push("Falta el NIF o CIF");
   if (!row.farm.trim()) issues.push("Falta la finca o parcela");
@@ -216,9 +235,39 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   if (!row.crop.trim()) issues.push("Falta la especie");
   if (!row.variety.trim()) issues.push("Falta la variedad");
   if (!row.expectedKg.trim()) issues.push("Faltan los kg previstos");
+  materials.forEach((material, index) => {
+    const suffix = materials.length > 1 ? ` en la materia prima ${index + 1}` : "";
+    if (!material.crop.trim()) issues.push(`Falta la especie${suffix}`);
+    if (!material.variety.trim()) issues.push(`Falta la variedad${suffix}`);
+    if (!material.expectedKg.trim()) issues.push(`Faltan los kg previstos${suffix}`);
+  });
   if (!row.campaign.trim()) issues.push("Falta la campaña");
   if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("No consta registrado en ICA");
   if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
+  if (!contract.buyerCompany) issues.push("Falta la empresa compradora");
+  if (!contract.signatureDate) issues.push("Falta la fecha de firma del contrato");
+  if (!contract.sellerEmail) issues.push("Falta el correo del agricultor");
+  if (!contract.companyEmail) issues.push("Falta el correo de la empresa");
+  if (contract.contractOrigin !== "existing") {
+    if (!contract.sellerRepresentative) issues.push("Falta el representante del vendedor");
+    if (!contract.sellerDni) issues.push("Falta el DNI del representante del vendedor");
+    if (!contract.buyerRepresentative) issues.push("Falta el representante de la empresa");
+    if (!contract.sellerAddress) issues.push("Falta el domicilio del vendedor");
+    if (!contract.organicOperatorCode) issues.push("Falta el código de operador ecológico");
+    if (!contract.modality) issues.push("Falta la modalidad de compra");
+    if (!contract.collectionBy) issues.push("Falta indicar quién realiza la recolección");
+    if (!contract.transportBy) issues.push("Falta indicar quién realiza el transporte");
+    if (contract.modality === "POR TANTO" ? !contract.totalPrice : !contract.pricePerKg) {
+      issues.push(contract.modality === "POR TANTO" ? "Falta el precio total" : "Falta el precio por kg");
+    }
+    if (!contract.paymentDays) issues.push("Falta el plazo de pago");
+  }
+  if (contract.applyDestrio === "Sí") {
+    if (!contract.destrioLocation) issues.push("Falta el lugar del destrío");
+    if (!contract.destrioDefects) issues.push("Faltan los defectos a destriar");
+    if (!contract.destrioPrice) issues.push("Falta el precio del destrío");
+  }
+  if (!contract.archiveId) issues.push("Falta archivar la copia firmada del contrato");
   if (!row.contractStart) issues.push("Falta el inicio del contrato");
   if (!row.contractEnd) issues.push("Falta el fin del contrato");
   if (!form.plannedCutDate) issues.push("Falta la fecha prevista de corte");
@@ -245,7 +294,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     issues.push("Otros documentos exigidos sin validar");
   }
   if (!form.reviewer.trim()) issues.push("Falta el responsable de revisión");
-  return issues;
+  return [...new Set(issues)];
 }
 
 export class WorkbookClient {
@@ -358,5 +407,45 @@ export class WorkbookClient {
       throw new Error(detail.error || "No se ha podido abrir el modelo contractual.");
     }
     return response.arrayBuffer();
+  }
+
+  async archiveContract(file: Blob, filename: string, purchase: PurchaseForm) {
+    const form = new FormData();
+    form.set("file", file, filename);
+    form.set("provider", purchase.provider);
+    form.set("sellerEmail", purchase.contractDetails.sellerEmail);
+    form.set("companyEmail", purchase.contractDetails.companyEmail);
+    form.set("contractNumber", purchase.contractDetails.contractNumber || purchase.id);
+    const response = await fetch(this.endpoint("/api/contract-files"), {
+      method: "POST",
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+      body: form,
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido archivar el contrato firmado.");
+    }
+    return response.json() as Promise<{
+      archiveId: string;
+      archiveFilename: string;
+      archivedAt: string;
+      emailStatus: "sent" | "pending_configuration" | "failed";
+    }>;
+  }
+
+  async archivedContract(archiveId: string) {
+    const response = await fetch(this.endpoint(`/api/contract-files/${encodeURIComponent(archiveId)}`), {
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido descargar el contrato firmado.");
+    }
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+    const plain = disposition.match(/filename="([^"]+)"/i)?.[1];
+    return { blob: await response.blob(), filename: encoded ? decodeURIComponent(encoded) : plain || "contrato-firmado" };
   }
 }
