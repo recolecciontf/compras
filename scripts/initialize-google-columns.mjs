@@ -15,7 +15,7 @@ const headers = [
   "Variedad",
   "Kg previstos",
   "Materias primas (JSON)",
-  "Registrado en ICA",
+  "Registrado en AICA",
   "Certificaciones (reservado)",
   "Datos contrato (JSON)",
 ];
@@ -69,6 +69,7 @@ if (!currentResponse.ok) throw new Error(currentBody.error?.message || "No se pu
 const current = currentBody.values?.[0] || [];
 const values = headers.map((header, index) => {
   const existing = String(current[index] || "").trim();
+  if (existing === "Registrado en ICA") return "Registrado en AICA";
   return !existing || /^Column \d+$/i.test(existing) ? header : existing;
 });
 
