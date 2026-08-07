@@ -5,6 +5,9 @@ export const EMPTY_CONFIG: AppConfig = {
 };
 
 export async function loadConfig(): Promise<AppConfig> {
+  const sameOriginApi = window.location.hostname.endsWith(".chatgpt.site")
+    ? window.location.origin
+    : "";
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}app-config.json`, { cache: "no-store" });
     if (response.ok) {
@@ -12,13 +15,13 @@ export async function loadConfig(): Promise<AppConfig> {
       return {
         ...EMPTY_CONFIG,
         ...published,
-        apiBaseUrl: published.apiBaseUrl?.trim() || EMPTY_CONFIG.apiBaseUrl,
+        apiBaseUrl: sameOriginApi || published.apiBaseUrl?.trim() || EMPTY_CONFIG.apiBaseUrl,
       };
     }
   } catch {
     // En el alojamiento integrado la API está en el mismo dominio.
   }
-  return EMPTY_CONFIG;
+  return sameOriginApi ? { apiBaseUrl: sameOriginApi } : EMPTY_CONFIG;
 }
 
 export function isConfigured(config: AppConfig) {
