@@ -242,7 +242,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     if (!material.expectedKg.trim()) issues.push(`Faltan los kg previstos${suffix}`);
   });
   if (!row.campaign.trim()) issues.push("Falta la campaña");
-  if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("No consta registrado en ICA");
+  if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("Registro en ICA pendiente de validación");
   if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
   if (!contract.buyerCompany) issues.push("Falta la empresa compradora");
   if (!contract.signatureDate) issues.push("Falta la fecha de firma del contrato");
@@ -297,6 +297,13 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   return [...new Set(issues)];
 }
 
+export class ArchiveUnavailableError extends Error {
+  constructor() {
+    super("El archivo central de contratos no está disponible en este momento.");
+    this.name = "ArchiveUnavailableError";
+  }
+}
+
 export class WorkbookClient {
   private token = localStorage.getItem(TOKEN_KEY) || "";
   private cachedProfile: UserProfile | null = null;
@@ -325,6 +332,9 @@ export class WorkbookClient {
       if (response.status === 401 && authenticated) {
         this.token = "";
         localStorage.removeItem(TOKEN_KEY);
+      }
+      if (response.status === 405) {
+        throw new Error("La aplicación conserva una configuración antigua. Ciérrala por completo, vuelve a abrirla y reintenta el acceso.");
       }
       throw new Error(detail.error || `El servicio ha respondido con el error ${response.status}.`);
     }
@@ -424,6 +434,7 @@ export class WorkbookClient {
     });
     if (!response.ok) {
       const detail = (await response.json().catch(() => ({}))) as ApiError;
+      if (response.status === 404) throw new ArchiveUnavailableError();
       throw new Error(detail.error || "No se ha podido archivar el contrato firmado.");
     }
     return response.json() as Promise<{

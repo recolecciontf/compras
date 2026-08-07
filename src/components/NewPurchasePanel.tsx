@@ -82,13 +82,13 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
         <button className="back-button mobile-back" type="button" onClick={onBack}><ArrowLeft size={20} /> Compras</button>
         <div className="page-kicker"><ShoppingBasket size={18} /> Asistente de nueva compra</div>
         <h2 className="page-title">Realizar compra nueva</h2>
-        <p className="page-subtitle">El contrato se comprueba o se firma antes de dar de alta la compra y de iniciar cualquier recolección.</p>
+        <p className="page-subtitle">El contrato se comprueba o se firma antes de dar de alta la compra. La validación documental, incluida el alta en ICA, se completa antes de recolectar.</p>
       </div>
 
       <section className="contract-first-step" aria-labelledby="contract-question">
         <span className="wizard-step-label">Paso previo obligatorio</span>
         <h3 id="contract-question">¿Esta compra ya tiene un contrato firmado?</h3>
-        <p>Selecciona una opción para continuar. La compra no se creará hasta que exista una copia firmada y archivada.</p>
+        <p>Selecciona una opción para continuar. La compra se creará cuando exista una copia firmada; el archivo central quedará incluido en el checklist previo a la recolección.</p>
         <div className="contract-choice-grid">
           <button type="button" className={contractChoice === "existing" ? "selected" : ""} onClick={() => chooseContract("existing")}>
             <FileCheck2 size={24} /><span><strong>Sí, ya está firmado</strong><small>Adjuntar y archivar la copia existente</small></span>{contractChoice === "existing" && <CheckCircle2 size={20} />}
@@ -102,7 +102,7 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
       {contractChoice && <>
         <div className="required-intro">
           <CircleCheck size={20} />
-          <div><strong>Datos necesarios antes de crear la compra</strong><span>Los campos marcados con * son obligatorios. El expediente se genera solo después de archivar el contrato.</span></div>
+          <div><strong>Datos necesarios antes de crear la compra</strong><span>Los campos marcados con * son obligatorios. ICA y el resto de controles se validan posteriormente, antes del corte.</span></div>
         </div>
 
         <fieldset className="purchase-fieldset" disabled={saving}>
@@ -133,7 +133,7 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
 
         <div className="form-actions single-action">
           <button className="primary-button" type="submit" disabled={saving}>
-            <PlusCircle size={19} /> {saving ? "Archivando contrato y creando compra…" : "Archivar contrato y crear compra"}
+            <PlusCircle size={19} /> {saving ? "Guardando contrato y creando compra…" : "Guardar contrato y crear compra"}
           </button>
         </div>
       </>}

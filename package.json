@@ -6,12 +6,12 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build:client": "tsc --noEmit && vite build",
-    "build": "tsc --noEmit && vite build && node scripts/generate-worker-assets.mjs && vite build --config vite.worker.config.ts && node scripts/prepare-sites-dist.mjs",
-    "preview": "vite preview",
+    "dev": "vite --configLoader native",
+    "build:client": "tsc --noEmit && vite build --configLoader native",
+    "build": "tsc --noEmit && vite build --configLoader native && node scripts/generate-worker-assets.mjs && vite build --config vite.worker.config.ts --configLoader native && node scripts/prepare-sites-dist.mjs",
+    "preview": "vite preview --configLoader native",
     "check": "tsc --noEmit",
-    "test": "node --test tests/auth.test.mjs"
+    "test": "node --test --test-isolation=none tests/auth.test.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",

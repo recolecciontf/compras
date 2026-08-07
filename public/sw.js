@@ -1,4 +1,4 @@
-const CACHE_NAME = "compras-de-campo-v6";
+const CACHE_NAME = "compras-de-campo-v7";
 const APP_SHELL = ["./", "./manifest.webmanifest", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -17,6 +17,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || !event.request.url.startsWith(self.location.origin)) return;
+
+  if (new URL(event.request.url).pathname.endsWith("/app-config.json")) {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
+    return;
+  }
 
   if (event.request.mode === "navigate") {
     event.respondWith(

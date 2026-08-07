@@ -489,7 +489,6 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     ["contractSigned", "estado del contrato"],
     ["contractStart", "inicio del contrato"],
     ["contractEnd", "fin del contrato"],
-    ["registeredIca", "registro en ICA"],
   ];
   if (requireComplete) {
     const missing = required.filter(([key]) => !purchase[key]).map(([, label]) => label);
@@ -504,12 +503,11 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     const incompleteMaterial = purchase.materials.find((item) => !item.crop || !item.variety || !item.expectedKg);
     if (incompleteMaterial) throw new InputError("Completa la especie, variedad y kg de todas las materias primas.");
     if (!["sí", "si"].includes(purchase.contractSigned.toLocaleLowerCase("es"))) {
-      throw new InputError("La compra solo puede crearse después de firmar y archivar el contrato.");
+      throw new InputError("La compra solo puede crearse después de firmar el contrato.");
     }
     const commonContractFields = [
       ["buyerCompany", "empresa compradora"], ["signatureDate", "fecha de firma"],
       ["sellerEmail", "correo del agricultor"], ["companyEmail", "correo de la empresa"],
-      ["archiveId", "copia firmada archivada"],
     ];
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,
