@@ -31,24 +31,37 @@ function contractKind(crop: string): ContractKind | null {
 }
 
 function templateName(company: PurchaseForm["contractDetails"]["buyerCompany"], kind: ContractKind) {
-  if (company === "MR. ORGÁNICA, S.L.") return `mro-${kind}.docx`;
-  if (company === "TOÑIFRUIT, S.L." && ["naranja", "mandarina"].includes(kind)) return `tonifruit-${kind}.docx`;
+  const buyer = normalized(company);
+  // Los expedientes importados pueden contener pequeñas diferencias de
+  // puntuación o acentuación. El modelo se resuelve por empresa y especie,
+  // nunca por variedad.
+  if (buyer.includes("organica")) return `mro-${kind}.docx`;
+  if (buyer.includes("tonifruit") && ["naranja", "mandarina"].includes(kind)) return `tonifruit-${kind}.docx`;
   return "";
 }
 
 function batchesFor(purchase: PurchaseForm) {
   const grouped = new Map<ContractKind, MaterialItem[]>();
-  const unsupported: string[] = [];
+  const unsupportedSpecies: string[] = [];
+  const speciesWithoutCompanyTemplate: string[] = [];
   for (const material of purchase.materials) {
     const kind = contractKind(material.crop);
-    if (!kind || !templateName(purchase.contractDetails.buyerCompany, kind)) {
-      unsupported.push(`${material.crop}${material.variety ? ` · ${material.variety}` : ""}`);
+    if (!kind) {
+      unsupportedSpecies.push(material.crop);
+      continue;
+    }
+    if (!templateName(purchase.contractDetails.buyerCompany, kind)) {
+      speciesWithoutCompanyTemplate.push(material.crop);
       continue;
     }
     grouped.set(kind, [...(grouped.get(kind) || []), material]);
   }
-  if (unsupported.length) {
-    throw new Error(`No se ha facilitado un modelo contractual para: ${unsupported.join(", ")}.`);
+  if (unsupportedSpecies.length) {
+    throw new Error(`No se ha facilitado un modelo contractual para la especie: ${[...new Set(unsupportedSpecies)].join(", ")}.`);
+  }
+  if (speciesWithoutCompanyTemplate.length) {
+    const species = [...new Set(speciesWithoutCompanyTemplate)].join(", ");
+    throw new Error(`No hay un modelo de ${species} para ${purchase.contractDetails.buyerCompany}. El modelo se selecciona por especie; la variedad se rellena dentro del contrato.`);
   }
   const batches: ContractBatch[] = [];
   for (const [kind, materials] of grouped) {
@@ -340,9 +353,15 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     setParagraph(sellerParagraph, sellerText, "Vendedor:", 14);
   }
 
-  // Los apartados 1, 2 y 3 del modelo AILIMPO se dejan expresamente en blanco.
-  // La información de finca, modalidad, recolección y transporte se conserva en el expediente,
-  // pero no se altera el documento contractual reservado para la revisión de oficina.
+  if (isAilimpo) {
+    const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
+    const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
+    if (varietiesParagraph && varieties) replaceNextBlank(varietiesParagraph, varieties);
+  }
+
+  // En el apartado 1 solo se completa la variedad en su hueco reservado.
+  // La finca, la modalidad, la recolección y el transporte se conservan en el expediente,
+  // pero permanecen en blanco en el documento para la revisión de oficina.
   const tables = topLevelTables(document);
   const collectionTable = tables[3];
   const collectionRows = rows(collectionTable);

@@ -42,7 +42,7 @@ import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS } from "./lib/catalog";
 import { downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
-import { ArchiveUnavailableError, purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
+import { purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
 import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
 function formatDate(value: string) {
@@ -55,6 +55,13 @@ function formatDate(value: string) {
 function localToday() {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+
+function certificationSelection(value: string | null | undefined) {
+  return String(value ?? "")
+    .split(/[;,]/)
+    .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
+    .filter(Boolean);
 }
 
 function authorized(row: ControlRow) {
@@ -488,23 +495,10 @@ export default function App() {
           };
         } else {
           const artifact = { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name };
-          let archived;
-          try {
-            archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
-          } catch (reason) {
-            if (!(reason instanceof ArchiveUnavailableError)) throw reason;
-            archived = {
-              archiveId: "",
-              archiveFilename: artifact.filename,
-              archivedAt: "",
-              emailStatus: "pending_configuration" as const,
-            };
-          }
+          const archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
           preparedPurchase = {
             ...nextPurchase,
-            documentPath: archived.archiveId
-              ? `Archivo central: ${archived.archiveFilename}`
-              : `Pendiente de archivar: ${archived.archiveFilename}`,
+            documentPath: `Archivo central: ${archived.archiveFilename}`,
             contractDetails: { ...nextPurchase.contractDetails, ...archived },
           };
         }
@@ -634,26 +628,14 @@ export default function App() {
           emailStatus: "pending_configuration" as const,
         };
       } else if (client) {
-        try {
-          archived = await client.archiveContract(file, file.name, purchase);
-        } catch (reason) {
-          if (!(reason instanceof ArchiveUnavailableError)) throw reason;
-          archived = {
-            archiveId: "",
-            archiveFilename: file.name,
-            archivedAt: "",
-            emailStatus: "pending_configuration" as const,
-          };
-        }
+        archived = await client.archiveContract(file, file.name, purchase);
       } else {
         throw new Error("No hay conexión con Google Sheets.");
       }
       const updated: PurchaseForm = {
         ...purchase,
         contractSigned: "Sí",
-        documentPath: archived.archiveId
-          ? `Archivo central: ${archived.archiveFilename}`
-          : `Pendiente de archivar: ${archived.archiveFilename}`,
+        documentPath: `Archivo central: ${archived.archiveFilename}`,
         contractDetails: {
           ...purchase.contractDetails,
           contractOrigin: "existing",
@@ -667,9 +649,7 @@ export default function App() {
       setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? mergePurchase(row, updated) : row));
       setToast(archived.emailStatus === "sent"
         ? "Contrato firmado archivado y copias enviadas"
-        : archived.archiveId
-          ? "Contrato firmado archivado"
-          : "Contrato registrado; pendiente de archivo central");
+        : "Contrato firmado archivado");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido adjuntar el contrato firmado.");
     } finally {
@@ -1007,16 +987,19 @@ function ReviewPanel({
   const hasSignedContract = ["sí", "si"].includes(purchase.contractSigned.trim().toLocaleLowerCase("es"));
   const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
   const canAttachFinalContract = hasSignedContract || Boolean(purchase.contractDetails.sellerSignedAt);
-  const selectedCertifications = review.certificateType
-    .split(/[;,]/)
-    .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
-    .filter(Boolean);
+  const selectedCertifications = certificationSelection(review.certificateType);
 
   function toggleCertification(certificate: string, checked: boolean) {
-    const next = checked
-      ? [...new Set([...selectedCertifications, certificate])]
-      : selectedCertifications.filter((item) => item !== certificate);
-    update("certificateType", next.join("; "));
+    // Se calcula desde el estado más reciente para que varios toques rápidos y
+    // el autoguardado no trabajen con una selección anterior del formulario.
+    onChange((current) => {
+      if (!current) return current;
+      const selected = certificationSelection(current.certificateType);
+      const next = checked
+        ? selected.includes(certificate) ? selected : [...selected, certificate]
+        : selected.filter((item) => item !== certificate);
+      return { ...current, certificateType: next.join("; ") };
+    });
   }
 
   return (
@@ -1146,7 +1129,7 @@ function ReviewPanel({
       <fieldset disabled={readOnly}>
         <legend><span className="step-number">4</span><span>Certificación<small>Tipo y vigencia en la fecha de corte</small></span></legend>
         <div className="certification-checks" role="group" aria-label="Certificaciones de la finca">
-          {CERTIFICATIONS.map((certificate) => <label key={certificate} className={`certification-check ${selectedCertifications.includes(certificate) ? "checked" : ""}`}><input type="checkbox" checked={selectedCertifications.includes(certificate)} onChange={(event) => toggleCertification(certificate, event.target.checked)} /><span><Check size={16} />{certificate}</span></label>)}
+          {CERTIFICATIONS.map((certificate) => <label key={certificate} className={`certification-check ${selectedCertifications.includes(certificate) ? "checked" : ""}`}><input type="checkbox" checked={selectedCertifications.includes(certificate)} onChange={(event) => toggleCertification(certificate, event.currentTarget.checked)} /><span><Check size={16} />{certificate}</span></label>)}
         </div>
         <div className="two-columns certification-validity">
           <label className="field required-field"><span>Caducidad más próxima</span><input required type="date" value={review.certificateExpiry} onInput={(event) => update("certificateExpiry", event.currentTarget.value)} /></label>

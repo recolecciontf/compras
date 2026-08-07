@@ -294,7 +294,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
 
 export class ArchiveUnavailableError extends Error {
   constructor() {
-    super("El archivo central de contratos no está disponible en este momento.");
+    super("El archivo central de contratos no está disponible. El PDF no se ha marcado como archivado ni firmado; vuelve a intentarlo cuando se restablezca el servicio.");
     this.name = "ArchiveUnavailableError";
   }
 }
@@ -450,15 +450,21 @@ export class WorkbookClient {
     });
     if (!response.ok) {
       const detail = (await response.json().catch(() => ({}))) as ApiError;
-      if (response.status === 404) throw new ArchiveUnavailableError();
+      if (response.status === 404 || response.status === 503 || detail.error?.includes("archivo central")) {
+        throw new ArchiveUnavailableError();
+      }
       throw new Error(detail.error || "No se ha podido archivar el contrato firmado.");
     }
-    return response.json() as Promise<{
+    const archived = await response.json() as {
       archiveId: string;
       archiveFilename: string;
       archivedAt: string;
       emailStatus: "sent" | "pending_configuration" | "failed";
-    }>;
+    };
+    if (!archived.archiveId || !archived.archiveFilename || !archived.archivedAt) {
+      throw new Error("El servidor no ha confirmado el archivo del contrato. El expediente no se ha modificado.");
+    }
+    return archived;
   }
 
   async archivedContract(archiveId: string) {
