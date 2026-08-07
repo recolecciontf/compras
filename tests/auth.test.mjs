@@ -152,3 +152,22 @@ test("archiva y descarga una copia firmada sin exponerla públicamente", async (
   assert.match(download.headers.get("content-disposition"), /contrato-firmado\.pdf/);
   assert.equal(await download.text(), "contrato firmado");
 });
+
+test("rechaza el contrato si el archivo central no está configurado", async () => {
+  const envWithoutArchive = { ...env, CONTRACT_FILES: undefined };
+  const login = await worker.fetch(new Request("https://app.example/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  }), envWithoutArchive);
+  const { token } = await login.json();
+  const form = new FormData();
+  form.set("file", new Blob(["contrato firmado"], { type: "application/pdf" }), "contrato-firmado.pdf");
+  const upload = await worker.fetch(new Request("https://app.example/api/contract-files", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  }), envWithoutArchive);
+  assert.equal(upload.status, 500);
+  assert.match((await upload.json()).error, /archivo central/);
+});
