@@ -116,7 +116,7 @@ function MaterialFields({
         <label className="field required-field"><span>Kg previstos</span><input required disabled={disabled} type="number" min="0.01" step="0.01" inputMode="decimal" value={item.expectedKg} onChange={(event) => update("expectedKg", event.target.value)} placeholder="0" /></label>
       </div>
       <details className="parcel-details">
-        <summary>Datos de parcela para el contrato</summary>
+        <summary>Datos internos de parcela</summary>
         <div className="three-columns">
           <label className="field"><span>Situación</span><input disabled={disabled} value={item.situation} onChange={(event) => update("situation", event.target.value)} placeholder="Pedanía o ubicación" /></label>
           <label className="field"><span>Término municipal</span><input disabled={disabled} value={item.municipality} onChange={(event) => update("municipality", event.target.value)} placeholder="Municipio" /></label>
@@ -194,13 +194,13 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
       </div>
       {contractMode !== "existing" ? <>
       <div className="contract-workflow" aria-label="Flujo del contrato">
-        <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i><span>Firmar</span><i>→</i><span>Descargar</span>
+        <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i><span>Firma agricultor</span><i>→</i><span>Descargar PDF</span>
       </div>
       <div className="three-columns">
         <label className="field required-field"><span>Empresa compradora</span><select required disabled={disabled} value={contract.buyerCompany} onChange={(event) => updateContract("buyerCompany", event.target.value as ContractDetails["buyerCompany"])}><option value="">Seleccionar</option><option>MR. ORGÁNICA, S.L.</option><option>TOÑIFRUIT, S.L.</option></select></label>
         <label className="field required-field"><span>Fecha de firma</span><input required disabled={disabled} type="date" value={contract.signatureDate} onInput={(event) => updateContract("signatureDate", event.currentTarget.value)} /></label>
         <label className="field"><span>N.º de contrato</span><input disabled={disabled} value={contract.contractNumber} onChange={(event) => updateContract("contractNumber", event.target.value)} placeholder="Si se deja vacío se usa el expediente" /></label>
-        <div className="contract-status-card"><FileText size={18} /><span><strong>Estado al finalizar</strong><small>Firmado por vendedor y comprador</small></span></div>
+        <div className="contract-status-card"><FileText size={18} /><span><strong>Estado al finalizar</strong><small>Pendiente de firma digital del comprador</small></span></div>
         <label className="field required-field"><span>Inicio del contrato</span><input required disabled={disabled} type="date" value={value.contractStart} onInput={(event) => update("contractStart", event.currentTarget.value)} /></label>
         <label className="field required-field"><span>Fin del contrato</span><input required disabled={disabled} type="date" min={value.contractStart || undefined} value={value.contractEnd} onInput={(event) => update("contractEnd", event.currentTarget.value)} /></label>
       </div>
@@ -210,25 +210,20 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
         <div className="two-columns contract-data-grid">
           <label className="field required-field"><span>Representante del vendedor</span><input required disabled={disabled} value={contract.sellerRepresentative} onChange={(event) => updateContract("sellerRepresentative", event.target.value)} placeholder="Nombre y apellidos" /></label>
           <label className="field required-field"><span>DNI del representante</span><input required disabled={disabled} value={contract.sellerDni} onChange={(event) => updateContract("sellerDni", event.target.value)} /></label>
-          <label className="field required-field"><span>Representante de la empresa</span><input required disabled={disabled} value={contract.buyerRepresentative} onChange={(event) => updateContract("buyerRepresentative", event.target.value)} placeholder="Nombre y apellidos" /></label>
           <label className="field required-field"><span>Correo del agricultor</span><input required disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} placeholder="agricultor@correo.es" /></label>
           <label className="field required-field"><span>Correo de la empresa</span><input required disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} placeholder="compras@empresa.es" /></label>
           <label className="field required-field field-span"><span>Domicilio del vendedor</span><input required disabled={disabled} value={contract.sellerAddress} onChange={(event) => updateContract("sellerAddress", event.target.value)} /></label>
           <label className="field required-field"><span>Código operador ecológico</span><input required disabled={disabled} value={contract.organicOperatorCode} onChange={(event) => updateContract("organicOperatorCode", event.target.value)} /></label>
           <label className="field"><span>Código certificadora</span><input disabled={disabled} value={contract.certifierCode} onChange={(event) => updateContract("certifierCode", event.target.value)} /></label>
           {hasAilimpoSpecies && <label className="field"><span>Registro AILIMPO / REGEPA</span><input disabled={disabled} value={contract.ailimpoRegepaCode} onChange={(event) => updateContract("ailimpoRegepaCode", event.target.value)} /></label>}
-          <label className="field required-field"><span>Modalidad</span><select required disabled={disabled} value={contract.modality} onChange={(event) => updateContract("modality", event.target.value as ContractDetails["modality"])}><option value="">Seleccionar</option><option>A KILOS</option><option>POR TANTO</option></select></label>
-          <label className="field required-field"><span>Recolección por cuenta de</span><select required disabled={disabled} value={contract.collectionBy} onChange={(event) => updateContract("collectionBy", event.target.value as ContractDetails["collectionBy"])}><option value="">Seleccionar</option><option>Vendedor</option><option>Comprador</option></select></label>
-          <label className="field required-field"><span>Transporte por cuenta de</span><select required disabled={disabled} value={contract.transportBy} onChange={(event) => updateContract("transportBy", event.target.value as ContractDetails["transportBy"])}><option value="">Seleccionar</option><option>Vendedor</option><option>Comprador</option></select></label>
-          {contract.modality === "POR TANTO"
-            ? <label className="field required-field"><span>Precio total (€)</span><input required disabled={disabled} type="number" min="0" step="0.01" inputMode="decimal" value={contract.totalPrice} onChange={(event) => updateContract("totalPrice", event.target.value)} /></label>
-            : <label className="field required-field"><span>Precio €/kg</span><input required disabled={disabled} type="number" min="0" step="0.001" inputMode="decimal" value={contract.pricePerKg} onChange={(event) => updateContract("pricePerKg", event.target.value)} /></label>}
+          <label className="field"><span>Precio €/kg</span><input disabled={disabled} type="number" min="0" step="0.001" inputMode="decimal" value={contract.pricePerKg} onChange={(event) => updateContract("pricePerKg", event.target.value)} placeholder="Completar este precio o el total" /></label>
+          <label className="field"><span>Precio total (€)</span><input disabled={disabled} type="number" min="0" step="0.01" inputMode="decimal" value={contract.totalPrice} onChange={(event) => updateContract("totalPrice", event.target.value)} placeholder="Alternativa al precio por kg" /></label>
+          <div className="field-help-card field-span"><FileText size={18} /><span><strong>Precio obligatorio:</strong> completa solo uno de los dos campos, por kilogramo o total.</span></div>
           <label className="field"><span>IVA %</span><input disabled={disabled} type="number" min="0" step="0.01" value={contract.ivaPercent} onChange={(event) => updateContract("ivaPercent", event.target.value)} /></label>
           <label className="field"><span>IRPF %</span><input disabled={disabled} type="number" min="0" step="0.01" value={contract.irpfPercent} onChange={(event) => updateContract("irpfPercent", event.target.value)} /></label>
           <label className="field"><span>Entrega a cuenta (€)</span><input disabled={disabled} type="number" min="0" step="0.01" value={contract.advancePayment} onChange={(event) => updateContract("advancePayment", event.target.value)} /></label>
           <label className="field required-field"><span>Plazo de pago (días)</span><input required disabled={disabled} type="number" min="1" max="30" value={contract.paymentDays} onChange={(event) => updateContract("paymentDays", event.target.value)} /></label>
-          <label className="field"><span>Seguro de cosecha</span><input disabled={disabled} value={contract.insuranceProvider} onChange={(event) => updateContract("insuranceProvider", event.target.value)} /></label>
-          <label className="field"><span>N.º de póliza</span><input disabled={disabled} value={contract.insurancePolicy} onChange={(event) => updateContract("insurancePolicy", event.target.value)} /></label>
+          <div className="field-help-card field-span"><FileText size={18} /><span>Los apartados 1, 2 y 3 del modelo AILIMPO se dejan sin rellenar para la revisión de oficina. La aplicación solo completa los datos personales y económicos necesarios.</span></div>
         </div>
 
         <div className="destrio-box">
@@ -238,7 +233,7 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
             <label className="field required-field"><span>Defectos a destriar</span><input required disabled={disabled} value={contract.destrioDefects} onChange={(event) => updateContract("destrioDefects", event.target.value)} placeholder="Rodrejo, caracol, rozado…" /></label>
             <label className="field required-field"><span>Precio destrío €/kg</span><input required disabled={disabled} type="number" min="0" step="0.001" value={contract.destrioPrice} onChange={(event) => updateContract("destrioPrice", event.target.value)} /></label>
           </div>}
-          {contract.applyDestrio === "Sí" && <p>El generador tachará las condiciones estándar de minoración y añadirá el acuerdo de destrío, siguiendo el contrato de ejemplo.</p>}
+          {contract.applyDestrio === "Sí" && <p>El generador mantendrá intactas las condiciones estándar de minoración y añadirá el acuerdo de destrío en el espacio reservado.</p>}
         </div>
       </details>
       </> : <>
