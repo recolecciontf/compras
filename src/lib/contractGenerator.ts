@@ -9,6 +9,8 @@ const CONTENT_TYPES_NS = "http://schemas.openxmlformats.org/package/2006/content
 
 type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina";
 
+const CURRENT_AILIMPO_MODEL_END = "2026-08-31";
+
 type ContractBatch = {
   kind: ContractKind;
   materials: MaterialItem[];
@@ -229,6 +231,79 @@ function topLevelTables(document: Document) {
   return childElements(body, "tbl");
 }
 
+function wordNumber(element: Element | null | undefined, name: string) {
+  if (!element) return 0;
+  const value = Number(element.getAttributeNS(WORD_NS, name) || element.getAttribute(`w:${name}`) || "0");
+  return Number.isFinite(value) ? value : 0;
+}
+
+function setWordNumber(element: Element, name: string, value: number) {
+  element.setAttributeNS(WORD_NS, `w:${name}`, String(Math.round(value)));
+}
+
+function clampNegativeParagraphIndents(document: Document) {
+  const body = document.getElementsByTagNameNS(WORD_NS, "body")[0];
+  for (const paragraph of childElements(body, "p")) {
+    const properties = childElements(paragraph, "pPr")[0];
+    const indent = properties && childElements(properties, "ind")[0];
+    if (!indent) continue;
+
+    const hanging = Math.max(0, wordNumber(indent, "hanging"));
+    for (const attribute of ["left", "start"]) {
+      if (wordNumber(indent, attribute) < 0) setWordNumber(indent, attribute, hanging);
+    }
+    for (const attribute of ["right", "end"]) {
+      if (wordNumber(indent, attribute) < 0) setWordNumber(indent, attribute, 0);
+    }
+  }
+}
+
+function scaleTableToWidth(table: Element, targetWidth: number) {
+  const properties = childElements(table, "tblPr")[0];
+  if (!properties) return;
+  const tableWidth = childElements(properties, "tblW")[0];
+  const tableIndent = childElements(properties, "tblInd")[0];
+  if (tableIndent && wordNumber(tableIndent, "w") < 0) setWordNumber(tableIndent, "w", 0);
+
+  const grid = childElements(table, "tblGrid")[0];
+  const gridColumns = grid ? childElements(grid, "gridCol") : [];
+  const gridWidth = gridColumns.reduce((total, column) => total + wordNumber(column, "w"), 0);
+  const declaredWidth = tableWidth?.getAttributeNS(WORD_NS, "type") === "dxa" ? wordNumber(tableWidth, "w") : 0;
+  const sourceWidth = Math.max(gridWidth, declaredWidth);
+  if (!sourceWidth || sourceWidth <= targetWidth) return;
+
+  const ratio = targetWidth / sourceWidth;
+  if (tableWidth) {
+    tableWidth.setAttributeNS(WORD_NS, "w:type", "dxa");
+    setWordNumber(tableWidth, "w", targetWidth);
+  }
+  gridColumns.forEach((column) => setWordNumber(column, "w", Math.max(1, wordNumber(column, "w") * ratio)));
+  for (const row of rows(table)) {
+    for (const cell of cells(row)) {
+      const cellProperties = childElements(cell, "tcPr")[0];
+      const cellWidth = cellProperties && childElements(cellProperties, "tcW")[0];
+      if (cellWidth?.getAttributeNS(WORD_NS, "type") === "dxa") {
+        setWordNumber(cellWidth, "w", Math.max(1, wordNumber(cellWidth, "w") * ratio));
+      }
+    }
+  }
+}
+
+function stabilizeAilimpoLayout(document: Document) {
+  const sections = Array.from(document.getElementsByTagNameNS(WORD_NS, "sectPr"));
+  const section = sections.at(-1);
+  if (!section) return;
+  const pageSize = childElements(section, "pgSz")[0];
+  const margins = childElements(section, "pgMar")[0];
+  const contentWidth = wordNumber(pageSize, "w") - wordNumber(margins, "left") - wordNumber(margins, "right");
+  if (contentWidth <= 0) return;
+
+  // El modelo usa sangrías negativas que reducen el margen visual a casi la mitad.
+  // El PDF debe respetar los márgenes A4 declarados por el propio documento.
+  clampNegativeParagraphIndents(document);
+  topLevelTables(document).forEach((table) => scaleTableToWidth(table, contentWidth));
+}
+
 function rows(table: Element) {
   return childElements(table, "tr");
 }
@@ -336,6 +411,8 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
       setParagraph(otherAgreements, `${original.trim()} ${purchase.otherAgreements.trim()}`, original.slice(0, original.indexOf(":") + 1), 15);
     }
   }
+
+  if (isAilimpo) stabilizeAilimpoLayout(document);
 }
 
 function safeFilename(value: string) {
@@ -418,6 +495,13 @@ function validateContractGeneration(purchase: PurchaseForm) {
   }
   if (details.applyDestrio === "Sí" && (!details.destrioLocation || !details.destrioDefects || !details.destrioPrice)) {
     throw new Error("Completa el lugar, los defectos y el precio del destrío.");
+  }
+  const usesAilimpoModel = purchase.materials.some((material) => {
+    const kind = contractKind(material.crop);
+    return kind === "limon" || kind === "pomelo";
+  });
+  if (usesAilimpoModel && [details.signatureDate, purchase.contractStart, purchase.contractEnd].some((date) => date > CURRENT_AILIMPO_MODEL_END)) {
+    throw new Error("Este modelo AILIMPO solo cubre hasta el 31/08/2026. Para la campaña 2026/2027 debe cargarse el contrato homologado vigente desde el 01/09/2026.");
   }
 }
 
