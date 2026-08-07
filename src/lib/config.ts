@@ -1,7 +1,7 @@
 import type { AppConfig } from "../types";
 
 export const EMPTY_CONFIG: AppConfig = {
-  apiBaseUrl: "https://compras-de-campo-tonifruit.ykarim16.chatgpt.site",
+  apiBaseUrl: "https://compras-campo-tonifruit.rrhh-0223.chatgpt.site",
 };
 
 export async function loadConfig(): Promise<AppConfig> {
