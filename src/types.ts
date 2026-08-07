@@ -62,9 +62,7 @@ export type ContractDetails = {
 
 export type ContractSignatures = {
   sellerDataUrl: string;
-  buyerDataUrl: string;
   sellerName: string;
-  buyerName: string;
   signedAt: string;
 };
 

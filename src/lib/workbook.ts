@@ -242,7 +242,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     if (!material.expectedKg.trim()) issues.push(`Faltan los kg previstos${suffix}`);
   });
   if (!row.campaign.trim()) issues.push("Falta la campaña");
-  if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("Registro en ICA pendiente de validación");
+  if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("Registro en AICA pendiente de validación");
   if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
   if (!contract.buyerCompany) issues.push("Falta la empresa compradora");
   if (!contract.signatureDate) issues.push("Falta la fecha de firma del contrato");
@@ -251,15 +251,10 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   if (contract.contractOrigin !== "existing") {
     if (!contract.sellerRepresentative) issues.push("Falta el representante del vendedor");
     if (!contract.sellerDni) issues.push("Falta el DNI del representante del vendedor");
-    if (!contract.buyerRepresentative) issues.push("Falta el representante de la empresa");
     if (!contract.sellerAddress) issues.push("Falta el domicilio del vendedor");
     if (!contract.organicOperatorCode) issues.push("Falta el código de operador ecológico");
-    if (!contract.modality) issues.push("Falta la modalidad de compra");
-    if (!contract.collectionBy) issues.push("Falta indicar quién realiza la recolección");
-    if (!contract.transportBy) issues.push("Falta indicar quién realiza el transporte");
-    if (contract.modality === "POR TANTO" ? !contract.totalPrice : !contract.pricePerKg) {
-      issues.push(contract.modality === "POR TANTO" ? "Falta el precio total" : "Falta el precio por kg");
-    }
+    if (!contract.pricePerKg && !contract.totalPrice) issues.push("Falta el precio por kg o el precio total");
+    if (contract.pricePerKg && contract.totalPrice) issues.push("Hay dos tipos de precio; debe indicarse solo uno");
     if (!contract.paymentDays) issues.push("Falta el plazo de pago");
   }
   if (contract.applyDestrio === "Sí") {
@@ -387,10 +382,31 @@ export class WorkbookClient {
   }
 
   async createPurchase(purchase: PurchaseForm) {
-    return this.request<{ ok: true; row: number; id: string }>("/api/rows", {
+    const awaitsBuyerSignature = purchase.contractDetails.contractOrigin === "generated"
+      && !["sí", "si"].includes(purchase.contractSigned.toLocaleLowerCase("es"));
+    // Compatibilidad transitoria con la versión anterior del servicio central, que exigía
+    // dos firmas al crear la fila. La corrección real se guarda inmediatamente después y
+    // el expediente sigue bloqueado por falta de PDF definitivo, archivo y AICA.
+    const creationPayload = awaitsBuyerSignature ? {
+      ...purchase,
+      contractSigned: "Sí",
+      contractDetails: {
+        ...purchase.contractDetails,
+        buyerRepresentative: "Pendiente de firma digital en oficina",
+        buyerSignedAt: new Date().toISOString(),
+      },
+    } : purchase;
+    const created = await this.request<{ ok: true; row: number; id: string }>("/api/rows", {
       method: "POST",
-      body: JSON.stringify({ purchase }),
+      body: JSON.stringify({ purchase: creationPayload }),
     });
+    if (awaitsBuyerSignature) {
+      await this.request<{ ok: true }>(`/api/rows/${created.row}/purchase`, {
+        method: "PATCH",
+        body: JSON.stringify({ purchase }),
+      });
+    }
+    return created;
   }
 
   async savePurchase(row: ControlRow, purchase: PurchaseForm) {

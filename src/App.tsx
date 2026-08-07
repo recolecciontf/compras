@@ -461,40 +461,53 @@ export default function App() {
       if (demoMode) {
         preparedPurchase = {
           ...nextPurchase,
-          documentPath: "Archivo central de demostración",
+          documentPath: contractSubmission.mode === "existing" ? "Archivo central de demostración" : "Pendiente de firma digital y archivo",
           contractDetails: {
             ...nextPurchase.contractDetails,
-            archiveId: crypto.randomUUID(),
-            archiveFilename: contractSubmission.mode === "existing" ? contractSubmission.file.name : "contrato-firmado-demo.docx",
-            archivedAt: new Date().toISOString(),
+            archiveId: contractSubmission.mode === "existing" ? crypto.randomUUID() : "",
+            archiveFilename: contractSubmission.mode === "existing" ? contractSubmission.file.name : "contrato-pendiente-demo.pdf",
+            archivedAt: contractSubmission.mode === "existing" ? new Date().toISOString() : "",
             emailStatus: "pending_configuration",
           },
         };
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
-        const artifact = contractSubmission.mode === "existing"
-          ? { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name }
-          : await generateContractPackage(nextPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
-        let archived;
-        try {
-          archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
-        } catch (reason) {
-          if (!(reason instanceof ArchiveUnavailableError)) throw reason;
+        if (contractSubmission.mode === "generated") {
+          const artifact = await generateContractPackage(nextPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
           triggerDownload(artifact.blob, artifact.filename);
-          archived = {
-            archiveId: "",
-            archiveFilename: artifact.filename,
-            archivedAt: "",
-            emailStatus: "pending_configuration" as const,
+          preparedPurchase = {
+            ...nextPurchase,
+            documentPath: "Pendiente de firma digital del comprador y archivo central",
+            contractDetails: {
+              ...nextPurchase.contractDetails,
+              archiveId: "",
+              archiveFilename: artifact.filename,
+              archivedAt: "",
+              emailStatus: "pending_configuration",
+            },
+          };
+        } else {
+          const artifact = { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name };
+          let archived;
+          try {
+            archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
+          } catch (reason) {
+            if (!(reason instanceof ArchiveUnavailableError)) throw reason;
+            archived = {
+              archiveId: "",
+              archiveFilename: artifact.filename,
+              archivedAt: "",
+              emailStatus: "pending_configuration" as const,
+            };
+          }
+          preparedPurchase = {
+            ...nextPurchase,
+            documentPath: archived.archiveId
+              ? `Archivo central: ${archived.archiveFilename}`
+              : `Pendiente de archivar: ${archived.archiveFilename}`,
+            contractDetails: { ...nextPurchase.contractDetails, ...archived },
           };
         }
-        preparedPurchase = {
-          ...nextPurchase,
-          documentPath: archived.archiveId
-            ? `Archivo central: ${archived.archiveFilename}`
-            : `Pendiente de archivar: ${archived.archiveFilename}`,
-          contractDetails: { ...nextPurchase.contractDetails, ...archived },
-        };
       }
 
       let createdIndex: number;
@@ -543,7 +556,9 @@ export default function App() {
         setSelectedIndex(createdIndex);
       }
       setLastSyncedAt(new Date());
-      setToast(preparedPurchase.contractDetails.emailStatus === "sent"
+      setToast(contractSubmission.mode === "generated"
+        ? "Compra creada y PDF descargado. Pendiente de firma digital del comprador, archivo y AICA."
+        : preparedPurchase.contractDetails.emailStatus === "sent"
         ? "Compra creada, contrato archivado y copias enviadas."
         : preparedPurchase.contractDetails.archiveId
           ? "Compra creada y contrato firmado archivado."
@@ -590,7 +605,7 @@ export default function App() {
         return;
       }
       const count = await downloadContracts(purchase, (name) => client.contractTemplate(name));
-      setToast(count === 1 ? "Contrato Word descargado" : `${count} contratos incluidos en el ZIP`);
+      setToast(count === 1 ? "Contrato PDF descargado" : `${count} contratos PDF incluidos en el ZIP`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido generar el contrato.");
     } finally {
@@ -991,6 +1006,7 @@ function ReviewPanel({
 
   const hasSignedContract = ["sí", "si"].includes(purchase.contractSigned.trim().toLocaleLowerCase("es"));
   const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
+  const canAttachFinalContract = hasSignedContract || Boolean(purchase.contractDetails.sellerSignedAt);
   const selectedCertifications = review.certificateType
     .split(/[;,]/)
     .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
@@ -1051,29 +1067,29 @@ function ReviewPanel({
         />
       </fieldset>
 
-      <div className={`contract-download-panel ${hasArchivedContract ? "contract-archived" : hasSignedContract ? "contract-awaiting-file" : "contract-draft"}`}>
+      <div className={`contract-download-panel ${hasArchivedContract ? "contract-archived" : canAttachFinalContract ? "contract-awaiting-file" : "contract-draft"}`}>
         <div>
-          {hasArchivedContract ? <FileCheck2 size={21} /> : hasSignedContract ? <FileUp size={21} /> : <FileCheck2 size={21} />}
+          {hasArchivedContract ? <FileCheck2 size={21} /> : canAttachFinalContract ? <FileUp size={21} /> : <FileCheck2 size={21} />}
           <span>
-            <strong>{hasArchivedContract ? "Contrato firmado archivado" : hasSignedContract ? "Falta archivar la copia firmada" : "Contrato listo para generar"}</strong>
+            <strong>{hasArchivedContract ? "Contrato firmado archivado" : canAttachFinalContract ? "Pendiente de firma del comprador y archivo" : "Contrato listo para generar"}</strong>
             <small>
               {hasArchivedContract
                 ? `Copia central: ${purchase.contractDetails.archiveFilename || "contrato firmado"}. Disponible para los usuarios autorizados.`
-                : hasSignedContract
-                  ? "Adjunta el PDF o Word firmado para completar el expediente y permitir su descarga."
-                  : "Se completa una copia del modelo original. Si hay varias especies, se descarga un contrato por especie."}
+                : canAttachFinalContract
+                  ? "Tras la firma digital de la empresa, adjunta el PDF definitivo. Después podrá validarse el registro en AICA."
+                  : "Se completa una copia PDF estable del modelo original. Si hay varias especies, se descarga un contrato por especie."}
             </small>
           </span>
         </div>
         {hasArchivedContract ? (
           <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Descargando…" : "Descargar contrato firmado"}</button>
-        ) : hasSignedContract && !readOnly ? (
+        ) : canAttachFinalContract && !readOnly ? (
           <label className={`secondary-button contract-upload-button ${saving ? "disabled" : ""}`}>
             <FileUp size={18} /> {saving ? "Archivando…" : "Adjuntar contrato firmado"}
             <input
               type="file"
               disabled={saving}
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".pdf,application/pdf"
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.currentTarget.value = "";
@@ -1081,8 +1097,8 @@ function ReviewPanel({
               }}
             />
           </label>
-        ) : !hasSignedContract ? (
-          <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador Word"}</button>
+        ) : !canAttachFinalContract ? (
+          <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador PDF"}</button>
         ) : null}
       </div>
 
@@ -1103,11 +1119,11 @@ function ReviewPanel({
       )}
 
       <fieldset disabled={readOnly}>
-        <legend><span className="step-number">1</span><span>Planificación, finca e ICA<small>Comprobaciones posteriores a la firma y anteriores al corte</small></span></legend>
+        <legend><span className="step-number">1</span><span>Planificación, finca y AICA<small>Comprobaciones posteriores a la firma y anteriores al corte</small></span></legend>
         <div className="three-columns">
           <label className="field required-field"><span>Fecha prevista de corte</span><input required type="date" value={review.plannedCutDate} min={purchase.contractStart || undefined} max={purchase.contractEnd || undefined} onInput={(event) => update("plannedCutDate", event.currentTarget.value)} /></label>
           <label className="field required-field"><span>Finca / parcela comprobada</span><select required value={review.farmChecked} onChange={(event) => update("farmChecked", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option></select></label>
-          <label className="field required-field"><span>Situación en ICA</span><select required value={purchase.registeredIca || "Pendiente"} onChange={(event) => updatePurchase("registeredIca", event.target.value)}><option value="Pendiente">Pendiente de alta o validación</option><option value="Sí">Sí, registrado</option><option value="No">No registrado</option></select></label>
+          <label className="field required-field"><span>Situación en AICA</span><select required value={purchase.registeredIca || "Pendiente"} onChange={(event) => updatePurchase("registeredIca", event.target.value)}><option value="Pendiente">Pendiente de alta o validación</option><option value="Sí">Sí, registrado</option><option value="No">No registrado</option></select></label>
         </div>
       </fieldset>
 
