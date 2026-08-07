@@ -268,13 +268,10 @@ async function archiveContract(request: Request, env: Env) {
   if (file.size <= 0 || file.size > 10 * 1024 * 1024) throw new InputError("El contrato debe ocupar entre 1 byte y 10 MB.");
   const allowed = [
     "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/msword",
-    "application/zip",
     "application/octet-stream",
   ];
-  if (file.type && !allowed.includes(file.type)) throw new InputError("El contrato debe ser un PDF, Word o ZIP generado por la aplicación.");
-  if (!/\.(pdf|docx?|zip)$/i.test(file.name)) throw new InputError("El archivo debe tener extensión PDF, DOC, DOCX o ZIP.");
+  if (file.type && !allowed.includes(file.type)) throw new InputError("El contrato firmado debe ser un PDF.");
+  if (!/\.pdf$/i.test(file.name)) throw new InputError("El archivo debe tener extensión PDF.");
 
   const metadata = {
     filename: safeContractFilename(file.name),
@@ -429,9 +426,10 @@ async function ensureSheetSchema(env: Env) {
   const headerRange = `'${sheetName(env)}'!AF${headerRow}:AI${headerRow}`;
   const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(headerRange)}`;
   const current = await sheetsRequest<{ values?: unknown[][] }>(env, headerUrl);
-  const proposed = ["Materias primas (JSON)", "Registrado en ICA", "Certificaciones (reservado)", "Datos contrato (JSON)"];
+  const proposed = ["Materias primas (JSON)", "Registrado en AICA", "Certificaciones (reservado)", "Datos contrato (JSON)"];
   const headers = proposed.map((header, index) => {
     const existing = String(current.values?.[0]?.[index] ?? "").trim();
+    if (existing === "Registrado en ICA") return "Registrado en AICA";
     return !existing || /^Column \d+$/i.test(existing) ? header : existing;
   });
   await sheetsRequest(env, `${headerUrl}?valueInputOption=RAW`, {
@@ -502,8 +500,9 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     if (!purchase.materials.length) throw new InputError("Añade al menos una especie y variedad.");
     const incompleteMaterial = purchase.materials.find((item) => !item.crop || !item.variety || !item.expectedKg);
     if (incompleteMaterial) throw new InputError("Completa la especie, variedad y kg de todas las materias primas.");
-    if (!["sí", "si"].includes(purchase.contractSigned.toLocaleLowerCase("es"))) {
-      throw new InputError("La compra solo puede crearse después de firmar el contrato.");
+    const signed = ["sí", "si"].includes(purchase.contractSigned.toLocaleLowerCase("es"));
+    if (purchase.contractDetails.contractOrigin === "existing" && !signed) {
+      throw new InputError("El contrato existente debe estar firmado antes de crear la compra.");
     }
     const commonContractFields = [
       ["buyerCompany", "empresa compradora"], ["signatureDate", "fecha de firma"],
@@ -512,13 +511,16 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,
       ["sellerRepresentative", "representante del vendedor"], ["sellerDni", "DNI del representante"],
-      ["buyerRepresentative", "representante de la empresa"], ["sellerAddress", "domicilio del vendedor"],
-      ["organicOperatorCode", "código de operador ecológico"], ["modality", "modalidad"],
-      ["collectionBy", "responsable de recolección"], ["transportBy", "responsable de transporte"],
-      ["paymentDays", "plazo de pago"], ["sellerSignedAt", "firma del vendedor"], ["buyerSignedAt", "firma del comprador"],
+      ["sellerAddress", "domicilio del vendedor"], ["organicOperatorCode", "código de operador ecológico"],
+      ["paymentDays", "plazo de pago"], ["sellerSignedAt", "firma del vendedor"],
     ];
     if (purchase.contractDetails.contractOrigin !== "existing") {
-      requiredContractFields.push(purchase.contractDetails.modality === "POR TANTO" ? ["totalPrice", "precio total"] : ["pricePerKg", "precio por kg"]);
+      if (!purchase.contractDetails.pricePerKg && !purchase.contractDetails.totalPrice) {
+        requiredContractFields.push(["pricePerKg", "precio por kg o precio total"]);
+      }
+      if (purchase.contractDetails.pricePerKg && purchase.contractDetails.totalPrice) {
+        throw new InputError("Indica solo un tipo de precio: precio por kg o precio total.");
+      }
     }
     const missingContract = requiredContractFields.filter(([key]) => !purchase.contractDetails[key]).map(([, label]) => label);
     if (missingContract.length) throw new InputError(`Faltan datos del contrato: ${missingContract.join(", ")}.`);
