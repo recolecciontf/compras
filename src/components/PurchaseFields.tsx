@@ -186,6 +186,7 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
         ))}
       </div>
       <button className="add-material-button" type="button" disabled={disabled} onClick={() => changeMaterials((materials) => [...materials, emptyMaterial({ municipality: value.municipality })])}><Plus size={18} /> Añadir especie o variedad</button>
+      <span className="catalog-source-note">El modelo contractual se selecciona por especie. Cada variedad se rellena en su campo dentro del mismo contrato.</span>
 
       <div className="field-section-heading section-divider">
         <span>3</span>
