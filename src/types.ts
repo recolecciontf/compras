@@ -23,6 +23,7 @@ export type MaterialItem = {
 };
 
 export type ContractDetails = {
+  contractOrigin: "" | "existing" | "generated";
   buyerCompany: "" | "MR. ORGÁNICA, S.L." | "TOÑIFRUIT, S.L.";
   signatureDate: string;
   contractNumber: string;
@@ -47,6 +48,24 @@ export type ContractDetails = {
   destrioLocation: "" | "Campo" | "Almacén";
   destrioDefects: string;
   destrioPrice: string;
+  sellerEmail: string;
+  companyEmail: string;
+  buyerRepresentative: string;
+  archiveId: string;
+  archiveFilename: string;
+  archivedAt: string;
+  emailStatus: "" | "sent" | "pending_configuration" | "failed";
+  sellerSignedAt: string;
+  buyerSignedAt: string;
+  signatureMethod: "" | "uploaded" | "in_app";
+};
+
+export type ContractSignatures = {
+  sellerDataUrl: string;
+  buyerDataUrl: string;
+  sellerName: string;
+  buyerName: string;
+  signedAt: string;
 };
 
 export type ControlRow = {

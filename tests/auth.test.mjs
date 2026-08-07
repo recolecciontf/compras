@@ -4,6 +4,7 @@ import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
 const { default: worker } = await import(workerUrl.href);
+const storedContracts = new Map();
 
 const env = {
   ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
@@ -16,6 +17,14 @@ const env = {
   GOOGLE_SERVICE_ACCOUNT_EMAIL: "unused@example.invalid",
   GOOGLE_PRIVATE_KEY: "unused",
   GOOGLE_SPREADSHEET_ID: "unused",
+  CONTRACT_FILES: {
+    async put(key, body, options) {
+      storedContracts.set(key, { body, ...options });
+    },
+    async get(key) {
+      return storedContracts.get(key) || null;
+    },
+  },
 };
 
 function api(path, init = {}) {
@@ -108,4 +117,38 @@ test("solo permite archivar compras con corte y kilos", async () => {
   });
   assert.equal(archive.status, 400);
   assert.match((await archive.json()).error, /Solo se puede archivar/);
+});
+
+test("archiva y descarga una copia firmada sin exponerla públicamente", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const form = new FormData();
+  form.set("file", new Blob(["contrato firmado"], { type: "application/pdf" }), "contrato-firmado.pdf");
+  form.set("provider", "Agricultor de prueba");
+  form.set("sellerEmail", "agricultor@example.test");
+  form.set("companyEmail", "compras@example.test");
+  form.set("contractNumber", "CMP-TEST-001");
+  const upload = await api("/api/contract-files", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  assert.equal(upload.status, 201);
+  const archived = await upload.json();
+  assert.equal(archived.archiveFilename, "contrato-firmado.pdf");
+  assert.equal(archived.emailStatus, "pending_configuration");
+
+  const unauthenticated = await api(`/api/contract-files/${archived.archiveId}`);
+  assert.equal(unauthenticated.status, 401);
+
+  const download = await api(`/api/contract-files/${archived.archiveId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(download.status, 200);
+  assert.match(download.headers.get("content-disposition"), /contrato-firmado\.pdf/);
+  assert.equal(await download.text(), "contrato firmado");
 });

@@ -2,6 +2,15 @@ import { STATIC_ASSETS } from "./static-assets.generated";
 import { CONTRACT_ASSETS } from "./contract-assets.generated";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
+type ContractObject = {
+  body: ReadableStream;
+  httpMetadata?: { contentType?: string };
+  customMetadata?: Record<string, string>;
+};
+type ContractBucket = {
+  put(key: string, value: ArrayBuffer, options?: { httpMetadata?: { contentType?: string }; customMetadata?: Record<string, string> }): Promise<unknown>;
+  get(key: string): Promise<ContractObject | null>;
+};
 
 interface Env {
   ASSETS?: Fetcher;
@@ -18,6 +27,9 @@ interface Env {
   GOOGLE_DATA_START_ROW?: string;
   GOOGLE_DATA_END_ROW?: string;
   CONTRACT_TEMPLATE_KEY: string;
+  CONTRACT_FILES?: ContractBucket;
+  CONTRACT_EMAIL_WEBHOOK_URL?: string;
+  CONTRACT_EMAIL_WEBHOOK_TOKEN?: string;
 }
 
 type UserRole = "admin" | "viewer";
@@ -219,6 +231,87 @@ async function contractTemplate(name: string, env: Env) {
   return crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes.slice(0, 12) }, key, bytes.slice(12));
 }
 
+function safeContractFilename(value: string) {
+  const cleaned = value.replace(/[\r\n"\\/:*?<>|]+/g, "-").replace(/\s+/g, " ").trim();
+  return (cleaned || "contrato-firmado").slice(0, 180);
+}
+
+async function sendContractCopies(
+  env: Env,
+  bytes: ArrayBuffer,
+  metadata: { filename: string; contentType: string; provider: string; sellerEmail: string; companyEmail: string; contractNumber: string },
+) {
+  if (!env.CONTRACT_EMAIL_WEBHOOK_URL) return "pending_configuration" as const;
+  try {
+    const form = new FormData();
+    form.set("file", new Blob([bytes], { type: metadata.contentType }), metadata.filename);
+    form.set("provider", metadata.provider);
+    form.set("sellerEmail", metadata.sellerEmail);
+    form.set("companyEmail", metadata.companyEmail);
+    form.set("contractNumber", metadata.contractNumber);
+    const response = await fetch(env.CONTRACT_EMAIL_WEBHOOK_URL, {
+      method: "POST",
+      headers: env.CONTRACT_EMAIL_WEBHOOK_TOKEN ? { Authorization: `Bearer ${env.CONTRACT_EMAIL_WEBHOOK_TOKEN}` } : undefined,
+      body: form,
+    });
+    return response.ok ? "sent" as const : "failed" as const;
+  } catch {
+    return "failed" as const;
+  }
+}
+
+async function archiveContract(request: Request, env: Env) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const form = await request.formData();
+  const file = form.get("file");
+  if (!(file instanceof File)) throw new InputError("Adjunta el contrato firmado.");
+  if (file.size <= 0 || file.size > 10 * 1024 * 1024) throw new InputError("El contrato debe ocupar entre 1 byte y 10 MB.");
+  const allowed = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "application/zip",
+    "application/octet-stream",
+  ];
+  if (file.type && !allowed.includes(file.type)) throw new InputError("El contrato debe ser un PDF, Word o ZIP generado por la aplicación.");
+  if (!/\.(pdf|docx?|zip)$/i.test(file.name)) throw new InputError("El archivo debe tener extensión PDF, DOC, DOCX o ZIP.");
+
+  const metadata = {
+    filename: safeContractFilename(file.name),
+    contentType: file.type || "application/octet-stream",
+    provider: String(form.get("provider") || "").trim().slice(0, 180),
+    sellerEmail: String(form.get("sellerEmail") || "").trim().slice(0, 254),
+    companyEmail: String(form.get("companyEmail") || "").trim().slice(0, 254),
+    contractNumber: String(form.get("contractNumber") || "").trim().slice(0, 80),
+  };
+  if (!metadata.provider) throw new InputError("Falta identificar al agricultor o proveedor.");
+  if (!metadata.sellerEmail || !metadata.companyEmail) throw new InputError("Indica el correo del agricultor y el correo de la empresa.");
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(metadata.sellerEmail) || !emailPattern.test(metadata.companyEmail)) {
+    throw new InputError("Revisa el formato del correo del agricultor y del correo de la empresa.");
+  }
+
+  const bytes = await file.arrayBuffer();
+  const archiveId = crypto.randomUUID();
+  const archivedAt = new Date().toISOString();
+  const putArchive = (emailStatus: "sent" | "pending_configuration" | "failed") => env.CONTRACT_FILES!.put(archiveId, bytes, {
+    httpMetadata: { contentType: metadata.contentType },
+    customMetadata: {
+      filename: metadata.filename,
+      provider: metadata.provider,
+      sellerEmail: metadata.sellerEmail,
+      companyEmail: metadata.companyEmail,
+      contractNumber: metadata.contractNumber,
+      archivedAt,
+      emailStatus,
+    },
+  });
+  await putArchive("pending_configuration");
+  const emailStatus = await sendContractCopies(env, bytes, metadata);
+  if (emailStatus !== "pending_configuration") await putArchive(emailStatus);
+  return { archiveId, archiveFilename: metadata.filename, archivedAt, emailStatus };
+}
+
 function embeddedAssetPath(pathname: string) {
   if (pathname === "/" || pathname === "/index.html") return "/index.html";
   if (pathname === "/compras" || pathname === "/compras/") return "/index.html";
@@ -410,19 +503,25 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     if (!purchase.materials.length) throw new InputError("Añade al menos una especie y variedad.");
     const incompleteMaterial = purchase.materials.find((item) => !item.crop || !item.variety || !item.expectedKg);
     if (incompleteMaterial) throw new InputError("Completa la especie, variedad y kg de todas las materias primas.");
-    const requiredContractFields = [
-      ["buyerCompany", "empresa compradora"],
-      ["signatureDate", "fecha de firma"],
-      ["sellerRepresentative", "representante del vendedor"],
-      ["sellerDni", "DNI del representante"],
-      ["sellerAddress", "domicilio del vendedor"],
-      ["organicOperatorCode", "código de operador ecológico"],
-      ["modality", "modalidad"],
-      ["collectionBy", "responsable de recolección"],
-      ["transportBy", "responsable de transporte"],
-      ["paymentDays", "plazo de pago"],
+    if (!["sí", "si"].includes(purchase.contractSigned.toLocaleLowerCase("es"))) {
+      throw new InputError("La compra solo puede crearse después de firmar y archivar el contrato.");
+    }
+    const commonContractFields = [
+      ["buyerCompany", "empresa compradora"], ["signatureDate", "fecha de firma"],
+      ["sellerEmail", "correo del agricultor"], ["companyEmail", "correo de la empresa"],
+      ["archiveId", "copia firmada archivada"],
     ];
-    requiredContractFields.push(purchase.contractDetails.modality === "POR TANTO" ? ["totalPrice", "precio total"] : ["pricePerKg", "precio por kg"]);
+    const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
+      ...commonContractFields,
+      ["sellerRepresentative", "representante del vendedor"], ["sellerDni", "DNI del representante"],
+      ["buyerRepresentative", "representante de la empresa"], ["sellerAddress", "domicilio del vendedor"],
+      ["organicOperatorCode", "código de operador ecológico"], ["modality", "modalidad"],
+      ["collectionBy", "responsable de recolección"], ["transportBy", "responsable de transporte"],
+      ["paymentDays", "plazo de pago"], ["sellerSignedAt", "firma del vendedor"], ["buyerSignedAt", "firma del comprador"],
+    ];
+    if (purchase.contractDetails.contractOrigin !== "existing") {
+      requiredContractFields.push(purchase.contractDetails.modality === "POR TANTO" ? ["totalPrice", "precio total"] : ["pricePerKg", "precio por kg"]);
+    }
     const missingContract = requiredContractFields.filter(([key]) => !purchase.contractDetails[key]).map(([, label]) => label);
     if (missingContract.length) throw new InputError(`Faltan datos del contrato: ${missingContract.join(", ")}.`);
     if (purchase.contractDetails.applyDestrio === "Sí") {
@@ -606,6 +705,27 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
+  }
+
+  if (url.pathname === "/api/contract-files" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos." }, 403);
+    return json(request, env, await archiveContract(request, env), 201);
+  }
+
+  const archivedContractMatch = url.pathname.match(/^\/api\/contract-files\/([0-9a-f-]{36})$/i);
+  if (archivedContractMatch && request.method === "GET") {
+    if (!env.CONTRACT_FILES) return json(request, env, { error: "El archivo central de contratos no está configurado." }, 503);
+    const object = await env.CONTRACT_FILES.get(archivedContractMatch[1]);
+    if (!object) return json(request, env, { error: "No se ha encontrado la copia firmada del contrato." }, 404);
+    const filename = safeContractFilename(object.customMetadata?.filename || "contrato-firmado");
+    return new Response(object.body, {
+      headers: {
+        "Content-Type": object.httpMetadata?.contentType || "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        "Cache-Control": "private, no-store",
+        ...corsHeaders(request, env),
+      },
+    });
   }
 
   const templateMatch = url.pathname.match(/^\/api\/contract-templates\/([a-z0-9-]+\.docx)$/);
