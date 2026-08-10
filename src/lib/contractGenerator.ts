@@ -391,9 +391,14 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
 
   const sellerParagraph = findParagraph(document, (text) => text.trimStart().startsWith("Vendedor:"));
   if (sellerParagraph) {
+    const representative = details.sellerRepresentative.trim();
+    const address = details.sellerAddress.trim();
+    const sellerIdentity = representative
+      ? `D. ${representative}, con DNI ${details.sellerDni.trim() || "__________"}, mayor de edad${address ? `, con domicilio en ${address}` : ""}, en representación y con poderes suficientes de ${purchase.provider}, con NIF ${purchase.taxId}${address ? `, domiciliada en ${address}` : ""}, en adelante vendedor.`
+      : `${purchase.provider}, con NIF ${purchase.taxId}${address ? `, con domicilio en ${address}` : ""}, en adelante vendedor.`;
     const sellerText = isAilimpo
-      ? `Vendedor: D. ${details.sellerRepresentative}, con DNI ${details.sellerDni}, mayor de edad, con domicilio en ${details.sellerAddress}, en representación y con poderes suficientes de ${purchase.provider}, con NIF ${purchase.taxId}, domiciliada en ${details.sellerAddress}, en adelante vendedor. Con número de operador ecológico: ${details.organicOperatorCode}. Certificado por la autoridad u organismo de control con Código: ${details.certifierCode || "__________"}. Código registro AILIMPO/REGEPA ${details.ailimpoRegepaCode || "____________"}.`
-      : `Vendedor: D. ${details.sellerRepresentative}, con DNI ${details.sellerDni}, mayor de edad, con domicilio en ${details.sellerAddress}, en representación y con poderes suficientes de ${purchase.provider}, con NIF ${purchase.taxId}, domiciliada en ${details.sellerAddress}, en adelante vendedor. Código operador ecológico: ${details.organicOperatorCode}`;
+      ? `Vendedor: ${sellerIdentity} Con número de operador ecológico: ${details.organicOperatorCode.trim() || "____________"}. Certificado por la autoridad u organismo de control con Código: ${details.certifierCode.trim() || "__________"}. Código registro AILIMPO/REGEPA ${details.ailimpoRegepaCode.trim() || "____________"}.`
+      : `Vendedor: ${sellerIdentity} Código operador ecológico: ${details.organicOperatorCode.trim() || "____________"}`;
     setParagraph(sellerParagraph, sellerText, "Vendedor:", 14);
   }
 
@@ -619,10 +624,6 @@ function validateContractGeneration(purchase: PurchaseForm) {
     [purchase.contractEnd, "fin del contrato"],
     [details.buyerCompany, "empresa compradora"],
     [details.signatureDate, "fecha de firma"],
-    [details.sellerRepresentative, "representante del vendedor"],
-    [details.sellerDni, "DNI del representante"],
-    [details.sellerAddress, "domicilio del vendedor"],
-    [details.organicOperatorCode, "código de operador ecológico"],
     [details.modality, "modalidad de compraventa"],
     [details.collectionBy, "responsable de recolección"],
     [details.transportBy, "responsable de transporte"],
