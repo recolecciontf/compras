@@ -1,6 +1,6 @@
 import { Archive, ArchiveRestore, ArrowLeft, CheckCircle2, PackageCheck, Save, Scale, Wheat } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { harvestFromRow } from "../lib/workbook";
+import { harvestFromRow, isRecordCancelled } from "../lib/workbook";
 import type { ControlRow, HarvestForm } from "../types";
 
 type CutFilter = "pending" | "cut" | "archived";
@@ -40,17 +40,19 @@ export function HarvestPanel({ rows, readOnly, saving, onSave, onBack }: Props) 
   const [draft, setDraft] = useState<HarvestForm>({ cutStatus: "No", cutKgTotal: "", archived: "No" });
 
   const summary = useMemo(() => {
-    const active = rows.filter((row) => !isArchived(row));
+    const harvestRows = rows.filter((row) => !isRecordCancelled(row));
+    const active = harvestRows.filter((row) => !isArchived(row));
     const cut = active.filter(isCut);
     return {
       pending: active.length - cut.length,
       cut: cut.length,
-      archived: rows.filter(isArchived).length,
+      archived: harvestRows.filter(isArchived).length,
       totalKg: cut.reduce((total, row) => total + kg(row.cutKgTotal), 0),
     };
   }, [rows]);
 
   const visible = useMemo(() => rows.filter((row) => {
+    if (isRecordCancelled(row)) return false;
     if (filter === "archived") return isArchived(row);
     if (isArchived(row)) return false;
     return filter === "cut" ? isCut(row) : !isCut(row);
