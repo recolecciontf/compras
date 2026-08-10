@@ -36,7 +36,31 @@ function templateName(company: PurchaseForm["contractDetails"]["buyerCompany"], 
   // puntuación o acentuación. El modelo se resuelve por empresa y especie,
   // nunca por variedad.
   if (buyer.includes("organica")) return `mro-${kind}.docx`;
-  if (buyer.includes("tonifruit") && ["naranja", "mandarina"].includes(kind)) return `tonifruit-${kind}.docx`;
+  if (buyer.includes("tonifruit")) {
+    if (["naranja", "mandarina"].includes(kind)) return `tonifruit-${kind}.docx`;
+    // Los modelos AILIMPO de limón y pomelo son modelos oficiales por
+    // producto, no por comprador. Conservamos intacto el documento original
+    // y sustituimos únicamente la identificación del comprador al rellenarlo.
+    if (["limon", "pomelo"].includes(kind)) return `mro-${kind}.docx`;
+  }
+  return "";
+}
+
+function buyerParagraphText(company: PurchaseForm["contractDetails"]["buyerCompany"], isAilimpo: boolean) {
+  const buyer = normalized(company);
+  const commonRepresentative = "D. Juan Antonio Martínez Rubio, con DNI 52805756X, mayor de edad, con domicilio en 30892 Librilla (Murcia) España, en representación y con poderes suficientes de";
+  if (buyer.includes("tonifruit")) {
+    const identity = `${commonRepresentative} TOÑIFRUIT, S.L., con NIF B73636086 domiciliada en P.E. Cabecicos Blancos - C/ Molino Grande, S/N, Buzón 22 - 30892 Librilla (Murcia) España, en adelante comprador.`;
+    return isAilimpo
+      ? `Comprador: ${identity} Con número de operador ecológico: MU-3078/E. Código registro AILIMPO ____________.`
+      : `Comprador: ${identity} Con número de operador ecológico: MU-3078/E.`;
+  }
+  if (buyer.includes("organica")) {
+    const identity = `${commonRepresentative} MR. Orgánica, S.L., con NIF B73894065 domiciliada en P.E. Cabecicos Blancos - C/ Molino Grande, S/N, Buzón 31 - 30892 Librilla (Murcia) España, en adelante comprador.`;
+    return isAilimpo
+      ? `Comprador: ${identity} Con número de operador ecológico: MU-3684/E. Código registro AILIMPO ____________.`
+      : `Comprador: ${identity} Con número de operador ecológico: MU-3684/E.`;
+  }
   return "";
 }
 
@@ -336,14 +360,12 @@ function stabilizeContractLayout(document: Document) {
   if (!section) return;
   const pageSize = childElements(section, "pgSz")[0];
   const margins = childElements(section, "pgMar")[0];
-  const body = document.getElementsByTagNameNS(WORD_NS, "body")[0];
-  const topLevelParagraphs = childElements(body, "p");
-  const leftCorrection = dominantNegativeIndent(topLevelParagraphs, ["left", "start"]);
-  const rightCorrection = dominantNegativeIndent(topLevelParagraphs, ["right", "end"]);
+  if (!pageSize || !margins) return;
 
-  if (leftCorrection) setWordNumber(margins, "left", Math.max(0, wordNumber(margins, "left") - leftCorrection));
-  if (rightCorrection) setWordNumber(margins, "right", Math.max(0, wordNumber(margins, "right") - rightCorrection));
-  normalizeParagraphIndents(document, leftCorrection, rightCorrection);
+  // Los márgenes pertenecen al modelo contractual y no deben recalcularse.
+  // Únicamente anulamos sangrías negativas que sacarían texto fuera de la
+  // zona imprimible y reducimos las tablas que excedan su anchura disponible.
+  normalizeParagraphIndents(document, 0, 0);
 
   const contentWidth = wordNumber(pageSize, "w") - wordNumber(margins, "left") - wordNumber(margins, "right");
   if (contentWidth <= 0) return;
@@ -401,6 +423,10 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
       : `Vendedor: ${sellerIdentity} Código operador ecológico: ${details.organicOperatorCode.trim() || "____________"}`;
     setParagraph(sellerParagraph, sellerText, "Vendedor:", 14);
   }
+
+  const buyerParagraph = findParagraph(document, (text) => text.trimStart().startsWith("Comprador:"));
+  const buyerText = buyerParagraphText(details.buyerCompany, isAilimpo);
+  if (buyerParagraph && buyerText) setParagraph(buyerParagraph, buyerText, "Comprador:", 14);
 
   const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
   const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
