@@ -1327,15 +1327,16 @@ function ReviewPanel({
   const cancelled = isCancelled(row);
   const contractHistory = contractArchiveHistory(purchase);
 
-  function toggleCertification(certificate: string, checked: boolean) {
-    // Se calcula desde el estado más reciente para que varios toques rápidos y
-    // el autoguardado no trabajen con una selección anterior del formulario.
+  function toggleCertification(certificate: string) {
+    // El botón alterna desde el estado más reciente. Así no dependemos del
+    // estado transitorio de un checkbox oculto, que en algunos navegadores
+    // móviles podía dejar la interfaz sin responder.
     onChange((current) => {
       if (!current) return current;
       const selected = certificationSelection(current.certificateType);
-      const next = checked
-        ? selected.includes(certificate) ? selected : [...selected, certificate]
-        : selected.filter((item) => item !== certificate);
+      const next = selected.includes(certificate)
+        ? selected.filter((item) => item !== certificate)
+        : [...selected, certificate];
       return { ...current, certificateType: next.join("; ") };
     });
   }
@@ -1501,7 +1502,21 @@ function ReviewPanel({
       <fieldset disabled={readOnly || cancelled}>
         <legend><span className="step-number">4</span><span>Certificación<small>Tipo y vigencia en la fecha de corte</small></span></legend>
         <div className="certification-checks" role="group" aria-label="Certificaciones de la finca">
-          {CERTIFICATIONS.map((certificate) => <label key={certificate} className={`certification-check ${selectedCertifications.includes(certificate) ? "checked" : ""}`}><input type="checkbox" checked={selectedCertifications.includes(certificate)} onChange={(event) => toggleCertification(certificate, event.currentTarget.checked)} /><span><Check size={16} />{certificate}</span></label>)}
+          {CERTIFICATIONS.map((certificate) => {
+            const selected = selectedCertifications.includes(certificate);
+            return (
+              <button
+                key={certificate}
+                className={`certification-check ${selected ? "checked" : ""}`}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => toggleCertification(certificate)}
+              >
+                <Check size={16} />
+                <span>{certificate}</span>
+              </button>
+            );
+          })}
         </div>
         <div className="two-columns certification-validity">
           <label className="field required-field"><span>Caducidad más próxima</span><input required type="date" value={review.certificateExpiry} onInput={(event) => update("certificateExpiry", event.currentTarget.value)} /></label>
