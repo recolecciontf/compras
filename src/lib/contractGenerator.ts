@@ -553,8 +553,9 @@ async function setContractMetadata(zip: JSZip, purchase: PurchaseForm, batch: Co
   if (coreDocument.getElementsByTagName("parsererror").length) return;
   const contractNumber = purchase.contractDetails.contractNumber || purchase.id || "PENDIENTE";
   const species = ({ limon: "Limón", pomelo: "Pomelo", naranja: "Naranja", mandarina: "Mandarina" } as const)[batch.kind];
+  const ecological = batch.kind === "naranja" || batch.kind === "mandarina" ? "ecológica" : "ecológico";
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:title", "title", `Contrato de ${species} - ${contractNumber} - ${purchase.provider}`);
-  setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:subject", "subject", `Contrato de compraventa de ${species.toLocaleLowerCase("es")} ecológico`);
+  setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:subject", "subject", `Contrato de compraventa de ${species.toLocaleLowerCase("es")} ${ecological}`);
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:creator", "creator", purchase.contractDetails.buyerCompany);
   setCoreProperty(coreDocument, CORE_PROPERTIES_NS, "cp:lastModifiedBy", "lastModifiedBy", purchase.contractDetails.buyerCompany);
   zip.file("docProps/core.xml", new XMLSerializer().serializeToString(coreDocument));
