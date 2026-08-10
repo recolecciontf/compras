@@ -254,19 +254,47 @@ function setWordNumber(element: Element, name: string, value: number) {
   element.setAttributeNS(WORD_NS, `w:${name}`, String(Math.round(value)));
 }
 
-function clampNegativeParagraphIndents(document: Document) {
+function dominantNegativeIndent(paragraphs: Element[], attributes: string[]) {
+  const counts = new Map<number, number>();
+  for (const paragraph of paragraphs) {
+    const properties = childElements(paragraph, "pPr")[0];
+    const indent = properties && childElements(properties, "ind")[0];
+    if (!indent) continue;
+    for (const attribute of attributes) {
+      const value = wordNumber(indent, attribute);
+      if (value < 0) counts.set(Math.abs(value), (counts.get(Math.abs(value)) || 0) + 1);
+    }
+  }
+  return [...counts.entries()].sort((left, right) => right[1] - left[1])[0]?.[0] || 0;
+}
+
+function shiftTopLevelIndent(indent: Element, attributes: string[], fallbackAttribute: string, correction: number) {
+  const attribute = attributes.find((name) => indent.hasAttributeNS(WORD_NS, name) || indent.hasAttribute(`w:${name}`));
+  if (attribute) setWordNumber(indent, attribute, Math.max(0, wordNumber(indent, attribute) + correction));
+  else setWordNumber(indent, fallbackAttribute, correction);
+}
+
+function normalizeParagraphIndents(document: Document, leftCorrection: number, rightCorrection: number) {
   const body = document.getElementsByTagNameNS(WORD_NS, "body")[0];
-  for (const paragraph of childElements(body, "p")) {
+  const topLevelParagraphs = new Set(childElements(body, "p"));
+  for (const paragraph of Array.from(body.getElementsByTagNameNS(WORD_NS, "p"))) {
     const properties = childElements(paragraph, "pPr")[0];
     const indent = properties && childElements(properties, "ind")[0];
     if (!indent) continue;
 
+    if (topLevelParagraphs.has(paragraph)) {
+      shiftTopLevelIndent(indent, ["left", "start"], "left", leftCorrection);
+      shiftTopLevelIndent(indent, ["right", "end"], "right", rightCorrection);
+      continue;
+    }
+
     const hanging = Math.max(0, wordNumber(indent, "hanging"));
     for (const attribute of ["left", "start"]) {
-      if (wordNumber(indent, attribute) < 0) setWordNumber(indent, attribute, hanging);
+      if (wordNumber(indent, attribute) < 0) setWordNumber(indent, attribute, Math.max(0, wordNumber(indent, attribute) + leftCorrection));
+      if (hanging && wordNumber(indent, attribute) < hanging) setWordNumber(indent, attribute, hanging);
     }
     for (const attribute of ["right", "end"]) {
-      if (wordNumber(indent, attribute) < 0) setWordNumber(indent, attribute, 0);
+      if (wordNumber(indent, attribute) < 0) setWordNumber(indent, attribute, Math.max(0, wordNumber(indent, attribute) + rightCorrection));
     }
   }
 }
@@ -302,18 +330,24 @@ function scaleTableToWidth(table: Element, targetWidth: number) {
   }
 }
 
-function stabilizeAilimpoLayout(document: Document) {
+function stabilizeContractLayout(document: Document) {
   const sections = Array.from(document.getElementsByTagNameNS(WORD_NS, "sectPr"));
   const section = sections.at(-1);
   if (!section) return;
   const pageSize = childElements(section, "pgSz")[0];
   const margins = childElements(section, "pgMar")[0];
+  const body = document.getElementsByTagNameNS(WORD_NS, "body")[0];
+  const topLevelParagraphs = childElements(body, "p");
+  const leftCorrection = dominantNegativeIndent(topLevelParagraphs, ["left", "start"]);
+  const rightCorrection = dominantNegativeIndent(topLevelParagraphs, ["right", "end"]);
+
+  if (leftCorrection) setWordNumber(margins, "left", Math.max(0, wordNumber(margins, "left") - leftCorrection));
+  if (rightCorrection) setWordNumber(margins, "right", Math.max(0, wordNumber(margins, "right") - rightCorrection));
+  normalizeParagraphIndents(document, leftCorrection, rightCorrection);
+
   const contentWidth = wordNumber(pageSize, "w") - wordNumber(margins, "left") - wordNumber(margins, "right");
   if (contentWidth <= 0) return;
 
-  // El modelo usa sangrías negativas que reducen el margen visual a casi la mitad.
-  // El PDF debe respetar los márgenes A4 declarados por el propio documento.
-  clampNegativeParagraphIndents(document);
   topLevelTables(document).forEach((table) => scaleTableToWidth(table, contentWidth));
 }
 
@@ -323,6 +357,12 @@ function rows(table: Element) {
 
 function cells(row: Element) {
   return childElements(row, "tc");
+}
+
+function isoDate(value: string) {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 function longDate(value: string) {
@@ -335,6 +375,10 @@ function longDate(value: string) {
 
 function numberEs(value: string) {
   return value.trim().replace(".", ",");
+}
+
+function totalKg(materials: MaterialItem[]) {
+  return materials.reduce((sum, material) => sum + (Number(material.expectedKg.replace(",", ".")) || 0), 0);
 }
 
 function fillDocument(document: Document, purchase: PurchaseForm, batch: ContractBatch) {
@@ -353,23 +397,76 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     setParagraph(sellerParagraph, sellerText, "Vendedor:", 14);
   }
 
-  if (isAilimpo) {
-    const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
-    const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
-    if (varietiesParagraph && varieties) replaceNextBlank(varietiesParagraph, varieties);
+  const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
+  const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
+  if (varietiesParagraph && varieties) replaceNextBlank(varietiesParagraph, varieties);
+
+  if (batch.kind === "naranja") {
+    const objectParagraph = findParagraph(document, (text) => text.includes("cantidades pactadas de MANDARINAS"));
+    if (objectParagraph) replaceInParagraph(objectParagraph, "MANDARINAS", "NARANJAS");
   }
 
-  // En el apartado 1 solo se completa la variedad en su hueco reservado.
-  // La finca, la modalidad, la recolección y el transporte se conservan en el expediente,
-  // pero permanecen en blanco en el documento para la revisión de oficina.
   const tables = topLevelTables(document);
+  if (tables.length < 4) throw new Error("El modelo contractual no contiene las tablas esperadas.");
+
+  const fieldOption = findParagraph(document, (text) => text.trimStart().startsWith("OPCIÓN 2:"));
+  if (fieldOption) {
+    replaceInParagraph(fieldOption, "□", "X");
+    replaceNextBlank(fieldOption, String(totalKg(batch.materials)));
+  }
+
+  const farmRows = rows(tables[0]);
+  for (let index = 0; index < 2; index += 1) {
+    const material = batch.materials[index];
+    const rowCells = farmRows[index + 1] ? cells(farmRows[index + 1]) : [];
+    const values = material
+      ? [material.variety, material.situation, material.municipality || purchase.municipality, material.paraje || purchase.farm, material.polygon, material.plot, material.hectares, material.expectedKg]
+      : ["", "", "", "", "", "", "", ""];
+    rowCells.forEach((cell, cellIndex) => setCellText(cell, values[cellIndex] || ""));
+  }
+
+  const priceMode = details.modality || (details.totalPrice && !details.pricePerKg ? "POR TANTO" : "A KILOS");
+  const modalityRows = rows(tables[1]);
+  modalityRows.forEach((row, index) => {
+    const rowCells = cells(row);
+    if (rowCells[0]) setCellText(rowCells[0], (priceMode === "A KILOS" ? index === 0 : index === 1) ? "X" : "");
+  });
+
+  const responsibilityRows = rows(tables[2]);
+  responsibilityRows.forEach((row, index) => {
+    const rowCells = cells(row);
+    if (rowCells[0]) setCellText(rowCells[0], (details.collectionBy || "Comprador") === (index === 0 ? "Vendedor" : "Comprador") ? "X" : "");
+    if (rowCells[5]) setCellText(rowCells[5], (details.transportBy || "Comprador") === (index === 0 ? "Vendedor" : "Comprador") ? "X" : "");
+  });
+
   const collectionTable = tables[3];
   const collectionRows = rows(collectionTable);
   const collectionCells = cells(collectionRows[1]);
   const leftCollectionCell = collectionCells[0];
+  const rightCollectionCell = collectionCells[2];
+
+  const nestedCuts = leftCollectionCell.getElementsByTagNameNS(WORD_NS, "tbl")[0];
+  if (nestedCuts) {
+    const cutRows = rows(nestedCuts);
+    if (cutRows[1]) {
+      const cutCells = cells(cutRows[1]);
+      ["1", isoDate(purchase.contractStart), isoDate(purchase.contractEnd), "", ""].forEach((value, index) => {
+        if (cutCells[index]) setCellText(cutCells[index], value);
+      });
+    }
+  }
+
+  if (priceMode === "POR TANTO") {
+    const rightStart = findParagraph(rightCollectionCell, (text) => text.startsWith("INICIO:"));
+    const rightEnd = findParagraph(rightCollectionCell, (text) => text.startsWith("FINALIZACIÓN:"));
+    if (rightStart) setParagraph(rightStart, `INICIO: ${isoDate(purchase.contractStart)}`, "", 14);
+    if (rightEnd) setParagraph(rightEnd, `FINALIZACIÓN: ${isoDate(purchase.contractEnd)}`, "", 14);
+  }
+
+  const insurance = findParagraph(rightCollectionCell, (text) => text.startsWith("El vendedor tiene asegurada"));
+  if (insurance) setParagraph(insurance, `El vendedor tiene asegurada la cosecha con ${details.insuranceProvider || "…………"}, nº póliza ${details.insurancePolicy || "……………………"}. El vendedor designará como beneficiario de la póliza al comprador.`, "", 14);
 
   const priceCells = cells(collectionRows[2]);
-  const priceMode = details.totalPrice && !details.pricePerKg ? "POR TANTO" : "A KILOS";
   const activePriceCell = priceMode === "POR TANTO" ? priceCells[2] : priceCells[0];
   const priceParagraphs = Array.from(activePriceCell.getElementsByTagNameNS(WORD_NS, "p"));
   const priceParagraph = priceParagraphs.find((paragraph) => paragraphText(paragraph).includes("IVA"));
@@ -431,7 +528,7 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     }
   }
 
-  if (isAilimpo) stabilizeAilimpoLayout(document);
+  stabilizeContractLayout(document);
 }
 
 function safeFilename(value: string) {
@@ -501,7 +598,10 @@ function validateContractGeneration(purchase: PurchaseForm) {
     [details.sellerDni, "DNI del representante"],
     [details.sellerAddress, "domicilio del vendedor"],
     [details.organicOperatorCode, "código de operador ecológico"],
-    [details.pricePerKg || details.totalPrice, "precio por kg o precio total"],
+    [details.modality, "modalidad de compraventa"],
+    [details.collectionBy, "responsable de recolección"],
+    [details.transportBy, "responsable de transporte"],
+    [details.modality === "POR TANTO" ? details.totalPrice : details.pricePerKg, details.modality === "POR TANTO" ? "precio total" : "precio por kg"],
     [details.paymentDays, "plazo de pago"],
   ];
   const missing = required.filter(([value]) => !value).map(([, label]) => label);
@@ -509,6 +609,8 @@ function validateContractGeneration(purchase: PurchaseForm) {
   if (details.pricePerKg && details.totalPrice) {
     throw new Error("Indica solo un tipo de precio: precio por kg o precio total.");
   }
+  if (details.modality === "A KILOS" && details.totalPrice) throw new Error("La modalidad A KILOS requiere precio por kg, no precio total.");
+  if (details.modality === "POR TANTO" && details.pricePerKg) throw new Error("La modalidad POR TANTO requiere precio total, no precio por kg.");
   if (purchase.materials.some((material) => !material.crop || !material.variety || !material.expectedKg)) {
     throw new Error("Completa la especie, variedad y kg de todas las materias primas.");
   }

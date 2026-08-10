@@ -572,12 +572,14 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
       ...commonContractFields,
       ["sellerRepresentative", "representante del vendedor"], ["sellerDni", "DNI del representante"],
       ["sellerAddress", "domicilio del vendedor"], ["organicOperatorCode", "código de operador ecológico"],
-      ["paymentDays", "plazo de pago"], ["sellerSignedAt", "firma del vendedor"],
+      ["modality", "modalidad de compraventa"], ["collectionBy", "responsable de recolección"],
+      ["transportBy", "responsable de transporte"], ["paymentDays", "plazo de pago"],
+      ["sellerSignedAt", "firma del vendedor"],
     ];
     if (purchase.contractDetails.contractOrigin !== "existing") {
-      if (!purchase.contractDetails.pricePerKg && !purchase.contractDetails.totalPrice) {
-        requiredContractFields.push(["pricePerKg", "precio por kg o precio total"]);
-      }
+      const priceField = purchase.contractDetails.modality === "POR TANTO" ? "totalPrice" : "pricePerKg";
+      const priceLabel = purchase.contractDetails.modality === "POR TANTO" ? "precio total" : "precio por kg";
+      if (!purchase.contractDetails[priceField]) requiredContractFields.push([priceField, priceLabel]);
       if (purchase.contractDetails.pricePerKg && purchase.contractDetails.totalPrice) {
         throw new InputError("Indica solo un tipo de precio: precio por kg o precio total.");
       }
@@ -628,6 +630,30 @@ async function firstAvailableRow(env: Env) {
   throw new Error("No quedan filas libres en el control documental.");
 }
 
+function purchaseIdPrefix(company: string) {
+  const normalizedCompany = company.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleUpperCase("es");
+  if (normalizedCompany.includes("TONIFRUIT")) return "TON";
+  if (normalizedCompany.includes("ORGANICA")) return "MRO";
+  throw new InputError("La empresa compradora no permite asignar una serie MRO o TON.");
+}
+
+async function currentPurchaseIds(env: Env) {
+  const { start, end } = dataBounds(env);
+  const range = `'${sheetName(env)}'!A${start}:A${end}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE`;
+  const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
+  return (result.values || []).map((row) => String(row[0] ?? "").trim()).filter(Boolean);
+}
+
+async function generatedPurchaseId(env: Env, company: string) {
+  const ids = await currentPurchaseIds(env);
+  const highest = ids.reduce((maximum, id) => {
+    const match = id.match(/^(?:MRO|TON)-(\d+)$/i);
+    return match ? Math.max(maximum, Number(match[1])) : maximum;
+  }, 0);
+  return `${purchaseIdPrefix(company)}-${String(highest + 1).padStart(3, "0")}`;
+}
+
 async function savePurchase(env: Env, row: number, purchase: PurchasePayload, create = false) {
   const { start, end } = dataBounds(env);
   if (!Number.isInteger(row) || row < start || row > end) throw new Error("La fila seleccionada no es válida.");
@@ -641,7 +667,18 @@ async function savePurchase(env: Env, row: number, purchase: PurchasePayload, cr
   const varieties = materials.map((item) => item.variety).filter(Boolean).join(" · ");
   const totalKg = materials.reduce((total, item) => total + (Number(item.expectedKg.replace(",", ".")) || 0), 0);
   const normalizedKg = totalKg ? String(totalKg) : "";
-  const generatedId = purchase.id || `CMP-${purchase.campaign}-${String(row).padStart(3, "0")}`;
+  let generatedId = purchase.id;
+  if (!generatedId) generatedId = await generatedPurchaseId(env, String(purchase.contractDetails.buyerCompany || ""));
+  if (create) {
+    const expectedPrefix = purchaseIdPrefix(String(purchase.contractDetails.buyerCompany || ""));
+    if (!new RegExp(`^${expectedPrefix}-\\d{3,}$`, "i").test(generatedId)) {
+      throw new InputError(`El identificador debe usar la serie ${expectedPrefix}-XXX.`);
+    }
+    const existingIds = await currentPurchaseIds(env);
+    if (existingIds.some((id) => id.toLocaleUpperCase("es") === generatedId.toLocaleUpperCase("es"))) {
+      throw new InputError(`El identificador ${generatedId} ya existe. Actualiza la lista e inténtalo de nuevo.`);
+    }
+  }
   const sheet = sheetName(env);
   const data = [
     {

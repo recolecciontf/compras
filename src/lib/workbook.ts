@@ -295,7 +295,10 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     if (!contract.sellerDni) issues.push("Falta el DNI del representante del vendedor");
     if (!contract.sellerAddress) issues.push("Falta el domicilio del vendedor");
     if (!contract.organicOperatorCode) issues.push("Falta el código de operador ecológico");
-    if (!contract.pricePerKg && !contract.totalPrice) issues.push("Falta el precio por kg o el precio total");
+    if (!contract.modality) issues.push("Falta la modalidad de compraventa");
+    if (!contract.collectionBy) issues.push("Falta indicar quién asume la recolección");
+    if (!contract.transportBy) issues.push("Falta indicar quién asume el transporte");
+    if (contract.modality === "POR TANTO" ? !contract.totalPrice : !contract.pricePerKg) issues.push(contract.modality === "POR TANTO" ? "Falta el precio total" : "Falta el precio por kg");
     if (contract.pricePerKg && contract.totalPrice) issues.push("Hay dos tipos de precio; debe indicarse solo uno");
     if (!contract.paymentDays) issues.push("Falta el plazo de pago");
   }

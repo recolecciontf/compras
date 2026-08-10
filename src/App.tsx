@@ -68,6 +68,21 @@ function localToday() {
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
+function purchaseIdPrefix(company: PurchaseForm["contractDetails"]["buyerCompany"]) {
+  const normalizedCompany = company.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleUpperCase("es");
+  if (normalizedCompany.includes("TONIFRUIT")) return "TON";
+  if (normalizedCompany.includes("ORGANICA")) return "MRO";
+  throw new Error("Selecciona la empresa compradora para asignar el identificador MRO o TON.");
+}
+
+function nextPurchaseId(rows: ControlRow[], company: PurchaseForm["contractDetails"]["buyerCompany"]) {
+  const highest = rows.reduce((maximum, row) => {
+    const match = row.id.trim().match(/^(?:MRO|TON)-(\d+)$/i);
+    return match ? Math.max(maximum, Number(match[1])) : maximum;
+  }, 0);
+  return `${purchaseIdPrefix(company)}-${String(highest + 1).padStart(3, "0")}`;
+}
+
 function certificationSelection(value: string | null | undefined) {
   return String(value ?? "")
     .split(/[;,]/)
@@ -484,13 +499,22 @@ export default function App() {
     setSaving(true);
     setError("");
     try {
-      let preparedPurchase = nextPurchase;
+      const assignedId = nextPurchase.id || nextPurchaseId(rows, nextPurchase.contractDetails.buyerCompany);
+      const identifiedPurchase: PurchaseForm = {
+        ...nextPurchase,
+        id: assignedId,
+        contractDetails: {
+          ...nextPurchase.contractDetails,
+          contractNumber: nextPurchase.contractDetails.contractNumber || assignedId,
+        },
+      };
+      let preparedPurchase = identifiedPurchase;
       if (demoMode) {
         preparedPurchase = {
-          ...nextPurchase,
+          ...identifiedPurchase,
           documentPath: contractSubmission.mode === "existing" ? "Archivo central de demostración" : "Pendiente de firma digital y archivo",
           contractDetails: {
-            ...nextPurchase.contractDetails,
+            ...identifiedPurchase.contractDetails,
             archiveId: contractSubmission.mode === "existing" ? crypto.randomUUID() : "",
             archiveFilename: contractSubmission.mode === "existing" ? contractSubmission.file.name : "contrato-pendiente-demo.pdf",
             archivedAt: contractSubmission.mode === "existing" ? new Date().toISOString() : "",
@@ -500,13 +524,13 @@ export default function App() {
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
         if (contractSubmission.mode === "generated") {
-          const artifact = await generateContractPackage(nextPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
+          const artifact = await generateContractPackage(identifiedPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
           triggerDownload(artifact.blob, artifact.filename);
           preparedPurchase = {
-            ...nextPurchase,
+            ...identifiedPurchase,
             documentPath: "Pendiente de firma digital del comprador y archivo central",
             contractDetails: {
-              ...nextPurchase.contractDetails,
+              ...identifiedPurchase.contractDetails,
               archiveId: "",
               archiveFilename: artifact.filename,
               archivedAt: "",
@@ -515,11 +539,11 @@ export default function App() {
           };
         } else {
           const artifact = { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name };
-          const archived = await client.archiveContract(artifact.blob, artifact.filename, nextPurchase);
+          const archived = await client.archiveContract(artifact.blob, artifact.filename, identifiedPurchase);
           preparedPurchase = {
-            ...nextPurchase,
+            ...identifiedPurchase,
             documentPath: `Archivo central: ${archived.archiveFilename}`,
-            contractDetails: { ...nextPurchase.contractDetails, ...archived },
+            contractDetails: { ...identifiedPurchase.contractDetails, ...archived },
           };
         }
       }
@@ -527,10 +551,9 @@ export default function App() {
       let createdIndex: number;
       if (demoMode) {
         createdIndex = Math.max(0, ...rows.map((row) => row.tableIndex)) + 1;
-        const id = preparedPurchase.id || `CMP-${preparedPurchase.campaign}-${String(createdIndex).padStart(3, "0")}`;
         const created: ControlRow = {
           ...preparedPurchase,
-          id,
+          id: preparedPurchase.id,
           tableIndex: createdIndex,
           contractAlert: "VIGENTE",
           plannedCutDate: "",

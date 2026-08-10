@@ -143,6 +143,18 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
     }));
   }
 
+  function updateModality(nextValue: ContractDetails["modality"]) {
+    onChange((current) => ({
+      ...current,
+      contractDetails: {
+        ...current.contractDetails,
+        modality: nextValue,
+        pricePerKg: nextValue === "A KILOS" ? current.contractDetails.pricePerKg : "",
+        totalPrice: nextValue === "POR TANTO" ? current.contractDetails.totalPrice : "",
+      },
+    }));
+  }
+
   function changeMaterials(change: (materials: MaterialItem[]) => MaterialItem[]) {
     onChange((current) => {
       const materials = change(current.materials);
@@ -218,14 +230,17 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
           <label className="field required-field"><span>Código operador ecológico</span><input required disabled={disabled} value={contract.organicOperatorCode} onChange={(event) => updateContract("organicOperatorCode", event.target.value)} /></label>
           <label className="field"><span>Código certificadora</span><input disabled={disabled} value={contract.certifierCode} onChange={(event) => updateContract("certifierCode", event.target.value)} /></label>
           {hasAilimpoSpecies && <label className="field"><span>Registro AILIMPO / REGEPA</span><input disabled={disabled} value={contract.ailimpoRegepaCode} onChange={(event) => updateContract("ailimpoRegepaCode", event.target.value)} /></label>}
-          <label className="field"><span>Precio €/kg</span><input disabled={disabled} type="number" min="0" step="0.001" inputMode="decimal" value={contract.pricePerKg} onChange={(event) => updateContract("pricePerKg", event.target.value)} placeholder="Completar este precio o el total" /></label>
-          <label className="field"><span>Precio total (€)</span><input disabled={disabled} type="number" min="0" step="0.01" inputMode="decimal" value={contract.totalPrice} onChange={(event) => updateContract("totalPrice", event.target.value)} placeholder="Alternativa al precio por kg" /></label>
-          <div className="field-help-card field-span"><FileText size={18} /><span><strong>Precio obligatorio:</strong> completa solo uno de los dos campos, por kilogramo o total.</span></div>
+          <label className="field required-field"><span>Modalidad de compraventa</span><select required disabled={disabled} value={contract.modality} onChange={(event) => updateModality(event.target.value as ContractDetails["modality"])}><option value="A KILOS">A KILOS</option><option value="POR TANTO">POR TANTO</option></select></label>
+          <label className="field required-field"><span>Recolección por cuenta de</span><select required disabled={disabled} value={contract.collectionBy} onChange={(event) => updateContract("collectionBy", event.target.value as ContractDetails["collectionBy"])}><option>Vendedor</option><option>Comprador</option></select></label>
+          <label className="field required-field"><span>Transporte por cuenta de</span><select required disabled={disabled} value={contract.transportBy} onChange={(event) => updateContract("transportBy", event.target.value as ContractDetails["transportBy"])}><option>Vendedor</option><option>Comprador</option></select></label>
+          {contract.modality === "A KILOS"
+            ? <label className="field required-field"><span>Precio €/kg</span><input required disabled={disabled} type="number" min="0" step="0.001" inputMode="decimal" value={contract.pricePerKg} onChange={(event) => updateContract("pricePerKg", event.target.value)} /></label>
+            : <label className="field required-field"><span>Precio total (€)</span><input required disabled={disabled} type="number" min="0" step="0.01" inputMode="decimal" value={contract.totalPrice} onChange={(event) => updateContract("totalPrice", event.target.value)} /></label>}
           <label className="field"><span>IVA %</span><input disabled={disabled} type="number" min="0" step="0.01" value={contract.ivaPercent} onChange={(event) => updateContract("ivaPercent", event.target.value)} /></label>
           <label className="field"><span>IRPF %</span><input disabled={disabled} type="number" min="0" step="0.01" value={contract.irpfPercent} onChange={(event) => updateContract("irpfPercent", event.target.value)} /></label>
           <label className="field"><span>Entrega a cuenta (€)</span><input disabled={disabled} type="number" min="0" step="0.01" value={contract.advancePayment} onChange={(event) => updateContract("advancePayment", event.target.value)} /></label>
           <label className="field required-field"><span>Plazo de pago (días)</span><input required disabled={disabled} type="number" min="1" max="30" value={contract.paymentDays} onChange={(event) => updateContract("paymentDays", event.target.value)} /></label>
-          <div className="field-help-card field-span"><FileText size={18} /><span>Los apartados 1, 2 y 3 del modelo AILIMPO se dejan sin rellenar para la revisión de oficina. La aplicación solo completa los datos personales y económicos necesarios.</span></div>
+          <div className="field-help-card field-span"><FileText size={18} /><span>El PDF marcará la procedencia, la modalidad, la recolección y el transporte en las casillas originales del contrato.</span></div>
         </div>
 
         <div className="destrio-box">
