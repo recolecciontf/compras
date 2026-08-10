@@ -13,6 +13,8 @@ Aplicación móvil para consultar y completar el control documental previo a la 
 - El usuario ADMINISTRADOR puede crear compras y completar agricultor, finca, contrato y materia prima.
 - Especie y variedad usan listas relacionadas; la opción «Otra» obliga a escribir el valor exacto.
 - La pestaña «Cortes» registra si la fruta se ha cortado, los kilos totales y permite archivar o restaurar compras terminadas.
+- El Administrador puede anular y restaurar expedientes, sustituir contratos conservando sus versiones anteriores y eliminar definitivamente registros creados por error mediante doble confirmación.
+- Los expedientes anulados quedan separados del trabajo activo y conservan el motivo, la fecha y el usuario de cada cambio de estado.
 - El usuario CONSULTAS puede revisar toda la información, pero nunca modificarla.
 - Las columnas W:X de la hoja conservan las fórmulas que calculan «Puede recolectarse» y «Motivo del bloqueo».
 - Las columnas AA:AE almacenan corte realizado, kilos cortados, archivo, variedad y kilos previstos.
