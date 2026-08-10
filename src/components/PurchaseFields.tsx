@@ -52,6 +52,7 @@ export const EMPTY_CONTRACT_DETAILS: ContractDetails = {
   sellerSignedAt: "",
   buyerSignedAt: "",
   signatureMethod: "",
+  archiveHistoryJson: "",
 };
 
 export const EMPTY_PURCHASE: PurchaseForm = {
