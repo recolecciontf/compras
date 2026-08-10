@@ -58,6 +58,23 @@ export type ContractDetails = {
   sellerSignedAt: string;
   buyerSignedAt: string;
   signatureMethod: "" | "uploaded" | "in_app";
+  archiveHistoryJson: string;
+};
+
+export type ContractArchiveHistoryEntry = {
+  archiveId: string;
+  archiveFilename: string;
+  archivedAt: string;
+  replacedAt: string;
+  replacedBy: string;
+  reason: string;
+};
+
+export type RecordStatusHistoryEntry = {
+  status: "Activo" | "Anulado";
+  reason: string;
+  changedAt: string;
+  changedBy: string;
 };
 
 export type ContractSignatures = {
@@ -102,6 +119,11 @@ export type ControlRow = {
   materialsJson: string;
   registeredIca: string;
   contractDetailsJson: string;
+  recordStatus: string;
+  statusReason: string;
+  statusUpdatedAt: string;
+  statusUpdatedBy: string;
+  statusHistoryJson: string;
 };
 
 export type PurchaseForm = Pick<
@@ -144,4 +166,4 @@ export type ReviewForm = Pick<
 >;
 
 export type AppView = "records" | "review" | "new" | "harvest";
-export type RecordFilter = "all" | "blocked" | "authorized";
+export type RecordFilter = "all" | "blocked" | "authorized" | "cancelled";
