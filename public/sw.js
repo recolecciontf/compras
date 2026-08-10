@@ -1,5 +1,4 @@
-const CACHE_NAME = "compras-de-campo-v15";
-const BROKEN_CERTIFICATION_CACHE = "compras-de-campo-v14";
+const CACHE_NAME = "compras-de-campo-v16";
 const APP_SHELL = ["./", "./manifest.webmanifest", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -10,17 +9,8 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
-      const mustRefreshOpenApp = keys.includes(BROKEN_CERTIFICATION_CACHE);
       await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
       await self.clients.claim();
-
-      // La versión 14 podía conservar el JavaScript antiguo que dejaba la
-      // pantalla en blanco al tocar una certificación. Esta migración recarga
-      // una sola vez las pestañas que sigan controladas por aquella versión.
-      if (mustRefreshOpenApp) {
-        const clients = await self.clients.matchAll({ type: "window" });
-        await Promise.allSettled(clients.map((client) => client.navigate(client.url)));
-      }
     }),
   );
 });
