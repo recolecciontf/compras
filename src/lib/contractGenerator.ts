@@ -6,6 +6,8 @@ const XML_NS = "http://www.w3.org/XML/1998/namespace";
 const RELATIONSHIP_NS = "http://schemas.openxmlformats.org/package/2006/relationships";
 const OFFICE_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 const CONTENT_TYPES_NS = "http://schemas.openxmlformats.org/package/2006/content-types";
+const CORE_PROPERTIES_NS = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
+const DUBLIN_CORE_NS = "http://purl.org/dc/elements/1.1/";
 
 type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina";
 
@@ -57,7 +59,7 @@ function batchesFor(purchase: PurchaseForm) {
     grouped.set(kind, [...(grouped.get(kind) || []), material]);
   }
   if (unsupportedSpecies.length) {
-    throw new Error(`No se ha facilitado un modelo contractual para la especie: ${[...new Set(unsupportedSpecies)].join(", ")}.`);
+    throw new Error(`No se ha facilitado un modelo contractual para la especie: ${[...new Set(unsupportedSpecies)].join(", ")}. No se reutilizará un modelo de otra especie. Si ya existe un contrato firmado, selecciona "Contrato firmado existente" para adjuntarlo y archivarlo.`);
   }
   if (speciesWithoutCompanyTemplate.length) {
     const species = [...new Set(speciesWithoutCompanyTemplate)].join(", ");
@@ -535,6 +537,29 @@ function safeFilename(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+function setCoreProperty(document: Document, namespace: string, qualifiedName: string, localName: string, value: string) {
+  let element = document.getElementsByTagNameNS(namespace, localName)[0];
+  if (!element) {
+    element = document.createElementNS(namespace, qualifiedName);
+    document.documentElement.append(element);
+  }
+  element.textContent = value;
+}
+
+async function setContractMetadata(zip: JSZip, purchase: PurchaseForm, batch: ContractBatch) {
+  const coreFile = zip.file("docProps/core.xml");
+  if (!coreFile) return;
+  const coreDocument = new DOMParser().parseFromString(await coreFile.async("string"), "application/xml");
+  if (coreDocument.getElementsByTagName("parsererror").length) return;
+  const contractNumber = purchase.contractDetails.contractNumber || purchase.id || "PENDIENTE";
+  const species = ({ limon: "Limón", pomelo: "Pomelo", naranja: "Naranja", mandarina: "Mandarina" } as const)[batch.kind];
+  setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:title", "title", `Contrato de ${species} - ${contractNumber} - ${purchase.provider}`);
+  setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:subject", "subject", `Contrato de compraventa de ${species.toLocaleLowerCase("es")} ecológico`);
+  setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:creator", "creator", purchase.contractDetails.buyerCompany);
+  setCoreProperty(coreDocument, CORE_PROPERTIES_NS, "cp:lastModifiedBy", "lastModifiedBy", purchase.contractDetails.buyerCompany);
+  zip.file("docProps/core.xml", new XMLSerializer().serializeToString(coreDocument));
+}
+
 async function generateOne(purchase: PurchaseForm, batch: ContractBatch, loadTemplate: (name: string) => Promise<ArrayBuffer>, signatures?: ContractSignatures) {
   const name = templateName(purchase.contractDetails.buyerCompany, batch.kind);
   const zip = await JSZip.loadAsync(await loadTemplate(name));
@@ -546,6 +571,7 @@ async function generateOne(purchase: PurchaseForm, batch: ContractBatch, loadTem
   fillDocument(document, purchase, batch);
   await addSignatures(zip, document, signatures);
   zip.file("word/document.xml", new XMLSerializer().serializeToString(document));
+  await setContractMetadata(zip, purchase, batch);
   return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", compression: "DEFLATE" });
 }
 
