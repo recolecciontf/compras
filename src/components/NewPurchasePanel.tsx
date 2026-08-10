@@ -99,6 +99,7 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
             <PenLine size={24} /><span><strong>No, hay que prepararlo</strong><small>Rellenar y recoger la firma del agricultor</small></span>{contractChoice === "generated" && <CheckCircle2 size={20} />}
           </button>
         </div>
+        {contractChoice === "generated" && <p className="contract-model-note">Modelos automáticos disponibles: limón, pomelo, naranja y mandarina, según la empresa compradora. Para otra especie, como fruta de hueso, debe adjuntarse su contrato firmado; nunca se reutilizará un modelo de cítricos.</p>}
       </section>
 
       {contractChoice && <>
@@ -134,7 +135,9 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
 
         <div className="form-actions single-action">
           <button className="primary-button" type="submit" disabled={saving}>
-            <PlusCircle size={19} /> {saving ? "Generando PDF y creando compra…" : "Generar PDF y crear compra"}
+            <PlusCircle size={19} /> {saving
+              ? contractChoice === "existing" ? "Archivando contrato y creando compra…" : "Generando PDF y creando compra…"
+              : contractChoice === "existing" ? "Archivar contrato y crear compra" : "Generar PDF y crear compra"}
           </button>
         </div>
       </>}
