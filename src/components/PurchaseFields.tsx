@@ -116,16 +116,17 @@ function MaterialFields({
         {varietySelection === OTHER_VALUE && <label className="field required-field"><span>Indica la variedad</span><input required disabled={disabled} value={item.variety === "Otra variedad" ? "" : item.variety} onChange={(event) => update("variety", event.target.value)} placeholder="Escribe la variedad" /></label>}
         <label className="field required-field"><span>Kg previstos</span><input required disabled={disabled} type="number" min="0.01" step="0.01" inputMode="decimal" value={item.expectedKg} onChange={(event) => update("expectedKg", event.target.value)} placeholder="0" /></label>
       </div>
-      <details className="parcel-details">
-        <summary>Datos internos de parcela</summary>
+      <details className="parcel-details" open>
+        <summary>Datos de la finca para el contrato <em>Opcionales</em></summary>
         <div className="three-columns">
           <label className="field"><span>Situación</span><input disabled={disabled} value={item.situation} onChange={(event) => update("situation", event.target.value)} placeholder="Pedanía o ubicación" /></label>
           <label className="field"><span>Término municipal</span><input disabled={disabled} value={item.municipality} onChange={(event) => update("municipality", event.target.value)} placeholder="Municipio" /></label>
-          <label className="field"><span>Paraje</span><input disabled={disabled} value={item.paraje} onChange={(event) => update("paraje", event.target.value)} /></label>
-          <label className="field"><span>Polígono</span><input disabled={disabled} value={item.polygon} onChange={(event) => update("polygon", event.target.value)} /></label>
-          <label className="field"><span>Parcela</span><input disabled={disabled} value={item.plot} onChange={(event) => update("plot", event.target.value)} /></label>
+          <label className="field"><span>Paraje</span><input disabled={disabled} value={item.paraje} onChange={(event) => update("paraje", event.target.value)} placeholder="Paraje de la finca" /></label>
+          <label className="field"><span>Polígono</span><input disabled={disabled} value={item.polygon} onChange={(event) => update("polygon", event.target.value)} placeholder="N.º de polígono" /></label>
+          <label className="field"><span>Parcela</span><input disabled={disabled} value={item.plot} onChange={(event) => update("plot", event.target.value)} placeholder="N.º de parcela" /></label>
           <label className="field"><span>Hectáreas</span><input disabled={disabled} type="number" min="0" step="0.01" inputMode="decimal" value={item.hectares} onChange={(event) => update("hectares", event.target.value)} /></label>
         </div>
+        <small className="parcel-contract-note">Los datos indicados se copiarán en las columnas de la finca del contrato. Pueden dejarse en blanco.</small>
       </details>
     </article>
   );

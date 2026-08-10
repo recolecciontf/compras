@@ -784,6 +784,17 @@ h3,
   background: #f6f9f3;
 }
 
+.contract-model-note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  color: #58675a;
+  border: 1px solid #dbe5d6;
+  border-radius: 10px;
+  background: #f7faf5;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
 .contract-workflow span.active {
   color: #233f20;
   background: var(--brand-lime-light);
@@ -866,9 +877,29 @@ h3,
   font-weight: 850;
 }
 
+.parcel-details summary em {
+  margin-left: auto;
+  padding: 3px 7px;
+  color: #667366;
+  border-radius: 999px;
+  background: #edf2e9;
+  font-size: 0.56rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .parcel-details .three-columns,
 .contract-data-grid {
   margin-top: 11px;
+}
+
+.parcel-contract-note {
+  display: block;
+  margin-top: 10px;
+  color: #68756b;
+  font-size: 0.62rem;
+  line-height: 1.45;
 }
 
 .contract-data-details {
