@@ -950,14 +950,10 @@ h3,
   gap: 9px;
 }
 
-.certification-check input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.certification-check > span {
+.certification-check {
+  appearance: none;
   display: flex;
+  width: 100%;
   min-height: 44px;
   align-items: center;
   gap: 8px;
@@ -969,13 +965,16 @@ h3,
   cursor: pointer;
   font-size: 0.67rem;
   font-weight: 750;
+  text-align: left;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .certification-check svg {
   color: #aeb8ae;
 }
 
-.certification-check.checked > span {
+.certification-check.checked {
   color: #244c2a;
   border-color: #88b77a;
   background: #edf7e7;
