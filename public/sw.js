@@ -1,66 +1,23 @@
-const CACHE_NAME = "compras-de-campo-v16";
-const APP_SHELL = ["./", "./manifest.webmanifest", "./favicon.svg"];
+const LEGACY_CACHE_PREFIX = "compras-de-campo-";
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
-      await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+      const legacyKeys = keys.filter((key) => key.startsWith(LEGACY_CACHE_PREFIX));
+      await Promise.all(legacyKeys.map((key) => caches.delete(key)));
       await self.clients.claim();
-    }),
-  );
-});
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || !event.request.url.startsWith(self.location.origin)) return;
-
-  if (new URL(event.request.url).pathname.endsWith("/app-config.json")) {
-    event.respondWith(fetch(event.request, { cache: "no-store" }));
-    return;
-  }
-
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./"))),
-    );
-    return;
-  }
-
-  if (["script", "style", "worker"].includes(event.request.destination)) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request)),
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request).then((response) => {
-        if (response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        }
-        return response;
-      });
-      return cached || network;
+      // Las versiones antiguas podían conservar JavaScript obsoleto. Si esta
+      // actualización encuentra uno de esos cachés, recarga una sola vez las
+      // ventanas abiertas después de eliminarlo.
+      if (legacyKeys.length) {
+        const clients = await self.clients.matchAll({ type: "window" });
+        await Promise.allSettled(clients.map((client) => client.navigate(client.url)));
+      }
     }),
   );
 });
