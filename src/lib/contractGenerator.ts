@@ -11,8 +11,6 @@ const DUBLIN_CORE_NS = "http://purl.org/dc/elements/1.1/";
 
 type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina";
 
-const CURRENT_AILIMPO_MODEL_END = "2026-08-31";
-
 type ContractBatch = {
   kind: ContractKind;
   materials: MaterialItem[];
@@ -643,13 +641,6 @@ function validateContractGeneration(purchase: PurchaseForm) {
   }
   if (details.applyDestrio === "Sí" && (!details.destrioLocation || !details.destrioDefects || !details.destrioPrice)) {
     throw new Error("Completa el lugar, los defectos y el precio del destrío.");
-  }
-  const usesAilimpoModel = purchase.materials.some((material) => {
-    const kind = contractKind(material.crop);
-    return kind === "limon" || kind === "pomelo";
-  });
-  if (usesAilimpoModel && [details.signatureDate, purchase.contractStart, purchase.contractEnd].some((date) => date > CURRENT_AILIMPO_MODEL_END)) {
-    throw new Error("Este modelo AILIMPO solo cubre hasta el 31/08/2026. Para la campaña 2026/2027 debe cargarse el contrato homologado vigente desde el 01/09/2026.");
   }
 }
 
