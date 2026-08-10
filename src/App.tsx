@@ -11,6 +11,7 @@ import {
 import {
   AlertTriangle,
   ArrowLeft,
+  Ban,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -20,6 +21,7 @@ import {
   Download,
   FileCheck2,
   FileUp,
+  History,
   ListChecks,
   LogIn,
   LogOut,
@@ -31,6 +33,7 @@ import {
   Search,
   ShieldCheck,
   Sprout,
+  Trash2,
   Wifi,
   X,
   XCircle,
@@ -42,7 +45,15 @@ import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS } from "./lib/catalog";
 import { downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
-import { purchaseFromRow, reviewBlockages, reviewFromRow, WorkbookClient } from "./lib/workbook";
+import {
+  contractArchiveHistory,
+  isRecordCancelled,
+  purchaseFromRow,
+  recordStatusHistory,
+  reviewBlockages,
+  reviewFromRow,
+  WorkbookClient,
+} from "./lib/workbook";
 import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
 function formatDate(value: string) {
@@ -92,6 +103,10 @@ function mergePurchase(row: ControlRow, purchase: PurchaseForm): ControlRow {
 
 function isArchived(row: ControlRow) {
   return row.archived.trim().toLocaleLowerCase("es") === "sí";
+}
+
+function isCancelled(row: ControlRow) {
+  return isRecordCancelled(row);
 }
 
 type AutoSaveTask = {
@@ -311,7 +326,11 @@ export default function App() {
   const visibleRows = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
     return rows.filter((row) => {
-      if (isArchived(row)) return false;
+      if (filter === "cancelled") {
+        if (!isCancelled(row)) return false;
+      } else {
+        if (isArchived(row) || isCancelled(row)) return false;
+      }
       if (filter === "blocked" && authorized(row)) return false;
       if (filter === "authorized" && !authorized(row)) return false;
       if (!normalizedQuery) return true;
@@ -323,9 +342,10 @@ export default function App() {
   }, [rows, filter, query]);
 
   const counts = useMemo(() => {
-    const active = rows.filter((row) => !isArchived(row));
+    const cancelled = rows.filter(isCancelled).length;
+    const active = rows.filter((row) => !isArchived(row) && !isCancelled(row));
     const yes = active.filter(authorized).length;
-    return { total: active.length, authorized: yes, blocked: active.length - yes };
+    return { total: active.length, authorized: yes, blocked: active.length - yes, cancelled };
   }, [rows]);
 
   const predictedRow = selected && purchase ? mergePurchase(selected, purchase) : selected;
@@ -531,6 +551,11 @@ export default function App() {
           archived: "No",
           materialsJson: JSON.stringify(preparedPurchase.materials),
           contractDetailsJson: JSON.stringify(preparedPurchase.contractDetails),
+          recordStatus: "Activo",
+          statusReason: "",
+          statusUpdatedAt: "",
+          statusUpdatedBy: "",
+          statusHistoryJson: "",
         };
         setRows((current) => [...current, created]);
         setSelectedIndex(createdIndex);
@@ -657,6 +682,147 @@ export default function App() {
     }
   }
 
+  async function persistOpenDraft() {
+    if (!selected || !review || !purchase) return;
+    if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = null;
+    pendingAutoSave.current = null;
+    const waitStartedAt = Date.now();
+    while (autoSaveBusy.current) {
+      if (Date.now() - waitStartedAt > 15_000) throw new Error("El guardado anterior está tardando demasiado. Espera unos segundos y vuelve a intentarlo.");
+      await new Promise((resolve) => window.setTimeout(resolve, 60));
+    }
+    if (!demoMode) {
+      if (!client) throw new Error("No hay conexión con Google Sheets.");
+      if (JSON.stringify(purchase) !== purchaseFingerprint.current) await client.savePurchase(selected, purchase);
+      if (JSON.stringify(review) !== reviewFingerprint.current) await client.saveReview(selected, review);
+    }
+    purchaseFingerprint.current = JSON.stringify(purchase);
+    reviewFingerprint.current = JSON.stringify(review);
+  }
+
+  async function changeRecordStatus(status: "Activo" | "Anulado", reason: string) {
+    if (!selected || !canEdit) return false;
+    setSaving(true);
+    setError("");
+    try {
+      await persistOpenDraft();
+      let statusUpdate: Pick<ControlRow, "recordStatus" | "statusReason" | "statusUpdatedAt" | "statusUpdatedBy" | "statusHistoryJson">;
+      if (demoMode) {
+        const changedAt = new Date().toISOString();
+        const history = [...recordStatusHistory(selected), { status, reason, changedAt, changedBy: "ADMINISTRADOR" }];
+        statusUpdate = {
+          recordStatus: status,
+          statusReason: reason,
+          statusUpdatedAt: changedAt,
+          statusUpdatedBy: "ADMINISTRADOR",
+          statusHistoryJson: JSON.stringify(history),
+        };
+      } else {
+        if (!client) throw new Error("No hay conexión con Google Sheets.");
+        statusUpdate = await client.updateRecordStatus(selected, status, reason);
+      }
+      setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? { ...row, ...statusUpdate } : row));
+      setLastSyncedAt(new Date());
+      setToast(status === "Anulado" ? "Expediente anulado" : "Expediente restaurado");
+      return true;
+    } catch (reasonValue) {
+      setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido cambiar el estado del expediente.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function replaceSignedContract(file: File, reason: string) {
+    if (!selected || !purchase || !canEdit) return false;
+    setSaving(true);
+    setError("");
+    try {
+      await persistOpenDraft();
+      if (demoMode) {
+        const previous = {
+          archiveId: purchase.contractDetails.archiveId,
+          archiveFilename: purchase.contractDetails.archiveFilename,
+          archivedAt: purchase.contractDetails.archivedAt,
+          replacedAt: new Date().toISOString(),
+          replacedBy: "ADMINISTRADOR",
+          reason,
+        };
+        const updated: PurchaseForm = {
+          ...purchase,
+          documentPath: `Archivo central: ${file.name}`,
+          contractDetails: {
+            ...purchase.contractDetails,
+            archiveId: crypto.randomUUID(),
+            archiveFilename: file.name,
+            archivedAt: new Date().toISOString(),
+            archiveHistoryJson: JSON.stringify([...contractArchiveHistory(purchase), previous]),
+          },
+        };
+        setPurchase(updated);
+        purchaseFingerprint.current = JSON.stringify(updated);
+        setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? mergePurchase(row, updated) : row));
+      } else {
+        if (!client) throw new Error("No hay conexión con Google Sheets.");
+        await client.replaceContract(selected, file, reason, purchase);
+        const nextRows = await client.rows();
+        loadedRowIndex.current = null;
+        setRows(nextRows);
+      }
+      setLastSyncedAt(new Date());
+      setToast("Contrato sustituido; la versión anterior permanece en el historial");
+      return true;
+    } catch (reasonValue) {
+      setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido sustituir el contrato.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function downloadArchivedContract(archiveId: string) {
+    setSaving(true);
+    setError("");
+    try {
+      if (!client || demoMode) throw new Error("La descarga de versiones anteriores solo está disponible con la sesión real.");
+      const archived = await client.archivedContract(archiveId);
+      triggerDownload(archived.blob, archived.filename);
+      setToast("Versión anterior descargada");
+    } catch (reasonValue) {
+      setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido descargar la versión anterior.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteRecord(reason: string, confirmation: string, acknowledgement: string) {
+    if (!selected || !canEdit) return false;
+    setSaving(true);
+    setError("");
+    try {
+      if (!isCancelled(selected)) throw new Error("Antes del borrado definitivo debes anular el expediente.");
+      if (!demoMode) {
+        if (!client) throw new Error("No hay conexión con Google Sheets.");
+        await client.deleteRecord(selected, reason, confirmation, acknowledgement);
+      }
+      setRows((current) => current.filter((row) => row.tableIndex !== selected.tableIndex));
+      setSelectedIndex(null);
+      loadedRowIndex.current = null;
+      setReview(null);
+      setPurchase(null);
+      setView("records");
+      setLastSyncedAt(new Date());
+      setToast("Expediente eliminado definitivamente");
+      return true;
+    } catch (reasonValue) {
+      setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido eliminar el expediente.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function installApp() {
     if (!installPrompt) return;
     await installPrompt.prompt();
@@ -747,7 +913,7 @@ export default function App() {
               <div className="welcome-row">
                 <div>
                   <p className="welcome">Hola, {profile?.displayName?.split(" ")[0] || "equipo"}</p>
-                  <h1>Expedientes activos</h1>
+                  <h1>{filter === "cancelled" ? "Expedientes anulados" : "Expedientes activos"}</h1>
                 </div>
                 <span className="sync-caption">
                   {loading ? "Sincronizando…" : lastSyncedAt ? `Actualizado ${lastSyncedAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : `${counts.total} expedientes`}
@@ -775,6 +941,11 @@ export default function App() {
                   <span>Bloqueados</span>
                   <strong>{counts.blocked}</strong>
                 </article>
+                <article className="summary-card summary-cancelled">
+                  <Ban size={21} />
+                  <span>Anulados</span>
+                  <strong>{counts.cancelled}</strong>
+                </article>
               </div>
 
               <div className="search-box">
@@ -787,6 +958,7 @@ export default function App() {
                 <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>Todos</button>
                 <button className={filter === "blocked" ? "active" : ""} onClick={() => setFilter("blocked")}>Bloqueados</button>
                 <button className={filter === "authorized" ? "active" : ""} onClick={() => setFilter("authorized")}>Autorizados</button>
+                <button className={filter === "cancelled" ? "active" : ""} onClick={() => setFilter("cancelled")}>Anulados</button>
               </div>
 
               <div className="records-list">
@@ -796,14 +968,16 @@ export default function App() {
                   visibleRows.map((row) => (
                     <button
                       key={`${row.id}-${row.tableIndex}`}
-                      className={`record-card ${selectedIndex === row.tableIndex ? "selected" : ""}`}
+                      className={`record-card ${selectedIndex === row.tableIndex ? "selected" : ""} ${isCancelled(row) ? "record-cancelled" : ""}`}
                       onClick={() => selectRow(row)}
                     >
-                      <span className={`record-stripe ${authorized(row) ? "stripe-ok" : "stripe-blocked"}`} />
+                      <span className={`record-stripe ${isCancelled(row) ? "stripe-cancelled" : authorized(row) ? "stripe-ok" : "stripe-blocked"}`} />
                       <span className="record-content">
                         <span className="record-heading">
                           <strong>{row.provider}</strong>
-                          <StatusBadge ok={authorized(row)}>{authorized(row) ? "SÍ" : "NO"}</StatusBadge>
+                          {isCancelled(row)
+                            ? <span className="status-badge status-cancelled"><Ban size={15} /> ANULADO</span>
+                            : <StatusBadge ok={authorized(row)}>{authorized(row) ? "SÍ" : "NO"}</StatusBadge>}
                         </span>
                         <span className="record-crop">{row.crop || "Especie sin indicar"}{row.variety ? ` · ${row.variety}` : ""}</span>
                         <span className="record-meta">
@@ -842,6 +1016,10 @@ export default function App() {
                   onReset={() => { setReview(reviewFromRow(selected)); setPurchase(purchaseFromRow(selected)); }}
                   onContractDownload={downloadPurchaseContracts}
                   onContractUpload={attachSignedContract}
+                  onArchivedContractDownload={downloadArchivedContract}
+                  onStatusChange={changeRecordStatus}
+                  onContractReplace={replaceSignedContract}
+                  onDeleteRecord={deleteRecord}
                   onBack={() => setView("records")}
                 />
               ) : view === "new" && canEdit ? (
@@ -945,6 +1123,133 @@ function ConfigurationUnavailablePanel({ onDemo }: { onDemo: () => void }) {
   );
 }
 
+type ManagementAction = "cancel" | "restore" | "replace" | "delete" | null;
+
+function RecordManagementPanel({
+  row,
+  cancelled,
+  hasArchivedContract,
+  saving,
+  onStatusChange,
+  onContractReplace,
+  onDeleteRecord,
+}: {
+  row: ControlRow;
+  cancelled: boolean;
+  hasArchivedContract: boolean;
+  saving: boolean;
+  onStatusChange: (status: "Activo" | "Anulado", reason: string) => Promise<boolean>;
+  onContractReplace: (file: File, reason: string) => Promise<boolean>;
+  onDeleteRecord: (reason: string, confirmation: string, acknowledgement: string) => Promise<boolean>;
+}) {
+  const [action, setAction] = useState<ManagementAction>(null);
+  const [reason, setReason] = useState("");
+  const [replacement, setReplacement] = useState<File | null>(null);
+  const [confirmation, setConfirmation] = useState("");
+  const [acknowledged, setAcknowledged] = useState(false);
+  const statusHistory = recordStatusHistory(row);
+
+  function resetAction() {
+    setAction(null);
+    setReason("");
+    setReplacement(null);
+    setConfirmation("");
+    setAcknowledged(false);
+  }
+
+  useEffect(() => resetAction(), [row.tableIndex]);
+
+  function choose(next: Exclude<ManagementAction, null>) {
+    resetAction();
+    setAction(next);
+  }
+
+  async function confirmAction() {
+    if (reason.trim().length < 5) return;
+    let completed = false;
+    if (action === "cancel") completed = await onStatusChange("Anulado", reason.trim());
+    if (action === "restore") completed = await onStatusChange("Activo", reason.trim());
+    if (action === "replace" && replacement) completed = await onContractReplace(replacement, reason.trim());
+    if (action === "delete") {
+      completed = await onDeleteRecord(
+        reason.trim(),
+        confirmation.trim(),
+        acknowledged ? "ELIMINAR DEFINITIVAMENTE" : "",
+      );
+    }
+    if (completed) resetAction();
+  }
+
+  const canConfirm = reason.trim().length >= 5
+    && (action !== "replace" || Boolean(replacement))
+    && (action !== "delete" || (cancelled && confirmation.trim() === row.id && acknowledged));
+
+  return (
+    <section className="record-management" aria-labelledby="record-management-title">
+      <div className="record-management-heading">
+        <div><span className="step-number">G</span><span><strong id="record-management-title">Gestión del expediente</strong><small>Acciones reservadas al Administrador y registradas en el historial</small></span></div>
+        <ShieldCheck size={20} />
+      </div>
+      <div className="management-actions">
+        {cancelled ? (
+          <button className="secondary-button" type="button" disabled={saving} onClick={() => choose("restore")}><RotateCcw size={17} /> Restaurar expediente</button>
+        ) : (
+          <button className="secondary-button cancel-button" type="button" disabled={saving} onClick={() => choose("cancel")}><Ban size={17} /> Anular expediente</button>
+        )}
+        {hasArchivedContract && (
+          <button className="secondary-button" type="button" disabled={saving} onClick={() => choose("replace")}><FileUp size={17} /> Sustituir contrato</button>
+        )}
+        <button className="secondary-button delete-button" type="button" disabled={saving || !cancelled} onClick={() => choose("delete")} title={cancelled ? "Eliminar un registro creado por error" : "Primero debes anular el expediente"}><Trash2 size={17} /> Eliminar definitivamente</button>
+      </div>
+      {!cancelled && <p className="management-help">El borrado definitivo solo se habilita después de anular el expediente.</p>}
+
+      {action && (
+        <div className={`management-confirmation ${action === "delete" ? "danger-confirmation" : ""}`} role="dialog" aria-label="Confirmar acción de gestión">
+          <div className="management-confirmation-title">
+            <strong>{action === "cancel" ? "Anular expediente" : action === "restore" ? "Restaurar expediente" : action === "replace" ? "Sustituir contrato firmado" : "Eliminar definitivamente"}</strong>
+            <button type="button" onClick={resetAction} aria-label="Cerrar"><X size={18} /></button>
+          </div>
+          <label className="field required-field"><span>Motivo</span><textarea value={reason} maxLength={500} onChange={(event) => setReason(event.target.value)} placeholder="Indica el motivo de esta acción" /></label>
+          {action === "replace" && (
+            <label className="replacement-file">
+              <FileUp size={18} />
+              <span><strong>{replacement ? replacement.name : "Seleccionar nuevo contrato PDF"}</strong><small>La versión actual permanecerá disponible en el historial.</small></span>
+              <input type="file" accept=".pdf,application/pdf" onChange={(event) => setReplacement(event.target.files?.[0] || null)} />
+            </label>
+          )}
+          {action === "delete" && (
+            <div className="delete-confirmations">
+              <div className="danger-note"><AlertTriangle size={18} /><span>Esta operación vaciará la fila y eliminará los contratos asociados. No se puede deshacer.</span></div>
+              <label className="field required-field"><span>Escribe {row.id} para confirmar</span><input value={confirmation} autoComplete="off" onChange={(event) => setConfirmation(event.target.value)} /></label>
+              <label className="acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.currentTarget.checked)} /><span>Confirmo que el expediente fue creado por error y debe eliminarse definitivamente.</span></label>
+            </div>
+          )}
+          <div className="management-confirmation-actions">
+            <button className="text-button" type="button" disabled={saving} onClick={resetAction}>Cancelar</button>
+            <button className={action === "delete" ? "danger-button" : "primary-button"} type="button" disabled={saving || !canConfirm} onClick={() => void confirmAction()}>
+              {action === "delete" ? <Trash2 size={17} /> : action === "replace" ? <FileUp size={17} /> : <Check size={17} />}
+              {saving ? "Guardando…" : action === "delete" ? "Eliminar definitivamente" : "Confirmar"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {statusHistory.length > 0 && (
+        <details className="management-history status-history">
+          <summary><History size={17} /> Historial del expediente <span>{statusHistory.length}</span></summary>
+          <div className="history-list">
+            {[...statusHistory].reverse().map((entry, index) => (
+              <article key={`${entry.changedAt}-${index}`}>
+                <div><strong>{entry.status}</strong><small>{entry.changedBy || "Administrador"}{entry.changedAt ? ` · ${formatDate(entry.changedAt.slice(0, 10))}` : ""}<br />Motivo: {entry.reason || "No indicado"}</small></div>
+              </article>
+            ))}
+          </div>
+        </details>
+      )}
+    </section>
+  );
+}
+
 function ReviewPanel({
   row,
   purchase,
@@ -959,6 +1264,10 @@ function ReviewPanel({
   onReset,
   onContractDownload,
   onContractUpload,
+  onArchivedContractDownload,
+  onStatusChange,
+  onContractReplace,
+  onDeleteRecord,
   onBack,
 }: {
   row: ControlRow;
@@ -974,6 +1283,10 @@ function ReviewPanel({
   onReset: () => void;
   onContractDownload: () => Promise<void>;
   onContractUpload: (file: File) => Promise<void>;
+  onArchivedContractDownload: (archiveId: string) => Promise<void>;
+  onStatusChange: (status: "Activo" | "Anulado", reason: string) => Promise<boolean>;
+  onContractReplace: (file: File, reason: string) => Promise<boolean>;
+  onDeleteRecord: (reason: string, confirmation: string, acknowledgement: string) => Promise<boolean>;
   onBack: () => void;
 }) {
   function update<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
@@ -988,6 +1301,8 @@ function ReviewPanel({
   const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
   const canAttachFinalContract = hasSignedContract || Boolean(purchase.contractDetails.sellerSignedAt);
   const selectedCertifications = certificationSelection(review.certificateType);
+  const cancelled = isCancelled(row);
+  const contractHistory = contractArchiveHistory(purchase);
 
   function toggleCertification(certificate: string, checked: boolean) {
     // Se calcula desde el estado más reciente para que varios toques rápidos y
@@ -1012,7 +1327,9 @@ function ReviewPanel({
             <h2>{purchase.provider}</h2>
             <p>{purchase.crop || "Especie sin indicar"}{purchase.variety ? ` · ${purchase.variety}` : ""} · {purchase.farm || "Finca sin indicar"}</p>
           </div>
-          <StatusBadge ok={issues.length === 0}>{issues.length === 0 ? "Autorizado" : "Bloqueado"}</StatusBadge>
+          {cancelled
+            ? <span className="status-badge status-cancelled"><Ban size={15} /> Anulado</span>
+            : <StatusBadge ok={issues.length === 0}>{issues.length === 0 ? "Autorizado" : "Bloqueado"}</StatusBadge>}
         </div>
 
         <div className="contract-strip">
@@ -1023,6 +1340,12 @@ function ReviewPanel({
       </div>
 
       {readOnly && <div className="readonly-note"><ShieldCheck size={18} /><span>Modo consulta: puedes revisar todos los datos, pero no modificarlos.</span></div>}
+      {cancelled && (
+        <div className="cancelled-note">
+          <Ban size={19} />
+          <span><strong>Expediente anulado</strong><small>{row.statusReason || "Sin motivo indicado"}{row.statusUpdatedAt ? ` · ${formatDate(row.statusUpdatedAt.slice(0, 10))}` : ""}</small></span>
+        </div>
+      )}
 
       <div className="autosave-row" role="status">
         <span className={`autosave-state autosave-${autoSaveStatus}`}>
@@ -1038,7 +1361,7 @@ function ReviewPanel({
         </span>
       </div>
 
-      <fieldset className="purchase-fieldset" disabled={readOnly}>
+      <fieldset className="purchase-fieldset" disabled={readOnly || cancelled}>
         <legend><span className="step-number">A</span><span>Compra y materia prima<small>Datos comerciales, fruta y vigencia contractual</small></span></legend>
         <PurchaseFields
           value={purchase}
@@ -1085,6 +1408,32 @@ function ReviewPanel({
         ) : null}
       </div>
 
+      {contractHistory.length > 0 && (
+        <details className="management-history">
+          <summary><History size={17} /> Versiones anteriores del contrato <span>{contractHistory.length}</span></summary>
+          <div className="history-list">
+            {[...contractHistory].reverse().map((entry) => (
+              <article key={`${entry.archiveId}-${entry.replacedAt}`}>
+                <div><strong>{entry.archiveFilename || "Contrato anterior"}</strong><small>Sustituido por {entry.replacedBy || "Administrador"}{entry.replacedAt ? ` · ${formatDate(entry.replacedAt.slice(0, 10))}` : ""}<br />Motivo: {entry.reason || "No indicado"}</small></div>
+                <button className="text-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(entry.archiveId)}><Download size={16} /> Descargar</button>
+              </article>
+            ))}
+          </div>
+        </details>
+      )}
+
+      {!readOnly && (
+        <RecordManagementPanel
+          row={row}
+          cancelled={cancelled}
+          hasArchivedContract={hasArchivedContract}
+          saving={saving}
+          onStatusChange={onStatusChange}
+          onContractReplace={onContractReplace}
+          onDeleteRecord={onDeleteRecord}
+        />
+      )}
+
       <div className={`result-panel ${issues.length ? "result-blocked" : "result-ok"}`}>
         {issues.length ? <AlertTriangle size={23} /> : <CheckCircle2 size={23} />}
         <div>
@@ -1101,7 +1450,7 @@ function ReviewPanel({
         </details>
       )}
 
-      <fieldset disabled={readOnly}>
+      <fieldset disabled={readOnly || cancelled}>
         <legend><span className="step-number">1</span><span>Planificación, finca y AICA<small>Comprobaciones posteriores a la firma y anteriores al corte</small></span></legend>
         <div className="three-columns">
           <label className="field required-field"><span>Fecha prevista de corte</span><input required type="date" value={review.plannedCutDate} min={purchase.contractStart || undefined} max={purchase.contractEnd || undefined} onInput={(event) => update("plannedCutDate", event.currentTarget.value)} /></label>
@@ -1110,7 +1459,7 @@ function ReviewPanel({
         </div>
       </fieldset>
 
-      <fieldset disabled={readOnly}>
+      <fieldset disabled={readOnly || cancelled}>
         <legend><span className="step-number">2</span><span>Cuaderno de campo<small>Debe estar recibido y validado</small></span></legend>
         <div className="two-columns">
           <label className="field required-field"><span>Cuaderno de campo</span><select required value={review.fieldNotebook} onChange={(event) => update("fieldNotebook", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option></select></label>
@@ -1118,7 +1467,7 @@ function ReviewPanel({
         </div>
       </fieldset>
 
-      <fieldset disabled={readOnly}>
+      <fieldset disabled={readOnly || cancelled}>
         <legend><span className="step-number">3</span><span>Análisis fitosanitario<small>Resultado revisado por Calidad</small></span></legend>
         <div className="two-columns">
           <label className="field required-field"><span>Estado del análisis</span><select required value={review.analysisStatus} onChange={(event) => update("analysisStatus", event.target.value)}><option value="">Seleccionar</option><option>No recibido</option><option>Pendiente de revisión</option><option>Apto</option><option>No apto</option></select></label>
@@ -1126,7 +1475,7 @@ function ReviewPanel({
         </div>
       </fieldset>
 
-      <fieldset disabled={readOnly}>
+      <fieldset disabled={readOnly || cancelled}>
         <legend><span className="step-number">4</span><span>Certificación<small>Tipo y vigencia en la fecha de corte</small></span></legend>
         <div className="certification-checks" role="group" aria-label="Certificaciones de la finca">
           {CERTIFICATIONS.map((certificate) => <label key={certificate} className={`certification-check ${selectedCertifications.includes(certificate) ? "checked" : ""}`}><input type="checkbox" checked={selectedCertifications.includes(certificate)} onChange={(event) => toggleCertification(certificate, event.currentTarget.checked)} /><span><Check size={16} />{certificate}</span></label>)}
@@ -1137,7 +1486,7 @@ function ReviewPanel({
         </div>
       </fieldset>
 
-      <fieldset disabled={readOnly}>
+      <fieldset disabled={readOnly || cancelled}>
         <legend><span className="step-number">5</span><span>Cierre de revisión<small>Otros documentos y responsable</small></span></legend>
         <div className="two-columns">
           <label className="field required-field"><span>Otros documentos exigidos</span><select required value={review.otherDocuments} onChange={(event) => update("otherDocuments", event.target.value)}><option value="">Seleccionar</option><option>Sí</option><option>No</option><option>Pendiente de revisión</option><option>No aplica</option></select></label>

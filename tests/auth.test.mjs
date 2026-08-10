@@ -24,6 +24,9 @@ const env = {
     async get(key) {
       return storedContracts.get(key) || null;
     },
+    async delete(keys) {
+      for (const key of Array.isArray(keys) ? keys : [keys]) storedContracts.delete(key);
+    },
   },
 };
 
@@ -85,6 +88,45 @@ test("el usuario de consulta no puede guardar cambios", async () => {
   });
   assert.equal(save.status, 403);
   assert.match((await save.json()).error, /consulta/);
+
+  const cancel = await api("/api/rows/9/status", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "Anulado", reason: "Creado por error", expectedId: "CMP-TEST" }),
+  });
+  assert.equal(cancel.status, 403);
+
+  const remove = await api("/api/rows/9", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ expectedId: "CMP-TEST", confirmation: "CMP-TEST", acknowledgement: "ELIMINAR DEFINITIVAMENTE", reason: "Creado por error" }),
+  });
+  assert.equal(remove.status, 403);
+});
+
+test("protege las acciones destructivas con validación reforzada", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+
+  const invalidStatus = await api("/api/rows/9/status", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "Borrado", reason: "Creado por error", expectedId: "CMP-TEST" }),
+  });
+  assert.equal(invalidStatus.status, 400);
+  assert.match((await invalidStatus.json()).error, /estado/);
+
+  const insufficientConfirmation = await api("/api/rows/9", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ expectedId: "CMP-TEST", confirmation: "otro", acknowledgement: "", reason: "Creado por error" }),
+  });
+  assert.equal(insufficientConfirmation.status, 400);
+  assert.match((await insufficientConfirmation.json()).error, /identificador/);
 });
 
 test("exige los datos obligatorios al crear una compra", async () => {

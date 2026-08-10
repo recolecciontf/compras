@@ -1,5 +1,16 @@
 import { canonicalMaterial, materialSummary } from "./catalog";
-import type { AppConfig, ContractDetails, ControlRow, HarvestForm, MaterialItem, PurchaseForm, ReviewForm, UserProfile } from "../types";
+import type {
+  AppConfig,
+  ContractArchiveHistoryEntry,
+  ContractDetails,
+  ControlRow,
+  HarvestForm,
+  MaterialItem,
+  PurchaseForm,
+  RecordStatusHistoryEntry,
+  ReviewForm,
+  UserProfile,
+} from "../types";
 
 type ApiSheetRow = { index: number; values: unknown[] };
 type ApiError = { error?: string };
@@ -77,6 +88,11 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
     materialsJson: text(v[31]),
     registeredIca: text(v[32]),
     contractDetailsJson: text(v[34]),
+    recordStatus: text(v[35]) || "Activo",
+    statusReason: text(v[36]),
+    statusUpdatedAt: text(v[37]),
+    statusUpdatedBy: text(v[38]),
+    statusHistoryJson: text(v[39]),
   };
 }
 
@@ -116,6 +132,7 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   sellerSignedAt: "",
   buyerSignedAt: "",
   signatureMethod: "",
+  archiveHistoryJson: "",
 };
 
 function materialsFromRow(row: ControlRow): MaterialItem[] {
@@ -174,6 +191,30 @@ function contractDetailsFromRow(row: ControlRow): ContractDetails {
   }
 }
 
+function safeJsonArray<T>(value: string) {
+  if (!value) return [] as T[];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed as T[] : [];
+  } catch {
+    return [] as T[];
+  }
+}
+
+export function contractArchiveHistory(purchase: PurchaseForm) {
+  return safeJsonArray<ContractArchiveHistoryEntry>(purchase.contractDetails.archiveHistoryJson)
+    .filter((entry) => entry && typeof entry.archiveId === "string" && Boolean(entry.archiveId));
+}
+
+export function recordStatusHistory(row: ControlRow) {
+  return safeJsonArray<RecordStatusHistoryEntry>(row.statusHistoryJson)
+    .filter((entry) => entry && (entry.status === "Activo" || entry.status === "Anulado"));
+}
+
+export function isRecordCancelled(row: ControlRow) {
+  return normalized(row.recordStatus) === "anulado";
+}
+
 export function purchaseFromRow(row: ControlRow): PurchaseForm {
   const materials = materialsFromRow(row);
   const summary = materialSummary(materials);
@@ -228,6 +269,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   const issues: string[] = [];
   const contract = contractDetailsFromRow(row);
   const materials = materialsFromRow(row);
+  if (isRecordCancelled(row)) issues.push("Expediente anulado");
   if (!row.provider.trim()) issues.push("Falta el agricultor o proveedor");
   if (!row.taxId.trim()) issues.push("Falta el NIF o CIF");
   if (!row.farm.trim()) issues.push("Falta la finca o parcela");
@@ -421,6 +463,52 @@ export class WorkbookClient {
       method: "PATCH",
       body: JSON.stringify({ harvest }),
     });
+  }
+
+  async updateRecordStatus(row: ControlRow, status: "Activo" | "Anulado", reason: string) {
+    return this.request<{
+      ok: true;
+      recordStatus: string;
+      statusReason: string;
+      statusUpdatedAt: string;
+      statusUpdatedBy: string;
+      statusHistoryJson: string;
+    }>(`/api/rows/${row.tableIndex}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, reason, expectedId: row.id }),
+    });
+  }
+
+  async replaceContract(row: ControlRow, file: File, reason: string, purchase: PurchaseForm) {
+    const form = new FormData();
+    form.set("file", file, file.name);
+    form.set("reason", reason);
+    form.set("expectedId", row.id);
+    form.set("provider", purchase.provider);
+    form.set("sellerEmail", purchase.contractDetails.sellerEmail);
+    form.set("companyEmail", purchase.contractDetails.companyEmail);
+    form.set("contractNumber", purchase.contractDetails.contractNumber || purchase.id);
+    const response = await fetch(this.endpoint(`/api/rows/${row.tableIndex}/contract`), {
+      method: "POST",
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+      body: form,
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido sustituir el contrato firmado.");
+    }
+    return response.json() as Promise<{ ok: true; archiveFilename: string }>;
+  }
+
+  async deleteRecord(row: ControlRow, reason: string, confirmation: string, acknowledgement: string) {
+    return this.request<{ ok: true; deletedId: string; deletedArchives: number; archiveCleanupPending: boolean }>(
+      `/api/rows/${row.tableIndex}`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({ expectedId: row.id, confirmation, acknowledgement, reason }),
+      },
+    );
   }
 
   async contractTemplate(name: string) {
