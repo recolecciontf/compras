@@ -63,7 +63,7 @@ export function NewPurchasePanel({ saving, onCreate, onBack }: Props) {
     const signedAt = new Date().toISOString();
     const signatures: ContractSignatures = {
       sellerDataUrl: sellerSignature,
-      sellerName: purchase.contractDetails.sellerRepresentative,
+      sellerName: purchase.contractDetails.sellerRepresentative || purchase.provider,
       signedAt,
     };
     await onCreate({

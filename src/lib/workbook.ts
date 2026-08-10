@@ -291,10 +291,6 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   if (!contract.sellerEmail) issues.push("Falta el correo del agricultor");
   if (!contract.companyEmail) issues.push("Falta el correo de la empresa");
   if (contract.contractOrigin !== "existing") {
-    if (!contract.sellerRepresentative) issues.push("Falta el representante del vendedor");
-    if (!contract.sellerDni) issues.push("Falta el DNI del representante del vendedor");
-    if (!contract.sellerAddress) issues.push("Falta el domicilio del vendedor");
-    if (!contract.organicOperatorCode) issues.push("Falta el código de operador ecológico");
     if (!contract.modality) issues.push("Falta la modalidad de compraventa");
     if (!contract.collectionBy) issues.push("Falta indicar quién asume la recolección");
     if (!contract.transportBy) issues.push("Falta indicar quién asume el transporte");
