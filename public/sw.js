@@ -1,4 +1,5 @@
-const CACHE_NAME = "compras-de-campo-v14";
+const CACHE_NAME = "compras-de-campo-v15";
+const BROKEN_CERTIFICATION_CACHE = "compras-de-campo-v14";
 const APP_SHELL = ["./", "./manifest.webmanifest", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -8,11 +9,20 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))),
+    caches.keys().then(async (keys) => {
+      const mustRefreshOpenApp = keys.includes(BROKEN_CERTIFICATION_CACHE);
+      await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+      await self.clients.claim();
+
+      // La versión 14 podía conservar el JavaScript antiguo que dejaba la
+      // pantalla en blanco al tocar una certificación. Esta migración recarga
+      // una sola vez las pestañas que sigan controladas por aquella versión.
+      if (mustRefreshOpenApp) {
+        const clients = await self.clients.matchAll({ type: "window" });
+        await Promise.allSettled(clients.map((client) => client.navigate(client.url)));
+      }
+    }),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -32,6 +42,21 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./"))),
+    );
+    return;
+  }
+
+  if (["script", "style", "worker"].includes(event.request.destination)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request)),
     );
     return;
   }
