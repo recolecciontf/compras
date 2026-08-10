@@ -10,6 +10,7 @@ type ContractObject = {
 type ContractBucket = {
   put(key: string, value: ArrayBuffer, options?: { httpMetadata?: { contentType?: string }; customMetadata?: Record<string, string> }): Promise<unknown>;
   get(key: string): Promise<ContractObject | null>;
+  delete(keys: string | string[]): Promise<unknown>;
 };
 
 interface Env {
@@ -208,7 +209,7 @@ function corsHeaders(request: Request, env: Env) {
     ? {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Headers": "Authorization, Content-Type",
-        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
         Vary: "Origin",
       }
     : {};
@@ -260,9 +261,8 @@ async function sendContractCopies(
   }
 }
 
-async function archiveContract(request: Request, env: Env) {
+async function storeContract(form: FormData, env: Env) {
   if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
-  const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) throw new InputError("Adjunta el contrato firmado.");
   if (file.size <= 0 || file.size > 10 * 1024 * 1024) throw new InputError("El contrato debe ocupar entre 1 byte y 10 MB.");
@@ -307,6 +307,10 @@ async function archiveContract(request: Request, env: Env) {
   const emailStatus = await sendContractCopies(env, bytes, metadata);
   if (emailStatus !== "pending_configuration") await putArchive(emailStatus);
   return { archiveId, archiveFilename: metadata.filename, archivedAt, emailStatus };
+}
+
+async function archiveContract(request: Request, env: Env) {
+  return storeContract(await request.formData(), env);
 }
 
 function embeddedAssetPath(pathname: string) {
@@ -415,7 +419,7 @@ async function ensureSheetSchema(env: Env) {
   const title = env.GOOGLE_WORKSHEET_NAME || "Control documental";
   const sheet = metadata.sheets?.find((item) => item.properties?.title === title)?.properties;
   if (typeof sheet?.sheetId !== "number") throw new Error(`No existe la pestaña ${title}.`);
-  const missingColumns = Math.max(0, 35 - Number(sheet.gridProperties?.columnCount || 0));
+  const missingColumns = Math.max(0, 40 - Number(sheet.gridProperties?.columnCount || 0));
   if (missingColumns) {
     await sheetsRequest(env, `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}:batchUpdate`, {
       method: "POST",
@@ -423,10 +427,20 @@ async function ensureSheetSchema(env: Env) {
     });
   }
   const headerRow = Math.max(1, dataBounds(env).start - 1);
-  const headerRange = `'${sheetName(env)}'!AF${headerRow}:AI${headerRow}`;
+  const headerRange = `'${sheetName(env)}'!AF${headerRow}:AN${headerRow}`;
   const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(headerRange)}`;
   const current = await sheetsRequest<{ values?: unknown[][] }>(env, headerUrl);
-  const proposed = ["Materias primas (JSON)", "Registrado en AICA", "Certificaciones (reservado)", "Datos contrato (JSON)"];
+  const proposed = [
+    "Materias primas (JSON)",
+    "Registrado en AICA",
+    "Certificaciones (reservado)",
+    "Datos contrato (JSON)",
+    "Estado expediente",
+    "Motivo del estado",
+    "Fecha del estado",
+    "Usuario del estado",
+    "Historial de gestión (JSON)",
+  ];
   const headers = proposed.map((header, index) => {
     const existing = String(current.values?.[0]?.[index] ?? "").trim();
     if (existing === "Registrado en ICA") return "Registrado en AICA";
@@ -442,12 +456,58 @@ async function ensureSheetSchema(env: Env) {
 async function loadRows(env: Env) {
   await ensureSheetSchema(env);
   const { start, end } = dataBounds(env);
-  const range = `'${sheetName(env)}'!A${start}:AI${end}`;
+  const range = `'${sheetName(env)}'!A${start}:AN${end}`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
   const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
   return (result.values || [])
     .map((values, offset) => ({ index: start + offset, values }))
     .filter((row) => String(row.values[1] || "").trim());
+}
+
+async function loadRowValues(env: Env, row: number) {
+  const { start, end } = dataBounds(env);
+  if (!Number.isInteger(row) || row < start || row > end) throw new InputError("La fila seleccionada no es válida.");
+  await ensureSheetSchema(env);
+  const range = `'${sheetName(env)}'!A${row}:AN${row}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
+  const result = await sheetsRequest<{ values?: unknown[][] }>(env, url);
+  const values = result.values?.[0] || [];
+  if (!String(values[0] || "").trim() || !String(values[1] || "").trim()) {
+    throw new InputError("El expediente ya no existe.");
+  }
+  return values;
+}
+
+function parseJsonRecord(value: unknown) {
+  try {
+    const parsed = JSON.parse(String(value || "{}")) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {} as Record<string, unknown>;
+  }
+}
+
+function parseJsonHistory(value: unknown) {
+  try {
+    const parsed = JSON.parse(String(value || "[]")) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === "object").slice(-40) : [];
+  } catch {
+    return [] as unknown[];
+  }
+}
+
+function verifyExpectedId(values: unknown[], expectedId: string) {
+  const actualId = String(values[0] || "").trim();
+  if (!expectedId || actualId !== expectedId.trim()) {
+    throw new InputError("El expediente ha cambiado. Sincroniza los datos antes de continuar.");
+  }
+  return actualId;
+}
+
+function managementReason(value: unknown) {
+  const reason = String(value || "").trim().slice(0, 500);
+  if (reason.length < 5) throw new InputError("Indica un motivo de al menos 5 caracteres.");
+  return reason;
 }
 
 function cleanRecord<T extends Record<string, unknown>, K extends keyof T>(value: unknown, keys: readonly K[]) {
@@ -606,7 +666,10 @@ async function savePurchase(env: Env, row: number, purchase: PurchasePayload, cr
       values: [[JSON.stringify(purchase.contractDetails)]],
     },
   ];
-  if (create) data.push({ range: `'${sheet}'!AA${row}:AC${row}`, values: [["No", "", "No"]] });
+  if (create) {
+    data.push({ range: `'${sheet}'!AA${row}:AC${row}`, values: [["No", "", "No"]] });
+    data.push({ range: `'${sheet}'!AJ${row}:AN${row}`, values: [["Activo", "", "", "", "[]"]] });
+  }
   await batchSave(env, data);
   return generatedId;
 }
@@ -666,6 +729,135 @@ async function saveReview(env: Env, row: number, review: ReviewPayload) {
       ]],
     }),
   });
+}
+
+async function updateRecordStatus(env: Env, row: number, value: unknown, session: Session) {
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const status = String(source.status || "").trim();
+  if (status !== "Activo" && status !== "Anulado") throw new InputError("El estado del expediente no es válido.");
+  const reason = managementReason(source.reason);
+  const values = await loadRowValues(env, row);
+  verifyExpectedId(values, String(source.expectedId || ""));
+  const currentStatus = String(values[35] || "Activo").trim() || "Activo";
+  if (currentStatus === status) throw new InputError(`El expediente ya está ${status.toLocaleLowerCase("es")}.`);
+  const changedAt = new Date().toISOString();
+  const changedBy = session.sub;
+  const history = parseJsonHistory(values[39]);
+  history.push({ status, reason, changedAt, changedBy });
+  const statusHistoryJson = JSON.stringify(history.slice(-40));
+  await batchSave(env, [{
+    range: `'${sheetName(env)}'!AJ${row}:AN${row}`,
+    values: [[status, reason, changedAt, changedBy, statusHistoryJson]],
+  }]);
+  return { recordStatus: status, statusReason: reason, statusUpdatedAt: changedAt, statusUpdatedBy: changedBy, statusHistoryJson };
+}
+
+async function replaceArchivedContract(env: Env, row: number, request: Request, session: Session) {
+  const form = await request.formData();
+  const reason = managementReason(form.get("reason"));
+  const values = await loadRowValues(env, row);
+  verifyExpectedId(values, String(form.get("expectedId") || ""));
+  const contract = parseJsonRecord(values[34]);
+  const previousArchiveId = String(contract.archiveId || "").trim();
+  if (!previousArchiveId) throw new InputError("Este expediente todavía no tiene un contrato archivado que sustituir.");
+
+  const archived = await storeContract(form, env);
+  const replacedAt = new Date().toISOString();
+  const history = parseJsonHistory(contract.archiveHistoryJson);
+  history.push({
+    archiveId: previousArchiveId,
+    archiveFilename: String(contract.archiveFilename || "contrato-firmado.pdf"),
+    archivedAt: String(contract.archivedAt || ""),
+    replacedAt,
+    replacedBy: session.sub,
+    reason,
+  });
+  const updatedContract = {
+    ...contract,
+    contractOrigin: "existing",
+    signatureMethod: "uploaded",
+    archiveId: archived.archiveId,
+    archiveFilename: archived.archiveFilename,
+    archivedAt: archived.archivedAt,
+    emailStatus: archived.emailStatus,
+    archiveHistoryJson: JSON.stringify(history.slice(-20)),
+  };
+
+  try {
+    await batchSave(env, [
+      { range: `'${sheetName(env)}'!H${row}:H${row}`, values: [["Sí"]] },
+      { range: `'${sheetName(env)}'!Y${row}:Y${row}`, values: [[`Archivo central: ${archived.archiveFilename}`]] },
+      { range: `'${sheetName(env)}'!AI${row}:AI${row}`, values: [[JSON.stringify(updatedContract)]] },
+    ]);
+  } catch (error) {
+    try {
+      await env.CONTRACT_FILES?.delete(archived.archiveId);
+    } catch {
+      // El archivo queda inaccesible y podrá limpiarse posteriormente.
+    }
+    throw error;
+  }
+
+  return { ...archived, historyCount: history.length };
+}
+
+async function deleteRecordPermanently(env: Env, row: number, value: unknown, session: Session) {
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const expectedId = String(source.expectedId || "").trim();
+  const confirmation = String(source.confirmation || "").trim();
+  const acknowledgement = String(source.acknowledgement || "").trim();
+  const reason = managementReason(source.reason);
+  if (!expectedId || confirmation !== expectedId) throw new InputError("Escribe exactamente el identificador del expediente para confirmar.");
+  if (acknowledgement !== "ELIMINAR DEFINITIVAMENTE") {
+    throw new InputError("Confirma expresamente el borrado definitivo.");
+  }
+
+  const values = await loadRowValues(env, row);
+  const deletedId = verifyExpectedId(values, expectedId);
+  if (String(values[35] || "Activo").trim() !== "Anulado") {
+    throw new InputError("Antes del borrado definitivo debes anular el expediente.");
+  }
+
+  const contract = parseJsonRecord(values[34]);
+  const archivedIds = new Set<string>();
+  const currentArchiveId = String(contract.archiveId || "").trim();
+  if (currentArchiveId) archivedIds.add(currentArchiveId);
+  for (const entry of parseJsonHistory(contract.archiveHistoryJson)) {
+    const archiveId = String((entry as Record<string, unknown>).archiveId || "").trim();
+    if (archiveId) archivedIds.add(archiveId);
+  }
+
+  const range = `'${sheetName(env)}'!A${row}:AN${row}`;
+  const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}:clear`;
+  await sheetsRequest(env, clearUrl, { method: "POST", body: "{}" });
+
+  const deletedAt = new Date().toISOString();
+  let archiveCleanupPending = false;
+  if (env.CONTRACT_FILES) {
+    try {
+      const audit = encoder.encode(JSON.stringify({
+        action: "delete_record",
+        deletedId,
+        provider: String(values[1] || "").trim(),
+        row,
+        reason,
+        deletedAt,
+        deletedBy: session.sub,
+        deletedArchives: [...archivedIds],
+      }));
+      await env.CONTRACT_FILES.put(`audit/deletions/${crypto.randomUUID()}.json`, audit.buffer, {
+        httpMetadata: { contentType: "application/json" },
+        customMetadata: { deletedId, deletedAt, deletedBy: session.sub },
+      });
+      if (archivedIds.size) await env.CONTRACT_FILES.delete([...archivedIds]);
+    } catch {
+      archiveCleanupPending = archivedIds.size > 0;
+    }
+  } else {
+    archiveCleanupPending = archivedIds.size > 0;
+  }
+
+  return { deletedId, deletedArchives: archivedIds.size, archiveCleanupPending };
 }
 
 async function handleApi(request: Request, env: Env) {
@@ -754,6 +946,26 @@ async function handleApi(request: Request, env: Env) {
     const row = await firstAvailableRow(env);
     const id = await savePurchase(env, row, purchase, true);
     return json(request, env, { ok: true, row, id }, 201);
+  }
+
+  const statusMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/status$/);
+  if (statusMatch && request.method === "PATCH") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede cambiar el estado de expedientes." }, 403);
+    const body = await request.json().catch(() => ({}));
+    return json(request, env, { ok: true, ...await updateRecordStatus(env, Number(statusMatch[1]), body, session) });
+  }
+
+  const replacementMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/contract$/);
+  if (replacementMatch && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede sustituir contratos." }, 403);
+    return json(request, env, { ok: true, ...await replaceArchivedContract(env, Number(replacementMatch[1]), request, session) }, 201);
+  }
+
+  const deleteMatch = url.pathname.match(/^\/api\/rows\/(\d+)$/);
+  if (deleteMatch && request.method === "DELETE") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede eliminar expedientes." }, 403);
+    const body = await request.json().catch(() => ({}));
+    return json(request, env, { ok: true, ...await deleteRecordPermanently(env, Number(deleteMatch[1]), body, session) });
   }
 
   const reviewMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/review$/);
