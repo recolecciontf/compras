@@ -28,6 +28,7 @@ interface Env {
   GOOGLE_DATA_START_ROW?: string;
   GOOGLE_DATA_END_ROW?: string;
   CONTRACT_TEMPLATE_KEY: string;
+  UVA_TEMPLATE_KEY?: string;
   CONTRACT_FILES?: ContractBucket;
   CONTRACT_EMAIL_WEBHOOK_URL?: string;
   CONTRACT_EMAIL_WEBHOOK_TOKEN?: string;
@@ -225,7 +226,8 @@ function json(request: Request, env: Env, body: unknown, status = 200) {
 async function contractTemplate(name: string, env: Env) {
   const encrypted = CONTRACT_ASSETS[name as keyof typeof CONTRACT_ASSETS];
   if (!encrypted) return null;
-  const keyBytes = Uint8Array.from(atob(env.CONTRACT_TEMPLATE_KEY || ""), (character) => character.charCodeAt(0));
+  const configuredKey = name === "tonifruit-uva.docx" ? env.UVA_TEMPLATE_KEY : env.CONTRACT_TEMPLATE_KEY;
+  const keyBytes = Uint8Array.from(atob(configuredKey || ""), (character) => character.charCodeAt(0));
   if (keyBytes.length !== 32) throw new Error("La clave de los modelos contractuales no está configurada.");
   const bytes = Uint8Array.from(atob(encrypted), (character) => character.charCodeAt(0));
   const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);

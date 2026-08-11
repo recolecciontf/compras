@@ -9,7 +9,7 @@ const CONTENT_TYPES_NS = "http://schemas.openxmlformats.org/package/2006/content
 const CORE_PROPERTIES_NS = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
 const DUBLIN_CORE_NS = "http://purl.org/dc/elements/1.1/";
 
-type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina";
+type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina" | "uva";
 
 type ContractBatch = {
   kind: ContractKind;
@@ -27,6 +27,7 @@ function contractKind(crop: string): ContractKind | null {
   if (value === "pomelo") return "pomelo";
   if (value === "naranja") return "naranja";
   if (value.includes("mandarina") || value.includes("clementina")) return "mandarina";
+  if (value === "uva") return "uva";
   return null;
 }
 
@@ -37,7 +38,7 @@ function templateName(company: PurchaseForm["contractDetails"]["buyerCompany"], 
   // nunca por variedad.
   if (buyer.includes("organica")) return `mro-${kind}.docx`;
   if (buyer.includes("tonifruit")) {
-    if (["naranja", "mandarina"].includes(kind)) return `tonifruit-${kind}.docx`;
+    if (["naranja", "mandarina", "uva"].includes(kind)) return `tonifruit-${kind}.docx`;
     // Los modelos AILIMPO de limón y pomelo son modelos oficiales por
     // producto, no por comprador. Conservamos intacto el documento original
     // y sustituimos únicamente la identificación del comprador al rellenarlo.
@@ -174,6 +175,15 @@ function replaceInParagraph(paragraph: Element, search: string, replacement: str
 function replaceNextBlank(paragraph: Element, value: string) {
   const match = paragraphText(paragraph).match(/_{2,}/);
   return match ? replaceInParagraph(paragraph, match[0], value) : false;
+}
+
+function replaceBetween(paragraph: Element, startMarker: string, endMarker: string, replacement: string) {
+  const text = paragraphText(paragraph);
+  const start = text.indexOf(startMarker);
+  const end = start < 0 ? -1 : text.indexOf(endMarker, start + startMarker.length);
+  if (start < 0 || end < 0) return false;
+  const current = text.slice(start + startMarker.length, end);
+  return replaceInParagraph(paragraph, current, replacement);
 }
 
 function setCellText(cell: Element, value: string) {
@@ -430,7 +440,9 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
 
   const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
   const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
-  if (varietiesParagraph && varieties) replaceNextBlank(varietiesParagraph, varieties);
+  if (varietiesParagraph && varieties && !replaceNextBlank(varietiesParagraph, varieties)) {
+    replaceBetween(varietiesParagraph, "variedad/es,", ", con destino", ` ${varieties}`);
+  }
 
   if (batch.kind === "naranja") {
     const objectParagraph = findParagraph(document, (text) => text.includes("cantidades pactadas de MANDARINAS"));
@@ -503,7 +515,10 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   const priceParagraph = priceParagraphs.find((paragraph) => paragraphText(paragraph).includes("IVA"));
   if (priceParagraph) {
     const priceValue = priceMode === "POR TANTO" ? details.totalPrice : details.pricePerKg;
-    if (paragraphText(priceParagraph).trimStart().startsWith("€ / Kg.")) {
+    const existingUnitPrice = paragraphText(priceParagraph).match(/\d+(?:[.,]\d+)?\s*€\s*\/\s*Kg\./i)?.[0];
+    if (existingUnitPrice) {
+      replaceInParagraph(priceParagraph, existingUnitPrice, `${numberEs(priceValue)} € / Kg.`);
+    } else if (paragraphText(priceParagraph).trimStart().startsWith("€ / Kg.")) {
       replaceInParagraph(priceParagraph, " € / Kg.", ` ${numberEs(priceValue)} € / Kg.`);
     } else if (!replaceNextBlank(priceParagraph, numberEs(priceValue))) {
       const marker = paragraphText(priceParagraph).includes(" € / Kg.") ? " € / Kg." : " €/";
@@ -581,8 +596,8 @@ async function setContractMetadata(zip: JSZip, purchase: PurchaseForm, batch: Co
   const coreDocument = new DOMParser().parseFromString(await coreFile.async("string"), "application/xml");
   if (coreDocument.getElementsByTagName("parsererror").length) return;
   const contractNumber = purchase.contractDetails.contractNumber || purchase.id || "PENDIENTE";
-  const species = ({ limon: "Limón", pomelo: "Pomelo", naranja: "Naranja", mandarina: "Mandarina" } as const)[batch.kind];
-  const ecological = batch.kind === "naranja" || batch.kind === "mandarina" ? "ecológica" : "ecológico";
+  const species = ({ limon: "Limón", pomelo: "Pomelo", naranja: "Naranja", mandarina: "Mandarina", uva: "Uva" } as const)[batch.kind];
+  const ecological = batch.kind === "pomelo" || batch.kind === "limon" ? "ecológico" : "ecológica";
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:title", "title", `Contrato de ${species} - ${contractNumber} - ${purchase.provider}`);
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:subject", "subject", `Contrato de compraventa de ${species.toLocaleLowerCase("es")} ${ecological}`);
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:creator", "creator", purchase.contractDetails.buyerCompany);
