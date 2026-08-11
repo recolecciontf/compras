@@ -656,6 +656,42 @@ h3,
   margin-bottom: 15px;
 }
 
+.signature-choice-grid {
+  margin: 0 0 15px;
+}
+
+.contract-send-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 14px;
+  color: #785c25;
+  border: 1px solid #e5cb91;
+  border-radius: 11px;
+  background: #fff8e8;
+}
+
+.contract-send-warning svg {
+  flex: 0 0 auto;
+  color: #a67013;
+}
+
+.contract-send-warning strong,
+.contract-send-warning small {
+  display: block;
+}
+
+.contract-send-warning strong {
+  font-size: 0.72rem;
+}
+
+.contract-send-warning small {
+  margin-top: 3px;
+  color: #786a52;
+  font-size: 0.63rem;
+  line-height: 1.5;
+}
+
 .signature-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1070,6 +1106,18 @@ h3,
   min-width: 210px;
 }
 
+.contract-panel-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.contract-panel-actions .secondary-button {
+  min-width: 190px;
+}
+
 .contract-download-panel.contract-archived {
   border-color: #9fc693;
   background: linear-gradient(135deg, #eaf6e5, #f8fcf6);
@@ -1302,6 +1350,11 @@ h3,
   .contract-download-panel .secondary-button {
     width: 100%;
     min-width: 0;
+  }
+
+  .contract-panel-actions {
+    display: grid;
+    width: 100%;
   }
 
   .certification-checks {
