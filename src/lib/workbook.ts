@@ -133,6 +133,12 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   buyerSignedAt: "",
   signatureMethod: "",
   archiveHistoryJson: "",
+  previousContractMode: "",
+  previousContractPurchaseId: "",
+  previousContractArchiveId: "",
+  previousContractSourceArchiveId: "",
+  previousContractFilename: "",
+  previousContractStoredAt: "",
 };
 
 function materialsFromRow(row: ControlRow): MaterialItem[] {
@@ -564,6 +570,39 @@ export class WorkbookClient {
       throw new Error("El servidor no ha confirmado el archivo del contrato. El expediente no se ha modificado.");
     }
     return archived;
+  }
+
+  async archivePreviousContract(file: File, purchase: PurchaseForm) {
+    const form = new FormData();
+    form.set("file", file, file.name);
+    form.set("provider", purchase.provider);
+    form.set("sourcePurchaseId", purchase.contractDetails.previousContractPurchaseId || "");
+    const response = await fetch(this.endpoint("/api/previous-contract-files"), {
+      method: "POST",
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+      body: form,
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido guardar el contrato anterior.");
+    }
+    return response.json() as Promise<{
+      previousContractArchiveId: string;
+      previousContractFilename: string;
+      previousContractStoredAt: string;
+    }>;
+  }
+
+  async copyPreviousContract(archiveId: string, purchaseId: string, provider: string) {
+    return this.request<{
+      previousContractArchiveId: string;
+      previousContractFilename: string;
+      previousContractStoredAt: string;
+    }>("/api/previous-contract-files/copy", {
+      method: "POST",
+      body: JSON.stringify({ archiveId, purchaseId, provider }),
+    });
   }
 
   async archivedContract(archiveId: string) {
