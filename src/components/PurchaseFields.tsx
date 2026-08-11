@@ -53,6 +53,12 @@ export const EMPTY_CONTRACT_DETAILS: ContractDetails = {
   buyerSignedAt: "",
   signatureMethod: "",
   archiveHistoryJson: "",
+  previousContractMode: "",
+  previousContractPurchaseId: "",
+  previousContractArchiveId: "",
+  previousContractSourceArchiveId: "",
+  previousContractFilename: "",
+  previousContractStoredAt: "",
 };
 
 export const EMPTY_PURCHASE: PurchaseForm = {
@@ -210,7 +216,7 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
       </div>
       {contractMode !== "existing" ? <>
       <div className="contract-workflow" aria-label="Flujo del contrato">
-        <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i>{isUnsigned ? <><span>Descargar y enviar</span><i>→</i><span>Adjuntar firmado</span></> : <><span>Firma agricultor</span><i>→</i><span>Descargar PDF</span></>}
+        <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i>{isUnsigned ? <><span>Descargar y enviar</span><i>→</i><span>Adjuntar firmado</span></> : <><span>Firma agricultor</span><i>→</i><span>Descargar PDF o Word</span></>}
       </div>
       <div className="three-columns">
         <label className="field required-field"><span>Empresa compradora</span><select required disabled={disabled} value={contract.buyerCompany} onChange={(event) => updateContract("buyerCompany", event.target.value as ContractDetails["buyerCompany"])}><option value="">Seleccionar</option><option>MR. ORGÁNICA, S.L.</option><option>TOÑIFRUIT, S.L.</option></select></label>
