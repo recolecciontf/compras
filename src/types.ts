@@ -59,6 +59,12 @@ export type ContractDetails = {
   buyerSignedAt: string;
   signatureMethod: "" | "uploaded" | "in_app" | "external_pending";
   archiveHistoryJson: string;
+  previousContractMode: "" | "none" | "archived" | "uploaded";
+  previousContractPurchaseId: string;
+  previousContractArchiveId: string;
+  previousContractSourceArchiveId: string;
+  previousContractFilename: string;
+  previousContractStoredAt: string;
 };
 
 export type ContractArchiveHistoryEntry = {
@@ -82,6 +88,8 @@ export type ContractSignatures = {
   sellerName: string;
   signedAt: string;
 };
+
+export type ContractOutputFormat = "pdf" | "docx";
 
 export type ControlRow = {
   tableIndex: number;

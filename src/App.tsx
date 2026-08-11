@@ -20,6 +20,7 @@ import {
   CloudOff,
   Download,
   FileCheck2,
+  FileText,
   FileUp,
   History,
   ListChecks,
@@ -54,7 +55,7 @@ import {
   reviewFromRow,
   WorkbookClient,
 } from "./lib/workbook";
-import type { AppConfig, AppView, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
+import type { AppConfig, AppView, ContractOutputFormat, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
 
 function formatDate(value: string) {
   if (!value) return "Sin fecha";
@@ -500,7 +501,7 @@ export default function App() {
     setError("");
     try {
       const assignedId = nextPurchase.id || nextPurchaseId(rows, nextPurchase.contractDetails.buyerCompany);
-      const identifiedPurchase: PurchaseForm = {
+      let identifiedPurchase: PurchaseForm = {
         ...nextPurchase,
         id: assignedId,
         contractDetails: {
@@ -508,6 +509,51 @@ export default function App() {
           contractNumber: nextPurchase.contractDetails.contractNumber || assignedId,
         },
       };
+      const previousReference = contractSubmission.previousContract;
+      if (previousReference.mode !== "none") {
+        let storedPrevious: {
+          previousContractArchiveId: string;
+          previousContractFilename: string;
+          previousContractStoredAt: string;
+        };
+        if (demoMode) {
+          storedPrevious = {
+            previousContractArchiveId: crypto.randomUUID(),
+            previousContractFilename: previousReference.mode === "uploaded" ? previousReference.file.name : previousReference.filename,
+            previousContractStoredAt: new Date().toISOString(),
+          };
+        } else {
+          if (!client) throw new Error("No hay conexión con Google Sheets.");
+          storedPrevious = previousReference.mode === "uploaded"
+            ? await client.archivePreviousContract(previousReference.file, identifiedPurchase)
+            : await client.copyPreviousContract(previousReference.archiveId, previousReference.purchaseId, identifiedPurchase.provider);
+        }
+        identifiedPurchase = {
+          ...identifiedPurchase,
+          contractDetails: {
+            ...identifiedPurchase.contractDetails,
+            previousContractMode: previousReference.mode,
+            previousContractPurchaseId: previousReference.mode === "archived" ? previousReference.purchaseId : "",
+            previousContractArchiveId: storedPrevious.previousContractArchiveId,
+            previousContractSourceArchiveId: previousReference.mode === "archived" ? previousReference.archiveId : "",
+            previousContractFilename: storedPrevious.previousContractFilename,
+            previousContractStoredAt: storedPrevious.previousContractStoredAt,
+          },
+        };
+      } else {
+        identifiedPurchase = {
+          ...identifiedPurchase,
+          contractDetails: {
+            ...identifiedPurchase.contractDetails,
+            previousContractMode: "none",
+            previousContractPurchaseId: "",
+            previousContractArchiveId: "",
+            previousContractSourceArchiveId: "",
+            previousContractFilename: "",
+            previousContractStoredAt: "",
+          },
+        };
+      }
       let preparedPurchase = identifiedPurchase;
       if (demoMode) {
         preparedPurchase = {
@@ -529,7 +575,7 @@ export default function App() {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
         if (contractSubmission.mode !== "existing") {
           const signatures = contractSubmission.mode === "generated" ? contractSubmission.signatures : undefined;
-          const artifact = await generateContractPackage(identifiedPurchase, (name) => client.contractTemplate(name), signatures);
+          const artifact = await generateContractPackage(identifiedPurchase, (name) => client.contractTemplate(name), signatures, contractSubmission.format);
           triggerDownload(artifact.blob, artifact.filename);
           preparedPurchase = {
             ...identifiedPurchase,
@@ -605,10 +651,11 @@ export default function App() {
         setSelectedIndex(createdIndex);
       }
       setLastSyncedAt(new Date());
+      const generatedFormat = contractSubmission.mode === "existing" ? "" : contractSubmission.format === "pdf" ? "PDF" : "Word";
       setToast(contractSubmission.mode === "generated"
-        ? "Compra creada y PDF descargado. Pendiente de firma digital del comprador, archivo y AICA."
+        ? `Compra creada y ${generatedFormat} descargado. Pendiente de firma digital del comprador, archivo y AICA.`
         : contractSubmission.mode === "unsigned"
-        ? "Compra creada y PDF descargado. Pendiente de firma del agricultor, devolución, archivo y AICA."
+        ? `Compra creada y ${generatedFormat} descargado. Pendiente de firma del agricultor, devolución, archivo y AICA.`
         : preparedPurchase.contractDetails.emailStatus === "sent"
         ? "Compra creada, contrato archivado y copias enviadas."
         : preparedPurchase.contractDetails.archiveId
@@ -643,7 +690,7 @@ export default function App() {
     }
   }
 
-  async function downloadPurchaseContracts() {
+  async function downloadPurchaseContracts(format: ContractOutputFormat = "pdf") {
     if (!purchase) return;
     setSaving(true);
     setError("");
@@ -655,8 +702,9 @@ export default function App() {
         setToast("Contrato firmado descargado");
         return;
       }
-      const count = await downloadContracts(purchase, (name) => client.contractTemplate(name));
-      setToast(count === 1 ? "Contrato PDF descargado" : `${count} contratos PDF incluidos en el ZIP`);
+      const count = await downloadContracts(purchase, (name) => client.contractTemplate(name), format);
+      const formatLabel = format === "pdf" ? "PDF" : "Word";
+      setToast(count === 1 ? `Contrato ${formatLabel} descargado` : `${count} contratos ${formatLabel} incluidos en el ZIP`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se ha podido generar el contrato.");
     } finally {
@@ -1055,7 +1103,13 @@ export default function App() {
                   onBack={() => setView("records")}
                 />
               ) : view === "new" && canEdit ? (
-                <NewPurchasePanel saving={saving} onCreate={createPurchase} onBack={() => setView("records")} />
+                <NewPurchasePanel
+                  saving={saving}
+                  rows={rows}
+                  onCreate={createPurchase}
+                  onPreviousContractDownload={downloadArchivedContract}
+                  onBack={() => setView("records")}
+                />
               ) : view === "harvest" ? (
                 <HarvestPanel rows={rows} readOnly={!canEdit} saving={saving} onSave={saveHarvest} onBack={() => setView("records")} />
               ) : (
@@ -1313,7 +1367,7 @@ function ReviewPanel({
   onChange: Dispatch<SetStateAction<ReviewForm | null>>;
   onSubmit: (event: FormEvent) => void;
   onReset: () => void;
-  onContractDownload: () => Promise<void>;
+  onContractDownload: (format?: ContractOutputFormat) => Promise<void>;
   onContractUpload: (file: File) => Promise<void>;
   onArchivedContractDownload: (archiveId: string) => Promise<void>;
   onStatusChange: (status: "Activo" | "Anulado", reason: string) => Promise<boolean>;
@@ -1419,7 +1473,7 @@ function ReviewPanel({
                   ? "Envía el PDF al agricultor. Cuando lo devuelva firmado, adjunta aquí la copia definitiva; después podrá completarse la firma de la empresa y validarse el registro en AICA."
                 : canAttachFinalContract
                   ? "Tras la firma digital de la empresa, adjunta el PDF definitivo. Después podrá validarse el registro en AICA."
-                  : "Se completa una copia PDF estable del modelo original. Si hay varias especies, se descarga un contrato por especie."}
+                  : "Puedes descargar una copia PDF estable o el documento Word. Si hay varias especies, se descarga un contrato por especie."}
             </small>
           </span>
         </div>
@@ -1427,7 +1481,10 @@ function ReviewPanel({
           <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Descargando…" : "Descargar contrato firmado"}</button>
         ) : canAttachFinalContract && !readOnly ? (
           <div className="contract-panel-actions">
-            {awaitsExternalSignature && <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar PDF sin firmas"}</button>}
+            {awaitsExternalSignature && <>
+              <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload("pdf")}><Download size={18} /> {saving ? "Generando…" : "Descargar PDF sin firmas"}</button>
+              <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload("docx")}><Download size={18} /> {saving ? "Generando…" : "Descargar Word sin firmas"}</button>
+            </>}
             <label className={`secondary-button contract-upload-button ${saving ? "disabled" : ""}`}>
               <FileUp size={18} /> {saving ? "Archivando…" : awaitsExternalSignature ? "Adjuntar contrato devuelto" : "Adjuntar contrato firmado"}
               <input
@@ -1443,9 +1500,23 @@ function ReviewPanel({
             </label>
           </div>
         ) : !canAttachFinalContract ? (
-          <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador PDF"}</button>
+          <div className="contract-panel-actions">
+            <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload("pdf")}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador PDF"}</button>
+            <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload("docx")}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador Word"}</button>
+          </div>
         ) : null}
       </div>
+
+      {purchase.contractDetails.previousContractArchiveId && (
+        <div className="previous-contract-reference">
+          <FileText size={20} />
+          <span>
+            <strong>Contrato anterior utilizado como referencia</strong>
+            <small>{purchase.contractDetails.previousContractFilename || "Contrato anterior"}{purchase.contractDetails.previousContractPurchaseId ? ` · origen ${purchase.contractDetails.previousContractPurchaseId}` : " · subido manualmente"}</small>
+          </span>
+          <button className="text-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(purchase.contractDetails.previousContractArchiveId)}><Download size={16} /> Descargar</button>
+        </div>
+      )}
 
       {contractHistory.length > 0 && (
         <details className="management-history">
