@@ -36,7 +36,12 @@ function templateName(company: PurchaseForm["contractDetails"]["buyerCompany"], 
   // Los expedientes importados pueden contener pequeñas diferencias de
   // puntuación o acentuación. El modelo se resuelve por empresa y especie,
   // nunca por variedad.
-  if (buyer.includes("organica")) return `mro-${kind}.docx`;
+  if (buyer.includes("organica")) {
+    // El modelo de uva es común; al rellenarlo se sustituye siempre la
+    // identidad del comprador por la empresa elegida.
+    if (kind === "uva") return "tonifruit-uva.docx";
+    return `mro-${kind}.docx`;
+  }
   if (buyer.includes("tonifruit")) {
     if (["naranja", "mandarina", "uva"].includes(kind)) return `tonifruit-${kind}.docx`;
     // Los modelos AILIMPO de limón y pomelo son modelos oficiales por
@@ -116,28 +121,35 @@ function textElement(document: Document, value: string) {
   return text;
 }
 
-function runElement(document: Document, value: string, bold = false, halfPoints = 14, sourceProperties?: Element | null) {
+function runElement(document: Document, value: string, bold = false, halfPoints?: number, sourceProperties?: Element | null) {
   const run = document.createElementNS(WORD_NS, "w:r");
   const properties = sourceProperties
     ? document.importNode(sourceProperties, true) as Element
     : document.createElementNS(WORD_NS, "w:rPr");
   for (const child of Array.from(properties.children)) {
-    if (child.namespaceURI === WORD_NS && ["sz", "szCs", "strike", "dstrike"].includes(child.localName)) child.remove();
+    if (child.namespaceURI === WORD_NS && ["strike", "dstrike"].includes(child.localName)) child.remove();
+    if (halfPoints !== undefined && child.namespaceURI === WORD_NS && ["sz", "szCs"].includes(child.localName)) child.remove();
+    if (!bold && child.namespaceURI === WORD_NS && ["b", "bCs"].includes(child.localName)) child.remove();
   }
   if (bold && !childElements(properties, "b").length) properties.append(document.createElementNS(WORD_NS, "w:b"));
-  const size = document.createElementNS(WORD_NS, "w:sz");
-  size.setAttributeNS(WORD_NS, "w:val", String(halfPoints));
-  const complexSize = document.createElementNS(WORD_NS, "w:szCs");
-  complexSize.setAttributeNS(WORD_NS, "w:val", String(halfPoints));
-  properties.append(size, complexSize);
+  if (halfPoints !== undefined) {
+    const size = document.createElementNS(WORD_NS, "w:sz");
+    size.setAttributeNS(WORD_NS, "w:val", String(halfPoints));
+    const complexSize = document.createElementNS(WORD_NS, "w:szCs");
+    complexSize.setAttributeNS(WORD_NS, "w:val", String(halfPoints));
+    properties.append(size, complexSize);
+  }
   run.append(properties);
   run.append(textElement(document, value));
   return run;
 }
 
-function setParagraph(paragraph: Element, value: string, boldPrefix = "", halfPoints = 14) {
+function setParagraph(paragraph: Element, value: string, boldPrefix = "", halfPoints?: number) {
   const document = paragraph.ownerDocument;
-  const sourceProperties = paragraph.getElementsByTagNameNS(WORD_NS, "rPr")[0] || null;
+  const paragraphProperties = childElements(paragraph, "pPr")[0];
+  const sourceProperties = (paragraphProperties && childElements(paragraphProperties, "rPr")[0])
+    || paragraph.getElementsByTagNameNS(WORD_NS, "rPr")[0]
+    || null;
   for (const child of Array.from(paragraph.children)) {
     if (!(child.namespaceURI === WORD_NS && child.localName === "pPr")) child.remove();
   }
@@ -186,9 +198,9 @@ function replaceBetween(paragraph: Element, startMarker: string, endMarker: stri
   return replaceInParagraph(paragraph, current, replacement);
 }
 
-function setCellText(cell: Element, value: string) {
+function setCellText(cell: Element, value: string, halfPoints?: number) {
   const paragraph = childElements(cell, "p")[0];
-  if (paragraph) setParagraph(paragraph, value, "", 14);
+  if (paragraph) setParagraph(paragraph, value, "", halfPoints);
 }
 
 function dataUrlBytes(dataUrl: string) {
@@ -407,6 +419,95 @@ function preventRowSplit(row: Element | undefined) {
   }
 }
 
+function addPageBreakBefore(element: Element) {
+  const parent = element.parentNode;
+  if (!parent) return;
+  const paragraph = element.ownerDocument.createElementNS(WORD_NS, "w:p");
+  const properties = element.ownerDocument.createElementNS(WORD_NS, "w:pPr");
+  properties.append(element.ownerDocument.createElementNS(WORD_NS, "w:pageBreakBefore"));
+  paragraph.append(properties);
+  parent.insertBefore(paragraph, element);
+}
+
+function preserveTemplateSpacerBefore(paragraph: Element | undefined) {
+  const previous = paragraph?.previousElementSibling;
+  if (!previous || previous.namespaceURI !== WORD_NS || previous.localName !== "p" || paragraphText(previous).trim()) return;
+  // Algunos conversores omiten los párrafos vacíos de 2 pt que el modelo
+  // usa como separación. El espacio no separable conserva exactamente ese hueco.
+  setParagraph(previous, "\u00a0", "", 4);
+}
+
+function removeParagraphs(document: Document, predicate: (text: string) => boolean) {
+  for (const paragraph of Array.from(document.getElementsByTagNameNS(WORD_NS, "p"))) {
+    if (predicate(paragraphText(paragraph).trim())) paragraph.remove();
+  }
+}
+
+function suppressParagraphBorders(paragraph: Element | undefined) {
+  if (!paragraph) return;
+  let properties = childElements(paragraph, "pPr")[0];
+  if (!properties) {
+    properties = paragraph.ownerDocument.createElementNS(WORD_NS, "w:pPr");
+    paragraph.prepend(properties);
+  }
+  let borders = childElements(properties, "pBdr")[0];
+  if (!borders) {
+    borders = paragraph.ownerDocument.createElementNS(WORD_NS, "w:pBdr");
+    properties.append(borders);
+  }
+  for (const edgeName of ["top", "bottom"]) {
+    let edge = childElements(borders, edgeName)[0];
+    if (!edge) {
+      edge = paragraph.ownerDocument.createElementNS(WORD_NS, `w:${edgeName}`);
+      borders.append(edge);
+    }
+    edge.setAttributeNS(WORD_NS, "w:val", "nil");
+  }
+}
+
+function repeatDefaultHeaderOnEveryPage(document: Document) {
+  for (const section of Array.from(document.getElementsByTagNameNS(WORD_NS, "sectPr"))) {
+    const references = childElements(section, "headerReference");
+    const defaultReference = references.find((reference) => reference.getAttributeNS(WORD_NS, "type") === "default");
+    const defaultId = defaultReference?.getAttributeNS(OFFICE_REL_NS, "id");
+    if (!defaultId) continue;
+    references.forEach((reference) => reference.setAttributeNS(OFFICE_REL_NS, "r:id", defaultId));
+  }
+}
+
+async function synchronizeDefaultHeaderParts(zip: JSZip, document: Document) {
+  const section = Array.from(document.getElementsByTagNameNS(WORD_NS, "sectPr")).at(-1);
+  const defaultReference = section && childElements(section, "headerReference")
+    .find((reference) => reference.getAttributeNS(WORD_NS, "type") === "default");
+  const defaultId = defaultReference?.getAttributeNS(OFFICE_REL_NS, "id");
+  const relationshipsFile = zip.file("word/_rels/document.xml.rels");
+  if (!defaultId || !relationshipsFile) return;
+
+  const relationships = new DOMParser().parseFromString(await relationshipsFile.async("string"), "application/xml");
+  const relationship = Array.from(relationships.documentElement.children)
+    .find((item) => item.getAttribute("Id") === defaultId);
+  const target = relationship?.getAttribute("Target")?.replace(/^\.\//, "");
+  if (!target) return;
+
+  const sourcePath = `word/${target}`;
+  const source = zip.file(sourcePath);
+  if (!source) return;
+  const sourceBytes = await source.async("uint8array");
+  const sourceName = sourcePath.split("/").at(-1) || "";
+  const sourceRelationshipsPath = `word/_rels/${sourceName}.rels`;
+  const sourceRelationships = zip.file(sourceRelationshipsPath);
+  const sourceRelationshipsBytes = sourceRelationships ? await sourceRelationships.async("uint8array") : null;
+
+  const headerPaths = Object.keys(zip.files).filter((path) => /^word\/header\d+\.xml$/.test(path));
+  headerPaths.forEach((path) => {
+    zip.file(path, sourceBytes);
+    const name = path.split("/").at(-1) || "";
+    const relationshipsPath = `word/_rels/${name}.rels`;
+    if (sourceRelationshipsBytes) zip.file(relationshipsPath, sourceRelationshipsBytes);
+    else zip.remove(relationshipsPath);
+  });
+}
+
 function rows(table: Element) {
   return childElements(table, "tr");
 }
@@ -419,6 +520,12 @@ function isoDate(value: string) {
   if (!value) return "";
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function shortDate(value: string) {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  return `${day}-${month}-${year.slice(-2)}`;
 }
 
 function longDate(value: string) {
@@ -440,10 +547,13 @@ function totalKg(materials: MaterialItem[]) {
 function fillDocument(document: Document, purchase: PurchaseForm, batch: ContractBatch) {
   const details = purchase.contractDetails;
   const isAilimpo = batch.kind === "limon" || batch.kind === "pomelo";
+  // Cada modelo conserva el tamaño definido por su Word original. La
+  // plantilla de uva requiere 10 pt también en los campos antes vacíos.
+  const filledHalfPoints = batch.kind === "uva" ? 20 : undefined;
   const contractNumber = details.contractNumber || purchase.id || "PENDIENTE";
 
   const dateParagraph = findParagraph(document, (text) => text.startsWith("En Librilla"));
-  if (dateParagraph) setParagraph(dateParagraph, `En Librilla (Murcia) a ${longDate(details.signatureDate)}          Nº CONTRATO: ${contractNumber}`, "", 15);
+  if (dateParagraph) setParagraph(dateParagraph, `En Librilla (Murcia) a ${longDate(details.signatureDate)}          Nº CONTRATO: ${contractNumber}`, "", filledHalfPoints);
 
   const sellerParagraph = findParagraph(document, (text) => text.trimStart().startsWith("Vendedor:"));
   if (sellerParagraph) {
@@ -455,12 +565,12 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     const sellerText = isAilimpo
       ? `Vendedor: ${sellerIdentity} Con número de operador ecológico: ${details.organicOperatorCode.trim() || "____________"}. Certificado por la autoridad u organismo de control con Código: ${details.certifierCode.trim() || "__________"}. Código registro AILIMPO/REGEPA ${details.ailimpoRegepaCode.trim() || "____________"}.`
       : `Vendedor: ${sellerIdentity} Código operador ecológico: ${details.organicOperatorCode.trim() || "____________"}`;
-    setParagraph(sellerParagraph, sellerText, "Vendedor:", 14);
+    setParagraph(sellerParagraph, sellerText, "Vendedor:", filledHalfPoints);
   }
 
   const buyerParagraph = findParagraph(document, (text) => text.trimStart().startsWith("Comprador:"));
   const buyerText = buyerParagraphText(details.buyerCompany, isAilimpo);
-  if (buyerParagraph && buyerText) setParagraph(buyerParagraph, buyerText, "Comprador:", 14);
+  if (buyerParagraph && buyerText) setParagraph(buyerParagraph, buyerText, "Comprador:", filledHalfPoints);
 
   const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
   const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
@@ -476,6 +586,11 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
       material.plot ? `parcela ${material.plot}` : "",
     ].filter(Boolean).join(", ")).join("; ");
     if (origin) replaceNextBlank(varietiesParagraph, origin);
+    // La plantilla de trabajo tenía todo el párrafo en negrita. Se restaura
+    // el formato contractual: solo el número del apartado va en negrita y el
+    // texto conserva los 10 pt del modelo original.
+    setParagraph(varietiesParagraph, paragraphText(varietiesParagraph), "1. ", 20);
+    preserveTemplateSpacerBefore(findParagraph(document, (text) => text.trimStart().startsWith("2. Que el comprador")));
   }
 
   if (batch.kind === "naranja") {
@@ -499,21 +614,21 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     const values = material
       ? [material.variety, material.situation, material.municipality || purchase.municipality, material.paraje || purchase.farm, material.polygon, material.plot, material.hectares, material.expectedKg]
       : ["", "", "", "", "", "", "", ""];
-    rowCells.forEach((cell, cellIndex) => setCellText(cell, values[cellIndex] || ""));
+    rowCells.forEach((cell, cellIndex) => setCellText(cell, values[cellIndex] || "", filledHalfPoints));
   }
 
   const priceMode = details.modality || (details.totalPrice && !details.pricePerKg ? "POR TANTO" : "A KILOS");
   const modalityRows = rows(tables[1]);
   modalityRows.forEach((row, index) => {
     const rowCells = cells(row);
-    if (rowCells[0]) setCellText(rowCells[0], (priceMode === "A KILOS" ? index === 0 : index === 1) ? "X" : "");
+    if (rowCells[0]) setCellText(rowCells[0], (priceMode === "A KILOS" ? index === 0 : index === 1) ? "X" : "", filledHalfPoints);
   });
 
   const responsibilityRows = rows(tables[2]);
   responsibilityRows.forEach((row, index) => {
     const rowCells = cells(row);
-    if (rowCells[0]) setCellText(rowCells[0], (details.collectionBy || "Comprador") === (index === 0 ? "Vendedor" : "Comprador") ? "X" : "");
-    if (rowCells[5]) setCellText(rowCells[5], (details.transportBy || "Comprador") === (index === 0 ? "Vendedor" : "Comprador") ? "X" : "");
+    if (rowCells[0]) setCellText(rowCells[0], (details.collectionBy || "Comprador") === (index === 0 ? "Vendedor" : "Comprador") ? "X" : "", filledHalfPoints);
+    if (rowCells[5]) setCellText(rowCells[5], (details.transportBy || "Comprador") === (index === 0 ? "Vendedor" : "Comprador") ? "X" : "", filledHalfPoints);
   });
 
   const collectionTable = tables[3];
@@ -528,15 +643,20 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     // quitamos de forma explícita y mantenemos el bloque de recolección unido.
     removeListMarkers(leftCollectionCell);
     preventRowSplit(collectionRows[1]);
+    // En el modelo original el bloque completo de modalidades comienza en la
+    // segunda página. El salto explícito evita que el conversor divida la
+    // tabla por la mitad y que una página de continuación pierda su cabecera.
+    addPageBreakBefore(collectionTable);
   }
 
   const nestedCuts = leftCollectionCell.getElementsByTagNameNS(WORD_NS, "tbl")[0];
   if (nestedCuts) {
+    if (batch.kind === "uva") scaleTableToWidth(nestedCuts, 4500);
     const cutRows = rows(nestedCuts);
     if (cutRows[1]) {
       const cutCells = cells(cutRows[1]);
-      ["1", isoDate(purchase.contractStart), isoDate(purchase.contractEnd), "", ""].forEach((value, index) => {
-        if (cutCells[index]) setCellText(cutCells[index], value);
+      ["1", shortDate(purchase.contractStart), shortDate(purchase.contractEnd), "", ""].forEach((value, index) => {
+        if (cutCells[index]) setCellText(cutCells[index], value, filledHalfPoints);
       });
     }
   }
@@ -544,12 +664,12 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   if (priceMode === "POR TANTO") {
     const rightStart = findParagraph(rightCollectionCell, (text) => text.startsWith("INICIO:"));
     const rightEnd = findParagraph(rightCollectionCell, (text) => text.startsWith("FINALIZACIÓN:"));
-    if (rightStart) setParagraph(rightStart, `INICIO: ${isoDate(purchase.contractStart)}`, "", 14);
-    if (rightEnd) setParagraph(rightEnd, `FINALIZACIÓN: ${isoDate(purchase.contractEnd)}`, "", 14);
+    if (rightStart) setParagraph(rightStart, `INICIO: ${isoDate(purchase.contractStart)}`, "", filledHalfPoints);
+    if (rightEnd) setParagraph(rightEnd, `FINALIZACIÓN: ${isoDate(purchase.contractEnd)}`, "", filledHalfPoints);
   }
 
   const insurance = findParagraph(rightCollectionCell, (text) => text.startsWith("El vendedor tiene asegurada"));
-  if (insurance) setParagraph(insurance, `El vendedor tiene asegurada la cosecha con ${details.insuranceProvider || "…………"}, nº póliza ${details.insurancePolicy || "……………………"}. El vendedor designará como beneficiario de la póliza al comprador.`, "", 14);
+  if (insurance) setParagraph(insurance, `El vendedor tiene asegurada la cosecha con ${details.insuranceProvider || "…………"}, nº póliza ${details.insurancePolicy || "……………………"}. El vendedor designará como beneficiario de la póliza al comprador.`, "", filledHalfPoints);
 
   const priceCells = cells(collectionRows[2]);
   const activePriceCell = priceMode === "POR TANTO" ? priceCells[2] : priceCells[0];
@@ -582,12 +702,18 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     });
   }
 
-  if (details.applyDestrio === "Sí" && priceMode === "A KILOS") {
+  if (priceMode === "A KILOS") {
     const leftParagraphs = childElements(leftCollectionCell, "p");
     const agreementParagraph = leftParagraphs.find((paragraph) => paragraphText(paragraph).startsWith("Las partes podrán acordar"));
     if (agreementParagraph) {
-      const agreement = `Destrío en ${details.destrioLocation.toLocaleLowerCase("es")} de ${details.destrioDefects}; el destrío se pagará a ${numberEs(details.destrioPrice)} €/kg.`;
-      replaceNextBlank(agreementParagraph, agreement);
+      const prefix = "Las partes podrán acordar otro tipo de minoraciones que deberán quedar reflejadas de forma expresa:";
+      const agreement = details.applyDestrio === "Sí"
+        ? `Destrío en ${details.destrioLocation.toLocaleLowerCase("es")} de ${details.destrioDefects}; el destrío se pagará a ${numberEs(details.destrioPrice)} €/kg.`
+        : "____________________";
+      // La línea de puntos original es más ancha que la celda y algunos
+      // conversores la sacan del margen. Se conserva el espacio reservado sin
+      // alterar el texto contractual.
+      setParagraph(agreementParagraph, `${prefix} ${agreement}`, "", filledHalfPoints);
     }
   }
 
@@ -602,23 +728,39 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     if (days) replaceNextBlank(days, details.paymentDays || "30");
   } else {
     const payment = childElements(paymentCells[2], "p")[0];
-    if (payment) setParagraph(payment, `5.o FORMA DE PAGO: Transferencia bancaria a ${details.paymentDays || "30"} días.`, "5.o FORMA DE PAGO:", 14);
+    if (payment) setParagraph(payment, `5.o FORMA DE PAGO: Transferencia bancaria a ${details.paymentDays || "30"} días.`, "5.o FORMA DE PAGO:", filledHalfPoints);
   }
 
   const otherAgreements = findParagraph(document, (text) => /^1[34]\.o OTROS ACUERDOS:/.test(text.trimStart()));
   if (otherAgreements && purchase.otherAgreements.trim()) {
     const original = paragraphText(otherAgreements);
-    if (/_{5,}/.test(original)) {
+    if (batch.kind === "uva") {
+      const prefix = original.match(/^.*?OTROS ACUERDOS:/)?.[0] || "13.o OTROS ACUERDOS:";
+      setParagraph(otherAgreements, `${prefix} ${purchase.otherAgreements.trim()}`, prefix, 20);
+    } else if (/_{5,}/.test(original)) {
       const prefix = original.match(/^.*?OTROS ACUERDOS:/)?.[0] || "14.o OTROS ACUERDOS:";
-      setParagraph(otherAgreements, `${prefix} ${purchase.otherAgreements.trim()}`, prefix, 15);
+      setParagraph(otherAgreements, `${prefix} ${purchase.otherAgreements.trim()}`, prefix, filledHalfPoints);
     } else {
-      setParagraph(otherAgreements, `${original.trim()} ${purchase.otherAgreements.trim()}`, original.slice(0, original.indexOf(":") + 1), 15);
+      setParagraph(otherAgreements, `${original.trim()} ${purchase.otherAgreements.trim()}`, original.slice(0, original.indexOf(":") + 1), filledHalfPoints);
     }
   }
 
-  // La plantilla de uva utiliza sangrías y anchos propios para mantener las
-  // dos modalidades de recolección en la misma página. No deben normalizarse.
-  if (batch.kind !== "uva") stabilizeContractLayout(document);
+  if (batch.kind === "uva") {
+    // El modelo contiene tres copias estáticas del acuerdo de calidad. Al
+    // rellenarlo debe quedar solo el texto vigente introducido en la compra.
+    removeParagraphs(document, (text) =>
+      text === "Queda pendiente resultado análisis de la fruta a recolectar"
+      || /^AL LLEGAR LA MERCANCIA SE HARA CONTROL DE CALIDAD/.test(text),
+    );
+
+    repeatDefaultHeaderOnEveryPage(document);
+    suppressParagraphBorders(findParagraph(document, (text) => text.startsWith("CONTRATO DE COMPRAVENTA DE UVA")));
+  }
+
+  // Las sangrías negativas del Word original desplazan cruces y bordes al
+  // convertirlo en el navegador. Se normalizan para todas las especies y se
+  // conserva intacta la anchura imprimible del modelo.
+  stabilizeContractLayout(document);
 }
 
 function safeFilename(value: string) {
@@ -658,6 +800,7 @@ async function generateOne(purchase: PurchaseForm, batch: ContractBatch, loadTem
   const document = new DOMParser().parseFromString(xml, "application/xml");
   if (document.getElementsByTagName("parsererror").length) throw new Error("El modelo Word no se ha podido interpretar.");
   fillDocument(document, purchase, batch);
+  if (batch.kind === "uva") await synchronizeDefaultHeaderParts(zip, document);
   await addSignatures(zip, document, signatures);
   zip.file("word/document.xml", new XMLSerializer().serializeToString(document));
   await setContractMetadata(zip, purchase, batch);
