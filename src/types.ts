@@ -57,7 +57,7 @@ export type ContractDetails = {
   emailStatus: "" | "sent" | "pending_configuration" | "failed";
   sellerSignedAt: string;
   buyerSignedAt: string;
-  signatureMethod: "" | "uploaded" | "in_app";
+  signatureMethod: "" | "uploaded" | "in_app" | "external_pending";
   archiveHistoryJson: string;
 };
 
