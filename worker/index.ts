@@ -915,7 +915,8 @@ async function deleteRecordPermanently(env: Env, row: number, value: unknown, se
   const currentArchiveId = String(contract.archiveId || "").trim();
   if (currentArchiveId) archivedIds.add(currentArchiveId);
   const previousContractArchiveId = String(contract.previousContractArchiveId || "").trim();
-  if (previousContractArchiveId) archivedIds.add(previousContractArchiveId);
+  const previousContractSourceArchiveId = String(contract.previousContractSourceArchiveId || "").trim();
+  if (previousContractArchiveId && previousContractArchiveId !== previousContractSourceArchiveId) archivedIds.add(previousContractArchiveId);
   for (const entry of parseJsonHistory(contract.archiveHistoryJson)) {
     const archiveId = String((entry as Record<string, unknown>).archiveId || "").trim();
     if (archiveId) archivedIds.add(archiveId);

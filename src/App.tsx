@@ -536,7 +536,9 @@ export default function App() {
             previousContractPurchaseId: previousReference.mode === "archived" ? previousReference.purchaseId : "",
             previousContractArchiveId: storedPrevious.previousContractArchiveId,
             previousContractSourceArchiveId: previousReference.mode === "archived" ? previousReference.archiveId : "",
-            previousContractFilename: storedPrevious.previousContractFilename,
+            previousContractFilename: previousReference.mode === "archived"
+              ? previousReference.filename || storedPrevious.previousContractFilename
+              : storedPrevious.previousContractFilename,
             previousContractStoredAt: storedPrevious.previousContractStoredAt,
           },
         };

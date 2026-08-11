@@ -583,6 +583,25 @@ export class WorkbookClient {
       headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
       body: form,
     });
+    if (response.status === 404) {
+      // Compatibilidad con el servicio anterior: conserva el PDF en el mismo R2,
+      // pero usa direcciones reservadas para que nunca se envíe como contrato actual.
+      const referenceOnlyPurchase: PurchaseForm = {
+        ...purchase,
+        contractDetails: {
+          ...purchase.contractDetails,
+          sellerEmail: "archivo@referencia.invalid",
+          companyEmail: "archivo@referencia.invalid",
+          contractNumber: `REF-${purchase.id || "ANTERIOR"}`,
+        },
+      };
+      const archived = await this.archiveContract(file, file.name, referenceOnlyPurchase);
+      return {
+        previousContractArchiveId: archived.archiveId,
+        previousContractFilename: archived.archiveFilename,
+        previousContractStoredAt: archived.archivedAt,
+      };
+    }
     if (!response.ok) {
       const detail = (await response.json().catch(() => ({}))) as ApiError;
       throw new Error(detail.error || "No se ha podido guardar el contrato anterior.");
@@ -595,14 +614,33 @@ export class WorkbookClient {
   }
 
   async copyPreviousContract(archiveId: string, purchaseId: string, provider: string) {
-    return this.request<{
+    const response = await fetch(this.endpoint("/api/previous-contract-files/copy"), {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      },
+      body: JSON.stringify({ archiveId, purchaseId, provider }),
+    });
+    if (response.status === 404) {
+      // El archivo original ya está protegido y disponible en R2. Hasta que el
+      // servicio admita copias independientes, se guarda una referencia segura.
+      return {
+        previousContractArchiveId: archiveId,
+        previousContractFilename: "contrato-anterior.pdf",
+        previousContractStoredAt: new Date().toISOString(),
+      };
+    }
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido reutilizar el contrato anterior.");
+    }
+    return response.json() as Promise<{
       previousContractArchiveId: string;
       previousContractFilename: string;
       previousContractStoredAt: string;
-    }>("/api/previous-contract-files/copy", {
-      method: "POST",
-      body: JSON.stringify({ archiveId, purchaseId, provider }),
-    });
+    }>;
   }
 
   async archivedContract(archiveId: string) {
