@@ -706,7 +706,8 @@ export async function generateContractPackage(
   if (!batches.length) throw new Error("Añade una materia prima con un modelo contractual disponible.");
   const generated = await Promise.all(batches.map(async (batch) => {
     const suffix = batch.part > 1 ? `-${batch.part}` : "";
-    const filename = `contrato-${batch.kind}-${safeFilename(purchase.provider)}${suffix}.pdf`;
+    const contractNumber = purchase.contractDetails.contractNumber || purchase.id || "pendiente";
+    const filename = `contrato-${batch.kind}-${safeFilename(contractNumber)}-${safeFilename(purchase.provider)}${suffix}.pdf`;
     const docx = await generateOne(purchase, batch, loadTemplate, signatures);
     return { filename, blob: await convertDocxToPdf(docx) };
   }));
