@@ -20,6 +20,7 @@ type ContractChoice = "" | "existing" | "generated";
 type SignatureChoice = "" | "now" | "later";
 type ReuseChoice = "" | "yes" | "no";
 type PreviousSource = "" | "saved" | "upload";
+type BuyerCompany = PurchaseForm["contractDetails"]["buyerCompany"];
 
 type Props = {
   saving: boolean;
@@ -37,9 +38,17 @@ function blankGeneratedPurchase(previousContractMode: "" | "none" | "archived" |
   return next;
 }
 
+function buyerCompanyForPurchase(purchase: PurchaseForm): BuyerCompany {
+  if (purchase.contractDetails.buyerCompany) return purchase.contractDetails.buyerCompany;
+  if (/^MRO-/i.test(purchase.id)) return "MR. ORGÁNICA, S.L.";
+  if (/^TON-/i.test(purchase.id)) return "TOÑIFRUIT, S.L.";
+  return "";
+}
+
 export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDownload, onBack }: Props) {
   const [purchase, setPurchase] = useState<PurchaseForm>(() => structuredClone(EMPTY_PURCHASE));
   const [purchaseStartMode, setPurchaseStartMode] = useState<PurchaseStartMode>("");
+  const [importBuyerCompany, setImportBuyerCompany] = useState<BuyerCompany>("");
   const [selectedImportedRow, setSelectedImportedRow] = useState("");
   const [contractChoice, setContractChoice] = useState<ContractChoice>("");
   const [signatureChoice, setSignatureChoice] = useState<SignatureChoice>("");
@@ -60,6 +69,8 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   const importablePurchases = useMemo(() => rows
     .map((row) => ({ row, purchase: purchaseFromRow(row) }))
     .sort((left, right) => right.row.tableIndex - left.row.tableIndex), [rows]);
+  const companyImportablePurchases = useMemo(() => importablePurchases
+    .filter(({ purchase: previous }) => buyerCompanyForPurchase(previous) === importBuyerCompany), [importablePurchases, importBuyerCompany]);
 
   const selectedSavedContract = savedContracts.find(({ row }) => String(row.tableIndex) === selectedPreviousRow);
   const selectedImportedPurchase = importablePurchases.find(({ row }) => String(row.tableIndex) === selectedImportedRow);
@@ -72,6 +83,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
 
   function choosePurchaseStart(mode: Exclude<PurchaseStartMode, "">) {
     setPurchaseStartMode(mode);
+    setImportBuyerCompany("");
     setSelectedImportedRow("");
     setContractChoice("");
     setReuseChoice("");
@@ -87,13 +99,25 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setPurchase(structuredClone(EMPTY_PURCHASE));
   }
 
+  function chooseImportBuyerCompany(company: Exclude<BuyerCompany, "">) {
+    setImportBuyerCompany(company);
+    setSelectedImportedRow("");
+    setContractChoice("");
+    setReuseChoice("");
+    setSignatureChoice("");
+    setFormError("");
+    const next = structuredClone(EMPTY_PURCHASE);
+    next.contractDetails.buyerCompany = company;
+    setPurchase(next);
+  }
+
   function importPurchase(rowIndex: string) {
     setSelectedImportedRow(rowIndex);
     setContractChoice("");
     setReuseChoice("");
     setSignatureChoice("");
     setFormError("");
-    const selected = importablePurchases.find(({ row }) => String(row.tableIndex) === rowIndex);
+    const selected = companyImportablePurchases.find(({ row }) => String(row.tableIndex) === rowIndex);
     if (!selected) {
       setPurchase(structuredClone(EMPTY_PURCHASE));
       return;
@@ -109,6 +133,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
       documentPath: "",
       contractDetails: {
         ...structuredClone(previousContract),
+        buyerCompany: importBuyerCompany || buyerCompanyForPurchase(previous),
         contractOrigin: "",
         signatureDate: EMPTY_PURCHASE.contractDetails.signatureDate,
         contractNumber: "",
@@ -188,7 +213,6 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     const materials = previous.materials.map((material) => ({
       ...material,
       id: crypto.randomUUID(),
-      expectedKg: "",
     }));
     setPurchase((current) => ({
       ...current,
@@ -198,7 +222,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
       municipality: previous.municipality,
       crop: previous.crop,
       variety: previous.variety,
-      expectedKg: "",
+      expectedKg: previous.expectedKg,
       materials,
       contractSigned: "Pendiente de firma",
       contractStart: "",
@@ -382,15 +406,27 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
         </div>
         {purchaseStartMode === "import" && (
           <div className="previous-contract-picker">
-            <label className="field required-field">
-              <span>Compra que quieres importar</span>
+            <div className="company-import-step">
+              <strong>Empresa compradora <span aria-hidden="true">*</span></strong>
+              <div className="contract-choice-grid" role="group" aria-label="Empresa compradora de la compra que se va a importar">
+                <button type="button" className={importBuyerCompany === "TOÑIFRUIT, S.L." ? "selected" : ""} onClick={() => chooseImportBuyerCompany("TOÑIFRUIT, S.L.")}>
+                  <ShoppingBasket size={22} /><span><strong>Toñifruit</strong><small>Mostrar expedientes TON</small></span>{importBuyerCompany === "TOÑIFRUIT, S.L." && <CheckCircle2 size={18} />}
+                </button>
+                <button type="button" className={importBuyerCompany === "MR. ORGÁNICA, S.L." ? "selected" : ""} onClick={() => chooseImportBuyerCompany("MR. ORGÁNICA, S.L.")}>
+                  <ShoppingBasket size={22} /><span><strong>Mr. Orgánica</strong><small>Mostrar expedientes MRO</small></span>{importBuyerCompany === "MR. ORGÁNICA, S.L." && <CheckCircle2 size={18} />}
+                </button>
+              </div>
+            </div>
+            {importBuyerCompany && <label className="field required-field">
+              <span>Compra de {importBuyerCompany === "TOÑIFRUIT, S.L." ? "Toñifruit" : "Mr. Orgánica"} que quieres importar</span>
               <select required value={selectedImportedRow} onChange={(event) => importPurchase(event.target.value)}>
                 <option value="">Seleccionar compra anterior</option>
-                {importablePurchases.map(({ row, purchase: previous }) => (
+                {companyImportablePurchases.map(({ row, purchase: previous }) => (
                   <option key={row.tableIndex} value={row.tableIndex}>{previous.id} · {previous.provider} · {previous.crop}{previous.variety ? ` / ${previous.variety}` : ""}</option>
                 ))}
               </select>
-            </label>
+            </label>}
+            {importBuyerCompany && !companyImportablePurchases.length && <div className="contract-send-warning"><AlertTriangle size={18} /><span><strong>No hay compras de esta empresa</strong><small>Selecciona la otra empresa o crea una compra desde cero.</small></span></div>}
             {selectedImportedPurchase && <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Datos importados de {selectedImportedPurchase.purchase.id}</strong><small>Se copian finca, fruta, kilos, fechas, precio, acuerdos y datos del contrato. El nuevo expediente tendrá otro identificador, nuevas firmas y AICA pendiente.</small></span></div>}
           </div>
         )}
@@ -417,7 +453,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
         <section className="contract-first-step previous-contract-step" aria-labelledby="reuse-contract-question">
           <span className="wizard-step-label">Paso 3 · Contrato anterior</span>
           <h3 id="reuse-contract-question">¿Quieres reciclar un contrato anterior?</h3>
-          <p>Se reutilizan los datos estables como agricultor, finca y condiciones habituales. El número, las fechas, los kilos, el precio y las firmas se rellenan de nuevo.</p>
+          <p>Se reutilizan el agricultor, la finca y toda la tabla de materia prima: variedad, situación, término, paraje, polígono, parcela, hectáreas y kilos. El número, las fechas, el precio y las firmas se rellenan de nuevo.</p>
           <div className="contract-choice-grid">
             <button type="button" className={reuseChoice === "no" ? "selected" : ""} onClick={() => chooseReuse("no")}>
               <PlusCircle size={24} /><span><strong>No</strong><small>Rellenar el contrato desde cero</small></span>{reuseChoice === "no" && <CheckCircle2 size={20} />}
