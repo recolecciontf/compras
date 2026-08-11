@@ -512,7 +512,11 @@ export default function App() {
       if (demoMode) {
         preparedPurchase = {
           ...identifiedPurchase,
-          documentPath: contractSubmission.mode === "existing" ? "Archivo central de demostración" : "Pendiente de firma digital y archivo",
+          documentPath: contractSubmission.mode === "existing"
+            ? "Archivo central de demostración"
+            : contractSubmission.mode === "unsigned"
+              ? "Contrato enviado para firma del vendedor. Pendiente de devolución y archivo"
+              : "Pendiente de firma digital y archivo",
           contractDetails: {
             ...identifiedPurchase.contractDetails,
             archiveId: contractSubmission.mode === "existing" ? crypto.randomUUID() : "",
@@ -523,12 +527,15 @@ export default function App() {
         };
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
-        if (contractSubmission.mode === "generated") {
-          const artifact = await generateContractPackage(identifiedPurchase, (name) => client.contractTemplate(name), contractSubmission.signatures);
+        if (contractSubmission.mode !== "existing") {
+          const signatures = contractSubmission.mode === "generated" ? contractSubmission.signatures : undefined;
+          const artifact = await generateContractPackage(identifiedPurchase, (name) => client.contractTemplate(name), signatures);
           triggerDownload(artifact.blob, artifact.filename);
           preparedPurchase = {
             ...identifiedPurchase,
-            documentPath: "Pendiente de firma digital del comprador y archivo central",
+            documentPath: contractSubmission.mode === "unsigned"
+              ? "Contrato enviado para firma del vendedor. Pendiente de devolución y archivo central"
+              : "Pendiente de firma digital del comprador y archivo central",
             contractDetails: {
               ...identifiedPurchase.contractDetails,
               archiveId: "",
@@ -600,6 +607,8 @@ export default function App() {
       setLastSyncedAt(new Date());
       setToast(contractSubmission.mode === "generated"
         ? "Compra creada y PDF descargado. Pendiente de firma digital del comprador, archivo y AICA."
+        : contractSubmission.mode === "unsigned"
+        ? "Compra creada y PDF descargado. Pendiente de firma del agricultor, devolución, archivo y AICA."
         : preparedPurchase.contractDetails.emailStatus === "sent"
         ? "Compra creada, contrato archivado y copias enviadas."
         : preparedPurchase.contractDetails.archiveId
@@ -1322,7 +1331,8 @@ function ReviewPanel({
 
   const hasSignedContract = ["sí", "si"].includes(purchase.contractSigned.trim().toLocaleLowerCase("es"));
   const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
-  const canAttachFinalContract = hasSignedContract || Boolean(purchase.contractDetails.sellerSignedAt);
+  const awaitsExternalSignature = purchase.contractDetails.signatureMethod === "external_pending";
+  const canAttachFinalContract = hasSignedContract || Boolean(purchase.contractDetails.sellerSignedAt) || awaitsExternalSignature;
   const selectedCertifications = certificationSelection(review.certificateType);
   const cancelled = isCancelled(row);
   const contractHistory = contractArchiveHistory(purchase);
@@ -1389,7 +1399,7 @@ function ReviewPanel({
         <legend><span className="step-number">A</span><span>Compra y materia prima<small>Datos comerciales, fruta y vigencia contractual</small></span></legend>
         <PurchaseFields
           value={purchase}
-          contractMode={purchase.contractDetails.contractOrigin === "existing" ? "existing" : "editing"}
+          contractMode={purchase.contractDetails.contractOrigin === "existing" ? "existing" : awaitsExternalSignature ? "unsigned" : "editing"}
           onChange={(next) => onPurchaseChange((current) => current
             ? typeof next === "function" ? next(current) : next
             : current)}
@@ -1401,10 +1411,12 @@ function ReviewPanel({
         <div>
           {hasArchivedContract ? <FileCheck2 size={21} /> : canAttachFinalContract ? <FileUp size={21} /> : <FileCheck2 size={21} />}
           <span>
-            <strong>{hasArchivedContract ? "Contrato firmado archivado" : canAttachFinalContract ? "Pendiente de firma del comprador y archivo" : "Contrato listo para generar"}</strong>
+            <strong>{hasArchivedContract ? "Contrato firmado archivado" : awaitsExternalSignature ? "Pendiente de firma del agricultor" : canAttachFinalContract ? "Pendiente de firma del comprador y archivo" : "Contrato listo para generar"}</strong>
             <small>
               {hasArchivedContract
                 ? `Copia central: ${purchase.contractDetails.archiveFilename || "contrato firmado"}. Disponible para los usuarios autorizados.`
+                : awaitsExternalSignature
+                  ? "Envía el PDF al agricultor. Cuando lo devuelva firmado, adjunta aquí la copia definitiva; después podrá completarse la firma de la empresa y validarse el registro en AICA."
                 : canAttachFinalContract
                   ? "Tras la firma digital de la empresa, adjunta el PDF definitivo. Después podrá validarse el registro en AICA."
                   : "Se completa una copia PDF estable del modelo original. Si hay varias especies, se descarga un contrato por especie."}
@@ -1414,19 +1426,22 @@ function ReviewPanel({
         {hasArchivedContract ? (
           <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Descargando…" : "Descargar contrato firmado"}</button>
         ) : canAttachFinalContract && !readOnly ? (
-          <label className={`secondary-button contract-upload-button ${saving ? "disabled" : ""}`}>
-            <FileUp size={18} /> {saving ? "Archivando…" : "Adjuntar contrato firmado"}
-            <input
-              type="file"
-              disabled={saving}
-              accept=".pdf,application/pdf"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.currentTarget.value = "";
-                if (file) void onContractUpload(file);
-              }}
-            />
-          </label>
+          <div className="contract-panel-actions">
+            {awaitsExternalSignature && <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar PDF sin firmas"}</button>}
+            <label className={`secondary-button contract-upload-button ${saving ? "disabled" : ""}`}>
+              <FileUp size={18} /> {saving ? "Archivando…" : awaitsExternalSignature ? "Adjuntar contrato devuelto" : "Adjuntar contrato firmado"}
+              <input
+                type="file"
+                disabled={saving}
+                accept=".pdf,application/pdf"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.currentTarget.value = "";
+                  if (file) void onContractUpload(file);
+                }}
+              />
+            </label>
+          </div>
         ) : !canAttachFinalContract ? (
           <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Generando…" : "Descargar borrador PDF"}</button>
         ) : null}
