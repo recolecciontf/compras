@@ -423,25 +423,31 @@ export class WorkbookClient {
   }
 
   async createPurchase(purchase: PurchaseForm) {
-    const awaitsBuyerSignature = purchase.contractDetails.contractOrigin === "generated"
+    const awaitsGeneratedSignature = purchase.contractDetails.contractOrigin === "generated"
       && !["sí", "si"].includes(purchase.contractSigned.toLocaleLowerCase("es"));
+    const awaitsExternalSignature = awaitsGeneratedSignature
+      && purchase.contractDetails.signatureMethod === "external_pending";
     // Compatibilidad transitoria con la versión anterior del servicio central, que exigía
     // dos firmas al crear la fila. La corrección real se guarda inmediatamente después y
     // el expediente sigue bloqueado por falta de PDF definitivo, archivo y AICA.
-    const creationPayload = awaitsBuyerSignature ? {
+    const creationPayload = awaitsGeneratedSignature ? {
       ...purchase,
       contractSigned: "Sí",
       contractDetails: {
         ...purchase.contractDetails,
-        buyerRepresentative: "Pendiente de firma digital en oficina",
-        buyerSignedAt: new Date().toISOString(),
+        ...(awaitsExternalSignature
+          ? { contractOrigin: "existing" as const, signatureMethod: "uploaded" as const }
+          : {
+            buyerRepresentative: "Pendiente de firma digital en oficina",
+            buyerSignedAt: new Date().toISOString(),
+          }),
       },
     } : purchase;
     const created = await this.request<{ ok: true; row: number; id: string }>("/api/rows", {
       method: "POST",
       body: JSON.stringify({ purchase: creationPayload }),
     });
-    if (awaitsBuyerSignature) {
+    if (awaitsGeneratedSignature) {
       await this.request<{ ok: true }>(`/api/rows/${created.row}/purchase`, {
         method: "PATCH",
         body: JSON.stringify({ purchase }),
