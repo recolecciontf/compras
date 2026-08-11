@@ -672,7 +672,13 @@ type ReamModule = {
   };
 };
 
-const REAM_MODULE_URL = "https://esm.sh/reamkit@latest";
+// Keep the converter inside the application. Mobile browsers and some company
+// networks block runtime modules loaded from public CDNs, so a remote import
+// made PDF generation fail even when the rest of the application was online.
+const REAM_MODULE_URL = new URL(
+  "vendor/reamkit-1.27.0.js",
+  new URL(import.meta.env.BASE_URL, window.location.href),
+).href;
 
 async function convertDocxToPdf(docx: Blob) {
   try {
@@ -685,7 +691,7 @@ async function convertDocxToPdf(docx: Blob) {
     return new Blob([pdfBuffer], { type: "application/pdf" });
   } catch (reason) {
     console.error("No se ha podido convertir el contrato a PDF", reason);
-    throw new Error("No se ha podido generar el PDF estable. Comprueba la conexión e inténtalo de nuevo.");
+    throw new Error("No se ha podido generar el PDF estable. Inténtalo de nuevo o descárgalo en Word.");
   }
 }
 
