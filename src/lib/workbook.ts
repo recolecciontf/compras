@@ -517,6 +517,12 @@ export class WorkbookClient {
   }
 
   async contractTemplate(name: string) {
+    if (name === "tonifruit-uva.docx") {
+      const publicTemplate = await fetch(`${import.meta.env.BASE_URL}contract-templates/${encodeURIComponent(name)}`, {
+        cache: "no-store",
+      });
+      if (publicTemplate.ok) return publicTemplate.arrayBuffer();
+    }
     const response = await fetch(this.endpoint(`/api/contract-templates/${encodeURIComponent(name)}`), {
       cache: "no-store",
       headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
