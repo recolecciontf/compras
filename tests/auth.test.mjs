@@ -195,6 +195,45 @@ test("archiva y descarga una copia firmada sin exponerla públicamente", async (
   assert.equal(await download.text(), "contrato firmado");
 });
 
+test("guarda o copia un contrato anterior como referencia independiente", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+
+  const form = new FormData();
+  form.set("file", new Blob(["contrato anterior"], { type: "application/pdf" }), "contrato-anterior.pdf");
+  form.set("provider", "Agricultor de prueba");
+  form.set("sourcePurchaseId", "TON-001");
+  const uploaded = await api("/api/previous-contract-files", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  assert.equal(uploaded.status, 201);
+  const stored = await uploaded.json();
+  assert.equal(stored.previousContractFilename, "contrato-anterior.pdf");
+  assert.ok(stored.previousContractArchiveId);
+
+  const copied = await api("/api/previous-contract-files/copy", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ archiveId: stored.previousContractArchiveId, purchaseId: "TON-001", provider: "Agricultor de prueba" }),
+  });
+  assert.equal(copied.status, 201);
+  const cloned = await copied.json();
+  assert.notEqual(cloned.previousContractArchiveId, stored.previousContractArchiveId);
+  assert.equal(cloned.previousContractFilename, "contrato-anterior.pdf");
+
+  const download = await api(`/api/contract-files/${cloned.previousContractArchiveId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(download.status, 200);
+  assert.equal(await download.text(), "contrato anterior");
+});
+
 test("rechaza el contrato si el archivo central no está configurado", async () => {
   const envWithoutArchive = { ...env, CONTRACT_FILES: undefined };
   const login = await worker.fetch(new Request("https://app.example/api/login", {

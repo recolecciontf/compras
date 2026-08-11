@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import type { ContractSignatures, MaterialItem, PurchaseForm } from "../types";
+import type { ContractOutputFormat, ContractSignatures, MaterialItem, PurchaseForm } from "../types";
 
 const WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const XML_NS = "http://www.w3.org/XML/1998/namespace";
@@ -700,6 +700,7 @@ export async function generateContractPackage(
   purchase: PurchaseForm,
   loadTemplate: (name: string) => Promise<ArrayBuffer>,
   signatures?: ContractSignatures,
+  format: ContractOutputFormat = "pdf",
 ) {
   validateContractGeneration(purchase);
   const batches = batchesFor(purchase);
@@ -707,9 +708,9 @@ export async function generateContractPackage(
   const generated = await Promise.all(batches.map(async (batch) => {
     const suffix = batch.part > 1 ? `-${batch.part}` : "";
     const contractNumber = purchase.contractDetails.contractNumber || purchase.id || "pendiente";
-    const filename = `contrato-${batch.kind}-${safeFilename(contractNumber)}-${safeFilename(purchase.provider)}${suffix}.pdf`;
+    const filename = `contrato-${batch.kind}-${safeFilename(contractNumber)}-${safeFilename(purchase.provider)}${suffix}.${format}`;
     const docx = await generateOne(purchase, batch, loadTemplate, signatures);
-    return { filename, blob: await convertDocxToPdf(docx) };
+    return { filename, blob: format === "pdf" ? await convertDocxToPdf(docx) : docx };
   }));
   if (generated.length === 1) {
     return { ...generated[0], count: 1 };
@@ -720,8 +721,12 @@ export async function generateContractPackage(
   return { blob: bundle, filename: `contratos-${safeFilename(purchase.provider)}.zip`, count: generated.length };
 }
 
-export async function downloadContracts(purchase: PurchaseForm, loadTemplate: (name: string) => Promise<ArrayBuffer>) {
-  const generated = await generateContractPackage(purchase, loadTemplate);
+export async function downloadContracts(
+  purchase: PurchaseForm,
+  loadTemplate: (name: string) => Promise<ArrayBuffer>,
+  format: ContractOutputFormat = "pdf",
+) {
+  const generated = await generateContractPackage(purchase, loadTemplate, undefined, format);
   triggerDownload(generated.blob, generated.filename);
   return generated.count;
 }
