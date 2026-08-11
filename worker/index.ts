@@ -28,6 +28,7 @@ interface Env {
   GOOGLE_DATA_START_ROW?: string;
   GOOGLE_DATA_END_ROW?: string;
   CONTRACT_TEMPLATE_KEY: string;
+  UVA_TEMPLATE_KEY?: string;
   CONTRACT_FILES?: ContractBucket;
   CONTRACT_EMAIL_WEBHOOK_URL?: string;
   CONTRACT_EMAIL_WEBHOOK_TOKEN?: string;
@@ -225,7 +226,8 @@ function json(request: Request, env: Env, body: unknown, status = 200) {
 async function contractTemplate(name: string, env: Env) {
   const encrypted = CONTRACT_ASSETS[name as keyof typeof CONTRACT_ASSETS];
   if (!encrypted) return null;
-  const keyBytes = Uint8Array.from(atob(env.CONTRACT_TEMPLATE_KEY || ""), (character) => character.charCodeAt(0));
+  const configuredKey = name === "tonifruit-uva.docx" ? env.UVA_TEMPLATE_KEY : env.CONTRACT_TEMPLATE_KEY;
+  const keyBytes = Uint8Array.from(atob(configuredKey || ""), (character) => character.charCodeAt(0));
   if (keyBytes.length !== 32) throw new Error("La clave de los modelos contractuales no está configurada.");
   const bytes = Uint8Array.from(atob(encrypted), (character) => character.charCodeAt(0));
   const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
@@ -311,6 +313,59 @@ async function storeContract(form: FormData, env: Env) {
 
 async function archiveContract(request: Request, env: Env) {
   return storeContract(await request.formData(), env);
+}
+
+async function storePreviousContract(request: Request, env: Env) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const form = await request.formData();
+  const file = form.get("file");
+  if (!(file instanceof File)) throw new InputError("Adjunta el contrato anterior.");
+  if (file.size <= 0 || file.size > 10 * 1024 * 1024) throw new InputError("El contrato anterior debe ocupar entre 1 byte y 10 MB.");
+  if (file.type && !["application/pdf", "application/octet-stream"].includes(file.type)) {
+    throw new InputError("El contrato anterior debe ser un PDF.");
+  }
+  if (!/\.pdf$/i.test(file.name)) throw new InputError("El contrato anterior debe tener extensión PDF.");
+  const provider = String(form.get("provider") || "").trim().slice(0, 180);
+  if (!provider) throw new InputError("Falta identificar al agricultor o proveedor.");
+  const previousContractArchiveId = crypto.randomUUID();
+  const previousContractFilename = safeContractFilename(file.name);
+  const previousContractStoredAt = new Date().toISOString();
+  await env.CONTRACT_FILES.put(previousContractArchiveId, await file.arrayBuffer(), {
+    httpMetadata: { contentType: file.type || "application/pdf" },
+    customMetadata: {
+      filename: previousContractFilename,
+      provider,
+      sourcePurchaseId: String(form.get("sourcePurchaseId") || "").trim().slice(0, 80),
+      storedAt: previousContractStoredAt,
+      kind: "previous_contract_reference",
+    },
+  });
+  return { previousContractArchiveId, previousContractFilename, previousContractStoredAt };
+}
+
+async function copyPreviousContract(value: unknown, env: Env) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const archiveId = String(source.archiveId || "").trim();
+  if (!/^[0-9a-f-]{36}$/i.test(archiveId)) throw new InputError("Selecciona un contrato anterior válido.");
+  const original = await env.CONTRACT_FILES.get(archiveId);
+  if (!original) throw new InputError("El contrato anterior seleccionado ya no está disponible.");
+  const previousContractArchiveId = crypto.randomUUID();
+  const previousContractFilename = safeContractFilename(original.customMetadata?.filename || "contrato-anterior.pdf");
+  const previousContractStoredAt = new Date().toISOString();
+  const bytes = await new Response(original.body).arrayBuffer();
+  await env.CONTRACT_FILES.put(previousContractArchiveId, bytes, {
+    httpMetadata: { contentType: original.httpMetadata?.contentType || "application/pdf" },
+    customMetadata: {
+      filename: previousContractFilename,
+      provider: String(source.provider || "").trim().slice(0, 180),
+      sourcePurchaseId: String(source.purchaseId || "").trim().slice(0, 80),
+      sourceArchiveId: archiveId,
+      storedAt: previousContractStoredAt,
+      kind: "previous_contract_reference",
+    },
+  });
+  return { previousContractArchiveId, previousContractFilename, previousContractStoredAt };
 }
 
 function embeddedAssetPath(pathname: string) {
@@ -529,7 +584,7 @@ function purchaseValues(value: unknown): PurchasePayload {
     ? source.contractDetails as Record<string, unknown>
     : {};
   const contractDetails = Object.fromEntries(
-    Object.entries(contractSource).slice(0, 40).map(([key, entry]) => [key, String(entry ?? "").trim()]),
+    Object.entries(contractSource).slice(0, 60).map(([key, entry]) => [key, String(entry ?? "").trim()]),
   );
   return { ...base, materials, contractDetails } as PurchasePayload;
 }
@@ -859,6 +914,8 @@ async function deleteRecordPermanently(env: Env, row: number, value: unknown, se
   const archivedIds = new Set<string>();
   const currentArchiveId = String(contract.archiveId || "").trim();
   if (currentArchiveId) archivedIds.add(currentArchiveId);
+  const previousContractArchiveId = String(contract.previousContractArchiveId || "").trim();
+  if (previousContractArchiveId) archivedIds.add(previousContractArchiveId);
   for (const entry of parseJsonHistory(contract.archiveHistoryJson)) {
     const archiveId = String((entry as Record<string, unknown>).archiveId || "").trim();
     if (archiveId) archivedIds.add(archiveId);
@@ -939,6 +996,16 @@ async function handleApi(request: Request, env: Env) {
   if (url.pathname === "/api/contract-files" && request.method === "POST") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos." }, 403);
     return json(request, env, await archiveContract(request, env), 201);
+  }
+
+  if (url.pathname === "/api/previous-contract-files" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos anteriores." }, 403);
+    return json(request, env, await storePreviousContract(request, env), 201);
+  }
+
+  if (url.pathname === "/api/previous-contract-files/copy" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede reutilizar contratos anteriores." }, 403);
+    return json(request, env, await copyPreviousContract(await request.json().catch(() => ({})), env), 201);
   }
 
   const archivedContractMatch = url.pathname.match(/^\/api\/contract-files\/([0-9a-f-]{36})$/i);
