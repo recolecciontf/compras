@@ -7,7 +7,7 @@ type Props = {
   value: PurchaseForm;
   onChange: Dispatch<SetStateAction<PurchaseForm>>;
   disabled?: boolean;
-  contractMode?: "existing" | "generated" | "editing";
+  contractMode?: "existing" | "generated" | "unsigned" | "editing";
 };
 
 function localToday() {
@@ -165,6 +165,7 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
 
   const contract = value.contractDetails;
   const hasAilimpoSpecies = value.materials.some((item) => ["Limón", "Pomelo"].includes(item.crop));
+  const isUnsigned = contractMode === "unsigned" || contract.signatureMethod === "external_pending";
 
   return (
     <div className="purchase-fields">
@@ -204,18 +205,18 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
 
       <div className="field-section-heading section-divider">
         <span>3</span>
-        <div><strong>{contractMode === "existing" ? "Contrato firmado existente" : "Rellenar contrato"}</strong><small>{contractMode === "existing" ? "Registra la vigencia y archiva la copia firmada" : "Los modelos originales se completan sin modificar el clausulado"}</small></div>
+        <div><strong>{contractMode === "existing" ? "Contrato firmado existente" : isUnsigned ? "Preparar contrato para enviar" : "Rellenar contrato"}</strong><small>{contractMode === "existing" ? "Registra la vigencia y archiva la copia firmada" : isUnsigned ? "Se descargará sin firmas y quedará pendiente de devolución" : "Los modelos originales se completan sin modificar el clausulado"}</small></div>
         <em>Obligatorio</em>
       </div>
       {contractMode !== "existing" ? <>
       <div className="contract-workflow" aria-label="Flujo del contrato">
-        <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i><span>Firma agricultor</span><i>→</i><span>Descargar PDF</span>
+        <span className="active">Rellenar datos</span><i>→</i><span>Revisar</span><i>→</i>{isUnsigned ? <><span>Descargar y enviar</span><i>→</i><span>Adjuntar firmado</span></> : <><span>Firma agricultor</span><i>→</i><span>Descargar PDF</span></>}
       </div>
       <div className="three-columns">
         <label className="field required-field"><span>Empresa compradora</span><select required disabled={disabled} value={contract.buyerCompany} onChange={(event) => updateContract("buyerCompany", event.target.value as ContractDetails["buyerCompany"])}><option value="">Seleccionar</option><option>MR. ORGÁNICA, S.L.</option><option>TOÑIFRUIT, S.L.</option></select></label>
         <label className="field required-field"><span>Fecha de firma</span><input required disabled={disabled} type="date" value={contract.signatureDate} onInput={(event) => updateContract("signatureDate", event.currentTarget.value)} /></label>
         <label className="field"><span>N.º de contrato</span><input disabled={disabled} value={contract.contractNumber} onChange={(event) => updateContract("contractNumber", event.target.value)} placeholder="Si se deja vacío se usa el expediente" /></label>
-        <div className="contract-status-card"><FileText size={18} /><span><strong>Estado al finalizar</strong><small>Pendiente de firma digital del comprador</small></span></div>
+        <div className="contract-status-card"><FileText size={18} /><span><strong>Estado al finalizar</strong><small>{isUnsigned ? "Pendiente de firma del agricultor y archivo" : "Pendiente de firma digital del comprador"}</small></span></div>
         <label className="field required-field"><span>Inicio del contrato</span><input required disabled={disabled} type="date" value={value.contractStart} onInput={(event) => update("contractStart", event.currentTarget.value)} /></label>
         <label className="field required-field"><span>Fin del contrato</span><input required disabled={disabled} type="date" min={value.contractStart || undefined} value={value.contractEnd} onInput={(event) => update("contractEnd", event.currentTarget.value)} /></label>
       </div>
