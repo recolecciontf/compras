@@ -383,6 +383,30 @@ function stabilizeContractLayout(document: Document) {
   topLevelTables(document).forEach((table) => scaleTableToWidth(table, contentWidth));
 }
 
+function removeListMarkers(root: Element) {
+  for (const paragraph of Array.from(root.getElementsByTagNameNS(WORD_NS, "p"))) {
+    const properties = childElements(paragraph, "pPr")[0];
+    if (!properties) continue;
+    const numbering = childElements(properties, "numPr")[0];
+    if (!numbering) continue;
+    numbering.remove();
+    const indent = childElements(properties, "ind")[0];
+    if (indent) indent.remove();
+  }
+}
+
+function preventRowSplit(row: Element | undefined) {
+  if (!row) return;
+  let properties = childElements(row, "trPr")[0];
+  if (!properties) {
+    properties = row.ownerDocument.createElementNS(WORD_NS, "w:trPr");
+    row.prepend(properties);
+  }
+  if (!childElements(properties, "cantSplit").length) {
+    properties.append(row.ownerDocument.createElementNS(WORD_NS, "w:cantSplit"));
+  }
+}
+
 function rows(table: Element) {
   return childElements(table, "tr");
 }
@@ -498,6 +522,14 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   const leftCollectionCell = collectionCells[0];
   const rightCollectionCell = collectionCells[2];
 
+  if (batch.kind === "uva") {
+    // El modelo original oculta los marcadores de la lista fuera de la celda.
+    // Algunos conversores los vuelven a mostrar y desplazan el texto. Los
+    // quitamos de forma explícita y mantenemos el bloque de recolección unido.
+    removeListMarkers(leftCollectionCell);
+    preventRowSplit(collectionRows[1]);
+  }
+
   const nestedCuts = leftCollectionCell.getElementsByTagNameNS(WORD_NS, "tbl")[0];
   if (nestedCuts) {
     const cutRows = rows(nestedCuts);
@@ -584,7 +616,9 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     }
   }
 
-  stabilizeContractLayout(document);
+  // La plantilla de uva utiliza sangrías y anchos propios para mantener las
+  // dos modalidades de recolección en la misma página. No deben normalizarse.
+  if (batch.kind !== "uva") stabilizeContractLayout(document);
 }
 
 function safeFilename(value: string) {
