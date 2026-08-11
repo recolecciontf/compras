@@ -443,6 +443,16 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   if (varietiesParagraph && varieties && !replaceNextBlank(varietiesParagraph, varieties)) {
     replaceBetween(varietiesParagraph, "variedad/es,", ", con destino", ` ${varieties}`);
   }
+  if (varietiesParagraph && batch.kind === "uva") {
+    const origin = batch.materials.map((material) => [
+      purchase.farm,
+      material.municipality || purchase.municipality,
+      material.paraje ? `paraje ${material.paraje}` : "",
+      material.polygon ? `polígono ${material.polygon}` : "",
+      material.plot ? `parcela ${material.plot}` : "",
+    ].filter(Boolean).join(", ")).join("; ");
+    if (origin) replaceNextBlank(varietiesParagraph, origin);
+  }
 
   if (batch.kind === "naranja") {
     const objectParagraph = findParagraph(document, (text) => text.includes("cantidades pactadas de MANDARINAS"));
