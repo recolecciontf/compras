@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 import type { MaterialItem, PurchaseForm } from "../types";
 import { PRODUCT_CATALOG, emptyMaterial, materialSummary } from "./catalog";
 
@@ -8,6 +9,12 @@ type BuyerCompany = PurchaseForm["contractDetails"]["buyerCompany"];
 type ExtractedDocument = {
   text: string;
   tables: string[][][];
+  usedOcr?: boolean;
+};
+
+export type ContractImportProgress = {
+  message: string;
+  progress: number;
 };
 
 export type ContractImportReport = {
@@ -15,7 +22,35 @@ export type ContractImportReport = {
   detectedFields: string[];
   warnings: string[];
   detectedBuyerCompany: BuyerCompany;
+  usedOcr: boolean;
 };
+
+type OcrLoggerMessage = {
+  status?: string;
+  progress?: number;
+};
+
+type OcrWorker = {
+  recognize: (image: HTMLCanvasElement) => Promise<{ data: { text: string } }>;
+  setParameters: (parameters: Record<string, string>) => Promise<unknown>;
+  terminate: () => Promise<unknown>;
+};
+
+type TesseractBrowserApi = {
+  createWorker: (languages: string, oem: number, options: {
+    workerPath: string;
+    logger: (message: OcrLoggerMessage) => void;
+  }) => Promise<OcrWorker>;
+  PSM: { AUTO: string };
+};
+
+declare global {
+  interface Window {
+    Tesseract?: TesseractBrowserApi;
+  }
+}
+
+let tesseractScriptPromise: Promise<TesseractBrowserApi> | null = null;
 
 const SPANISH_MONTHS: Record<string, number> = {
   enero: 1,
@@ -154,7 +189,111 @@ async function extractDocx(file: File): Promise<ExtractedDocument> {
   return { text: paragraphs.join("\n"), tables };
 }
 
-async function extractPdf(file: File): Promise<ExtractedDocument> {
+function publicAssetUrl(path: string) {
+  return `${import.meta.env.BASE_URL.replace(/\/?$/, "/")}${path.replace(/^\//, "")}`;
+}
+
+function loadTesseractBrowser() {
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (tesseractScriptPromise) return tesseractScriptPromise;
+  tesseractScriptPromise = new Promise<TesseractBrowserApi>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-contract-ocr="tesseract"]');
+    existing?.remove();
+    const script = document.createElement("script");
+    const finish = () => window.Tesseract
+      ? resolve(window.Tesseract)
+      : reject(new Error("No se ha podido iniciar el lector OCR."));
+    script.addEventListener("load", finish, { once: true });
+    script.addEventListener("error", () => reject(new Error("No se ha podido cargar el lector OCR.")), { once: true });
+    script.src = publicAssetUrl("vendor/tesseract-7.0.0.min.js");
+    script.async = true;
+    script.dataset.contractOcr = "tesseract";
+    document.head.appendChild(script);
+  }).catch((error) => {
+    tesseractScriptPromise = null;
+    throw error;
+  });
+  return tesseractScriptPromise;
+}
+
+function ocrStatus(status = "") {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("language")) return "Cargando el idioma español para el OCR";
+  if (normalized.includes("core")) return "Preparando el motor OCR";
+  if (normalized.includes("initializ")) return "Inicializando el lector OCR";
+  if (normalized.includes("recogniz")) return "Leyendo el contrato escaneado";
+  return "Preparando la lectura del contrato escaneado";
+}
+
+async function ocrPdfPages(
+  pdf: PDFDocumentProxy,
+  pageTexts: string[],
+  sparsePageNumbers: number[],
+  onProgress?: (progress: ContractImportProgress) => void,
+) {
+  onProgress?.({ message: "El PDF está escaneado. Iniciando OCR…", progress: 0.01 });
+  const tesseract = await loadTesseractBrowser();
+  let activePage = 0;
+  let worker: OcrWorker | null = null;
+  try {
+    worker = await tesseract.createWorker("spa", 1, {
+      workerPath: publicAssetUrl("vendor/tesseract-worker-7.0.0.min.js"),
+      logger: (message) => {
+        const pageProgress = Math.max(0, Math.min(1, message.progress || 0));
+        const overallProgress = activePage
+          ? 0.08 + (((activePage - 1) + pageProgress) / sparsePageNumbers.length) * 0.9
+          : Math.min(0.08, pageProgress * 0.08);
+        onProgress?.({
+          message: activePage
+            ? `${ocrStatus(message.status)} · página ${sparsePageNumbers[activePage - 1]} de ${pdf.numPages}`
+            : ocrStatus(message.status),
+          progress: overallProgress,
+        });
+      },
+    });
+    await worker.setParameters({
+      tessedit_pageseg_mode: tesseract.PSM.AUTO,
+      preserve_interword_spaces: "1",
+      user_defined_dpi: "220",
+    });
+    for (let index = 0; index < sparsePageNumbers.length; index += 1) {
+      activePage = index + 1;
+      const pageNumber = sparsePageNumbers[index];
+      onProgress?.({
+        message: `Preparando página ${pageNumber} de ${pdf.numPages}`,
+        progress: 0.08 + (index / sparsePageNumbers.length) * 0.9,
+      });
+      const page = await pdf.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const scale = Math.min(2.8, Math.max(1.8, 1800 / baseViewport.width));
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const context = canvas.getContext("2d", { alpha: false });
+      if (!context) throw new Error("El dispositivo no ha podido preparar la página para OCR.");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvas, canvasContext: context, viewport }).promise;
+      const result = await worker.recognize(canvas);
+      pageTexts[pageNumber - 1] = result.data.text.trim();
+      page.cleanup();
+      canvas.width = 1;
+      canvas.height = 1;
+    }
+    onProgress?.({ message: "OCR completado. Identificando los datos…", progress: 0.99 });
+  } catch (error) {
+    if (error instanceof Error && /dispositivo no ha podido/i.test(error.message)) throw error;
+    throw new Error("No se ha podido completar el OCR. Comprueba la conexión e inténtalo de nuevo.");
+  } finally {
+    await worker?.terminate().catch(() => undefined);
+  }
+}
+
+async function extractPdf(
+  file: File,
+  onProgress?: (progress: ContractImportProgress) => void,
+): Promise<ExtractedDocument> {
   const { GlobalWorkerOptions, getDocument } = await import("pdfjs-dist");
   GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
@@ -214,24 +353,34 @@ async function extractPdf(file: File): Promise<ExtractedDocument> {
       pages.push(lines.join("\n"));
       page.cleanup();
     }
+    const sparsePageNumbers = pages
+      .map((text, index) => ({ index, length: fold(text).length }))
+      .filter(({ length }) => length < 80)
+      .map(({ index }) => index + 1);
+    if (sparsePageNumbers.length) {
+      await ocrPdfPages(pdf, pages, sparsePageNumbers, onProgress);
+    }
+    const extractedText = pages.join("\n\n");
+    if (fold(extractedText).length < 80) {
+      throw new Error("El OCR no ha encontrado texto suficiente en el contrato. Prueba con una copia más nítida.");
+    }
+    return { text: extractedText, tables, usedOcr: sparsePageNumbers.length > 0 };
   } finally {
     await pdf.destroy();
   }
-  return { text: pages.join("\n\n"), tables };
 }
 
-async function extractDocument(file: File) {
+async function extractDocument(
+  file: File,
+  onProgress?: (progress: ContractImportProgress) => void,
+) {
   const extension = file.name.split(".").pop()?.toLowerCase();
   if (file.size > 10 * 1024 * 1024) throw new Error("El contrato supera el límite de 10 MB.");
   if (!ACCEPTED_TYPES.has(file.type) && extension !== "pdf" && extension !== "docx") {
     throw new Error("Selecciona un contrato en formato PDF o Word (.docx).");
   }
   if (extension === "docx" || file.type.includes("wordprocessingml")) return extractDocx(file);
-  const extracted = await extractPdf(file);
-  if (fold(extracted.text).length < 80) {
-    throw new Error("El PDF no contiene texto seleccionable. Parece escaneado; utiliza un PDF con OCR o un archivo Word.");
-  }
-  return extracted;
+  return extractPdf(file, onProgress);
 }
 
 function detectBuyerCompany(text: string): BuyerCompany {
@@ -390,12 +539,16 @@ export async function importPurchaseFromContract(
   file: File,
   selectedBuyerCompany: Exclude<BuyerCompany, "">,
   basePurchase: PurchaseForm,
+  onProgress?: (progress: ContractImportProgress) => void,
 ): Promise<ContractImportReport> {
-  const { text, tables } = await extractDocument(file);
+  const { text, tables, usedOcr = false } = await extractDocument(file, onProgress);
   const warnings: string[] = [];
   const detectedFields: string[] = [];
   const next = structuredClone(basePurchase);
   const detectedBuyerCompany = detectBuyerCompany(text);
+  if (usedOcr) {
+    warnings.push("El documento se ha leído mediante OCR. Comprueba especialmente nombres, cifras, fechas y datos de las parcelas.");
+  }
   next.contractDetails.buyerCompany = selectedBuyerCompany;
   detectedFields.push("Empresa compradora");
   if (detectedBuyerCompany && detectedBuyerCompany !== selectedBuyerCompany) {
@@ -541,5 +694,6 @@ export async function importPurchaseFromContract(
     detectedFields: [...new Set(detectedFields)],
     warnings,
     detectedBuyerCompany,
+    usedOcr,
   };
 }

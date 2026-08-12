@@ -1,6 +1,6 @@
 import { AlertTriangle, ArrowLeft, CheckCircle2, CircleCheck, Download, FileCheck2, FileText, FileUp, PenLine, PlusCircle, Send, ShoppingBasket } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { importPurchaseFromContract, type ContractImportReport } from "../lib/contractImport";
+import { importPurchaseFromContract, type ContractImportProgress, type ContractImportReport } from "../lib/contractImport";
 import { purchaseFromRow } from "../lib/workbook";
 import type { ContractOutputFormat, ContractSignatures, ControlRow, PurchaseForm } from "../types";
 import { EMPTY_PURCHASE, PurchaseFields } from "./PurchaseFields";
@@ -56,6 +56,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   const [importedContractFile, setImportedContractFile] = useState<File | null>(null);
   const [importReport, setImportReport] = useState<ContractImportReport | null>(null);
   const [importingContract, setImportingContract] = useState(false);
+  const [importProgress, setImportProgress] = useState<ContractImportProgress | null>(null);
   const [importContractError, setImportContractError] = useState("");
   const [contractChoice, setContractChoice] = useState<ContractChoice>("");
   const [signatureChoice, setSignatureChoice] = useState<SignatureChoice>("");
@@ -97,6 +98,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setImportedContractFile(null);
     setImportReport(null);
     setImportingContract(false);
+    setImportProgress(null);
     setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
@@ -118,6 +120,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setSelectedImportedRow("");
     setImportedContractFile(null);
     setImportReport(null);
+    setImportProgress(null);
     setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
@@ -133,6 +136,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setSelectedImportedRow("");
     setImportedContractFile(null);
     setImportReport(null);
+    setImportProgress(null);
     setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
@@ -145,6 +149,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   async function importContractFile(file: File | null) {
     setImportedContractFile(null);
     setImportReport(null);
+    setImportProgress({ message: "Comprobando el contrato…", progress: 0 });
     setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
@@ -154,7 +159,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     try {
       const base = structuredClone(EMPTY_PURCHASE);
       base.contractDetails.buyerCompany = importBuyerCompany;
-      const report = await importPurchaseFromContract(file, importBuyerCompany, base);
+      const report = await importPurchaseFromContract(file, importBuyerCompany, base, setImportProgress);
       setPurchase(report.purchase);
       setImportedContractFile(file);
       setImportReport(report);
@@ -165,6 +170,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
       setPurchase(next);
     } finally {
       setImportingContract(false);
+      setImportProgress(null);
     }
   }
 
@@ -172,6 +178,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setSelectedImportedRow(rowIndex);
     setImportedContractFile(null);
     setImportReport(null);
+    setImportProgress(null);
     setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
@@ -513,12 +520,16 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
                   onChange={(event) => void importContractFile(event.target.files?.[0] || null)}
                 />
                 <FileUp size={20} />
-                <span>{importingContract ? "Leyendo y comprobando el contrato…" : importedContractFile ? importedContractFile.name : "Seleccionar contrato PDF o Word"}</span>
+                <span>{importingContract ? importProgress?.message || "Leyendo y comprobando el contrato…" : importedContractFile ? importedContractFile.name : "Seleccionar contrato PDF o Word"}</span>
               </label>
-              <small className="contract-import-privacy">Máximo 10 MB. La lectura se realiza en este dispositivo; después podrás corregir cualquier campo.</small>
+              {importingContract && importProgress && <div className="contract-ocr-progress" role="status" aria-live="polite">
+                <div><strong>{importProgress.message}</strong><span>{Math.round(importProgress.progress * 100)}%</span></div>
+                <progress max="1" value={importProgress.progress} aria-label="Progreso de lectura del contrato" />
+              </div>}
+              <small className="contract-import-privacy">Máximo 10 MB. La lectura se realiza en este dispositivo. Si el PDF está escaneado, el OCR puede tardar unos minutos la primera vez.</small>
               {importContractError && <div className="contract-send-warning import-contract-error" role="alert"><AlertTriangle size={18} /><span><strong>No se ha podido importar</strong><small>{importContractError}</small></span></div>}
               {importReport && importedContractFile && <div className="contract-import-report" aria-live="polite">
-                <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Contrato leído: {importedContractFile.name}</strong><small>La compra está preparada con los datos reconocidos. Revisa y completa los campos antes de guardarla.</small></span></div>
+                <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Contrato leído{importReport.usedOcr ? " mediante OCR" : ""}: {importedContractFile.name}</strong><small>La compra está preparada con los datos reconocidos. Revisa y completa los campos antes de guardarla.</small></span></div>
                 <div className="contract-import-detected"><strong>Datos reconocidos</strong><div>{importReport.detectedFields.map((field) => <span key={field}>{field}</span>)}</div></div>
                 {importReport.warnings.length > 0 && <div className="contract-import-warnings"><strong>Campos que debes revisar</strong><ul>{importReport.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div>}
               </div>}
