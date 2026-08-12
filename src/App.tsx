@@ -40,6 +40,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { HarvestPanel } from "./components/HarvestPanel";
+import { CertificateControlPanel } from "./components/CertificateControlPanel";
 import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurchasePanel";
 import { PurchaseFields } from "./components/PurchaseFields";
 import { DEMO_ROWS } from "./demo";
@@ -123,6 +124,24 @@ function isArchived(row: ControlRow) {
 
 function isCancelled(row: ControlRow) {
   return isRecordCancelled(row);
+}
+
+function hasCompletedCut(row: ControlRow) {
+  const cut = row.cutStatus.trim().toLocaleLowerCase("es");
+  const kg = Number(row.cutKgTotal.replace(",", "."));
+  return ["sí", "si"].includes(cut) && Number.isFinite(kg) && kg > 0;
+}
+
+function isExpiredContract(row: ControlRow) {
+  return Boolean(row.contractEnd && row.contractEnd < localToday());
+}
+
+function isPreviousCampaign(row: ControlRow) {
+  return row.campaign.replace(/\s/g, "") === "2025/2026";
+}
+
+function belongsInExpiredQueue(row: ControlRow) {
+  return isExpiredContract(row) || (isPreviousCampaign(row) && hasCompletedCut(row));
 }
 
 type AutoSaveTask = {
@@ -344,8 +363,10 @@ export default function App() {
     return rows.filter((row) => {
       if (filter === "cancelled") {
         if (!isCancelled(row)) return false;
+      } else if (filter === "expired") {
+        if (isArchived(row) || isCancelled(row) || !belongsInExpiredQueue(row)) return false;
       } else {
-        if (isArchived(row) || isCancelled(row)) return false;
+        if (isArchived(row) || isCancelled(row) || belongsInExpiredQueue(row)) return false;
       }
       if (filter === "blocked" && authorized(row)) return false;
       if (filter === "authorized" && !authorized(row)) return false;
@@ -359,9 +380,10 @@ export default function App() {
 
   const counts = useMemo(() => {
     const cancelled = rows.filter(isCancelled).length;
-    const active = rows.filter((row) => !isArchived(row) && !isCancelled(row));
+    const expired = rows.filter((row) => !isArchived(row) && !isCancelled(row) && belongsInExpiredQueue(row)).length;
+    const active = rows.filter((row) => !isArchived(row) && !isCancelled(row) && !belongsInExpiredQueue(row));
     const yes = active.filter(authorized).length;
-    return { total: active.length, authorized: yes, blocked: active.length - yes, cancelled };
+    return { total: active.length, authorized: yes, blocked: active.length - yes, expired, cancelled };
   }, [rows]);
 
   const predictedRow = selected && purchase ? mergePurchase(selected, purchase) : selected;
@@ -714,6 +736,17 @@ export default function App() {
     }
   }
 
+  async function downloadLibraryDocument(id: string) {
+    if (!client || demoMode) throw new Error("Inicia sesión con el usuario real para descargar documentos.");
+    const document = await client.libraryDocument(id);
+    triggerDownload(document.blob, document.filename);
+  }
+
+  async function uploadLibraryDocument(file: File, id: string) {
+    if (!client || demoMode || !canEdit) throw new Error("Inicia sesión como administrador para importar contratos.");
+    await client.uploadLibraryDocument(file, id);
+  }
+
   async function attachSignedContract(file: File) {
     if (!purchase || !selected) return;
     setSaving(true);
@@ -934,6 +967,7 @@ export default function App() {
             <button className={view === "records" || view === "review" ? "active" : ""} onClick={() => setView("records")}><ListChecks size={17} /> Expedientes</button>
             {canEdit && <button className={view === "new" ? "active" : ""} onClick={() => setView("new")}><Plus size={17} /> Nueva compra</button>}
             <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}><PackageCheck size={17} /> Cortes</button>
+            <button className={view === "certificates" ? "active" : ""} onClick={() => setView("certificates")}><FileCheck2 size={17} /> Certificados</button>
           </nav>
         )}
         <div className="topbar-actions">
@@ -985,7 +1019,15 @@ export default function App() {
             onDemo={startDemo}
           />
         ) : (
-          <div className="workspace">
+          <div className={`workspace ${view === "certificates" ? "catalog-workspace" : ""}`}>
+            {view === "certificates" ? (
+              <CertificateControlPanel
+                canEdit={Boolean(canEdit && !demoMode)}
+                onDownloadDocument={downloadLibraryDocument}
+                onUploadDocument={uploadLibraryDocument}
+                onBack={() => setView("records")}
+              />
+            ) : <>
             <section className={`records-pane ${view !== "records" ? "mobile-hidden" : ""}`}>
               <div className="dashboard-hero">
                 <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo: control documental, materia prima y cortes" />
@@ -995,7 +1037,7 @@ export default function App() {
               <div className="welcome-row">
                 <div>
                   <p className="welcome">Hola, {profile?.displayName?.split(" ")[0] || "equipo"}</p>
-                  <h1>{filter === "cancelled" ? "Expedientes anulados" : "Expedientes activos"}</h1>
+                  <h1>{filter === "cancelled" ? "Expedientes anulados" : filter === "expired" ? "Contratos vencidos" : "Expedientes activos"}</h1>
                 </div>
                 <span className="sync-caption">
                   {loading ? "Sincronizando…" : lastSyncedAt ? `Actualizado ${lastSyncedAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : `${counts.total} expedientes`}
@@ -1005,6 +1047,7 @@ export default function App() {
               <div className="quick-actions">
                 {canEdit && <button className="action-card action-card-primary" onClick={() => setView("new")}><span className="action-icon"><Plus size={20} /></span><span><strong>Nueva compra</strong><small>Agricultor, fruta y contrato</small></span><ChevronRight size={19} /></button>}
                 <button className="action-card" onClick={() => setView("harvest")}><span className="action-icon"><PackageCheck size={20} /></span><span><strong>Cortes y kilos</strong><small>Seguimiento de recolección</small></span><ChevronRight size={19} /></button>
+                <button className="action-card" onClick={() => setView("certificates")}><span className="action-icon"><FileCheck2 size={20} /></span><span><strong>Certificados y OPFH</strong><small>Vigencias, socios y fincas</small></span><ChevronRight size={19} /></button>
               </div>
 
               <div className="summary-grid">
@@ -1023,6 +1066,11 @@ export default function App() {
                   <span>Bloqueados</span>
                   <strong>{counts.blocked}</strong>
                 </article>
+                <article className="summary-card summary-expired">
+                  <History size={21} />
+                  <span>Vencidos</span>
+                  <strong>{counts.expired}</strong>
+                </article>
                 <article className="summary-card summary-cancelled">
                   <Ban size={21} />
                   <span>Anulados</span>
@@ -1040,6 +1088,7 @@ export default function App() {
                 <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>Todos</button>
                 <button className={filter === "blocked" ? "active" : ""} onClick={() => setFilter("blocked")}>Bloqueados</button>
                 <button className={filter === "authorized" ? "active" : ""} onClick={() => setFilter("authorized")}>Autorizados</button>
+                <button className={filter === "expired" ? "active" : ""} onClick={() => setFilter("expired")}>Vencidos · {counts.expired}</button>
                 <button className={filter === "cancelled" ? "active" : ""} onClick={() => setFilter("cancelled")}>Anulados</button>
               </div>
 
@@ -1048,29 +1097,53 @@ export default function App() {
                   <div className="list-loading"><div className="loading-ring" /><p>Consultando Google Sheets…</p></div>
                 ) : visibleRows.length ? (
                   visibleRows.map((row) => (
-                    <button
+                    <article
                       key={`${row.id}-${row.tableIndex}`}
-                      className={`record-card ${selectedIndex === row.tableIndex ? "selected" : ""} ${isCancelled(row) ? "record-cancelled" : ""}`}
+                      className={`record-card ${selectedIndex === row.tableIndex ? "selected" : ""} ${isCancelled(row) ? "record-cancelled" : ""} ${filter === "expired" ? "record-expired" : ""}`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => selectRow(row)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          selectRow(row);
+                        }
+                      }}
                     >
-                      <span className={`record-stripe ${isCancelled(row) ? "stripe-cancelled" : authorized(row) ? "stripe-ok" : "stripe-blocked"}`} />
+                      <span className={`record-stripe ${isCancelled(row) ? "stripe-cancelled" : filter === "expired" ? "stripe-expired" : authorized(row) ? "stripe-ok" : "stripe-blocked"}`} />
                       <span className="record-content">
                         <span className="record-heading">
                           <strong>{row.provider}</strong>
                           {isCancelled(row)
                             ? <span className="status-badge status-cancelled"><Ban size={15} /> ANULADO</span>
+                            : filter === "expired"
+                              ? <span className="status-badge status-expired"><History size={15} /> VENCIDO</span>
                             : <StatusBadge ok={authorized(row)}>{authorized(row) ? "SÍ" : "NO"}</StatusBadge>}
                         </span>
                         <span className="record-crop">{row.crop || "Especie sin indicar"}{row.variety ? ` · ${row.variety}` : ""}</span>
                         <span className="record-meta">
                           <span><Sprout size={15} /> {row.farm || "Finca sin indicar"}</span>
                           <span><CalendarDays size={15} /> {row.plannedCutDate ? formatDate(row.plannedCutDate) : "Corte pendiente"}</span>
+                          {filter === "expired" && <span><History size={15} /> Contrato hasta {formatDate(row.contractEnd)}</span>}
+                          {filter === "expired" && <span><FileText size={15} /> Campaña {row.campaign || "sin indicar"}</span>}
                           {row.expectedKg && <span><PackageCheck size={15} /> {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(Number(row.expectedKg))} kg previstos</span>}
                         </span>
-                        {!authorized(row) && <span className="blockage-preview">{currentBlockageReason(row)}</span>}
+                        {filter === "expired" && canEdit && hasCompletedCut(row) ? (
+                          <button
+                            className="expired-archive-action"
+                            type="button"
+                            disabled={saving}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void saveHarvest(row, { cutStatus: row.cutStatus, cutKgTotal: row.cutKgTotal, archived: "Sí" });
+                            }}
+                          ><History size={16} /> Archivar {isPreviousCampaign(row) ? "en 2025/2026" : "contrato cortado"}</button>
+                        ) : filter === "expired" && !hasCompletedCut(row) ? (
+                          <span className="blockage-preview">Confirma el corte y sus kilos antes de archivar.</span>
+                        ) : !authorized(row) && <span className="blockage-preview">{currentBlockageReason(row)}</span>}
                       </span>
                       <ChevronRight className="record-chevron" size={20} />
-                    </button>
+                    </article>
                   ))
                 ) : (
                   <div className="empty-state">
@@ -1122,6 +1195,7 @@ export default function App() {
                 </div>
               )}
             </section>
+            </>}
           </div>
         )}
       </main>
@@ -1139,6 +1213,9 @@ export default function App() {
           </button>}
           <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}>
             <PackageCheck size={21} /><span>Cortes</span>
+          </button>
+          <button className={view === "certificates" ? "active" : ""} onClick={() => setView("certificates")}>
+            <FileCheck2 size={21} /><span>Certificados</span>
           </button>
         </nav>
       )}

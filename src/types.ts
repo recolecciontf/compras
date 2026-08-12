@@ -173,5 +173,5 @@ export type ReviewForm = Pick<
   | "lastReviewDate"
 >;
 
-export type AppView = "records" | "review" | "new" | "harvest";
-export type RecordFilter = "all" | "blocked" | "authorized" | "cancelled";
+export type AppView = "records" | "review" | "new" | "harvest" | "certificates";
+export type RecordFilter = "all" | "blocked" | "authorized" | "expired" | "cancelled";

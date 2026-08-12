@@ -1,0 +1,412 @@
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Download,
+  FileCheck2,
+  FileText,
+  LoaderCircle,
+  MapPin,
+  Search,
+  ShieldCheck,
+  Sprout,
+  Users,
+  Upload,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  CERTIFICATE_RECORDS,
+  CONTROL_DATA_UPDATED_AT,
+  FARM_RECORDS,
+  OPFH_MEMBERS,
+} from "../data/controlCatalog.generated";
+import { CONTRACT_DOCUMENTS } from "../data/documentLibrary.generated";
+
+type CatalogTab = "certificates" | "farms" | "members" | "contracts";
+type CompanyFilter = "all" | "MR. ORGÁNICA" | "TOÑIFRUIT";
+type MemberFilter = "all" | "yes" | "no";
+type FarmTypeFilter = "all" | "Propia" | "De terceros";
+type CertificateStatusFilter = "all" | "expired" | "soon" | "valid" | "missing";
+type CertificateRecord = (typeof CERTIFICATE_RECORDS)[number];
+
+type Props = {
+  canEdit: boolean;
+  onDownloadDocument: (id: string) => Promise<void>;
+  onUploadDocument: (file: File, id: string) => Promise<void>;
+  onBack: () => void;
+};
+
+function normalize(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .trim();
+}
+
+function certificateStatus(expiry: string) {
+  if (!expiry) return { key: "missing" as const, label: "Sin fecha" };
+  const today = new Date();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const date = new Date(`${expiry}T12:00:00`);
+  const days = Math.ceil((date.getTime() - localToday.getTime()) / 86_400_000);
+  if (days < 0) return { key: "expired" as const, label: "Vencido" };
+  if (days <= 15) return { key: "soon" as const, label: days === 0 ? "Vence hoy" : `Vence en ${days} días` };
+  return { key: "valid" as const, label: "Vigente" };
+}
+
+function formatDate(value: string) {
+  if (!value) return "Sin fecha";
+  return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })
+    .format(new Date(`${value}T12:00:00`));
+}
+
+function formatSurface(value: number) {
+  return new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
+
+function OpfhMark({ selected }: { selected: boolean }) {
+  return (
+    <span className={`catalog-opfh-mark ${selected ? "selected" : ""}`} role="checkbox" aria-checked={selected}>
+      <span>{selected && <Check size={14} />}</span>
+      {selected ? "Socio OPFH" : "No socio"}
+    </span>
+  );
+}
+
+export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, onUploadDocument }: Props) {
+  const [tab, setTab] = useState<CatalogTab>("certificates");
+  const [query, setQuery] = useState("");
+  const [company, setCompany] = useState<CompanyFilter>("all");
+  const [memberFilter, setMemberFilter] = useState<MemberFilter>("all");
+  const [farmType, setFarmType] = useState<FarmTypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<CertificateStatusFilter>("all");
+  const [campaign, setCampaign] = useState("all");
+  const [documentType, setDocumentType] = useState("all");
+  const [downloadingId, setDownloadingId] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [uploadMessage, setUploadMessage] = useState("");
+
+  const summary = useMemo(() => {
+    const uniqueFarmers = new Set(CERTIFICATE_RECORDS.map((record) => `${record.company}|${record.farmer}`)).size;
+    const expired = CERTIFICATE_RECORDS.filter((record) => certificateStatus(record.expiry).key === "expired").length;
+    const soon = CERTIFICATE_RECORDS.filter((record) => certificateStatus(record.expiry).key === "soon").length;
+    return {
+      farmers: uniqueFarmers,
+      opfh: OPFH_MEMBERS.length,
+      expired,
+      soon,
+      farms: FARM_RECORDS.length,
+      documents: CONTRACT_DOCUMENTS.length,
+    };
+  }, []);
+
+  const filteredCertificates = useMemo(() => {
+    const search = normalize(query);
+    return CERTIFICATE_RECORDS.filter((record) => {
+      if (company !== "all" && record.company !== company) return false;
+      if (memberFilter === "yes" && !record.opfhMember) return false;
+      if (memberFilter === "no" && record.opfhMember) return false;
+      if (farmType !== "all" && record.farmType !== farmType) return false;
+      if (statusFilter !== "all" && certificateStatus(record.expiry).key !== statusFilter) return false;
+      if (!search) return true;
+      return normalize([
+        record.farmer,
+        record.taxId,
+        record.certification,
+        record.company,
+        ...record.crops,
+      ].join(" ")).includes(search);
+    });
+  }, [company, farmType, memberFilter, query, statusFilter]);
+
+  const farmerGroups = useMemo(() => {
+    const groups = new Map<string, { base: CertificateRecord; certificates: CertificateRecord[] }>();
+    for (const record of filteredCertificates) {
+      const key = `${record.company}|${record.farmer}`;
+      const current = groups.get(key);
+      if (current) current.certificates.push(record);
+      else groups.set(key, { base: record, certificates: [record] });
+    }
+    return [...groups.values()].sort((left, right) => left.base.farmer.localeCompare(right.base.farmer, "es"));
+  }, [filteredCertificates]);
+
+  const filteredFarms = useMemo(() => {
+    const search = normalize(query);
+    return FARM_RECORDS.filter((farm) => {
+      if (farmType !== "all" && farm.farmType !== farmType) return false;
+      if (!search) return true;
+      return normalize([
+        farm.holder,
+        farm.taxId,
+        farm.farmName,
+        farm.municipality,
+        farm.polygon,
+        farm.parcel,
+        farm.crop,
+        farm.variety,
+        farm.ownerLessor,
+      ].join(" ")).includes(search);
+    });
+  }, [farmType, query]);
+
+  const filteredMembers = useMemo(() => {
+    const search = normalize(query);
+    return OPFH_MEMBERS.filter((member) => {
+      if (farmType !== "all" && member.farmType !== farmType) return false;
+      if (!search) return true;
+      return normalize([member.name, member.taxId, member.note, ...member.controlNames].join(" ")).includes(search);
+    });
+  }, [farmType, query]);
+
+  const filteredDocuments = useMemo(() => {
+    const search = normalize(query);
+    return CONTRACT_DOCUMENTS.filter((document) => {
+      if (company !== "all" && document.company !== company) return false;
+      if (campaign !== "all" && document.campaign !== campaign) return false;
+      if (documentType !== "all" && document.documentType !== documentType) return false;
+      if (!search) return true;
+      return normalize([document.farmer, document.filename, document.company, document.campaign, document.documentType].join(" ")).includes(search);
+    });
+  }, [campaign, company, documentType, query]);
+
+  const documentCampaigns = useMemo(() => [...new Set(CONTRACT_DOCUMENTS.map((document) => document.campaign))].sort().reverse(), []);
+  const documentTypes = useMemo(() => [...new Set(CONTRACT_DOCUMENTS.map((document) => document.documentType))].sort((left, right) => left.localeCompare(right, "es")), []);
+
+  function changeTab(next: CatalogTab) {
+    setTab(next);
+    setQuery("");
+    setCompany("all");
+    setMemberFilter("all");
+    setFarmType("all");
+    setStatusFilter("all");
+    setCampaign("all");
+    setDocumentType("all");
+    setUploadMessage("");
+  }
+
+  async function downloadDocument(id: string) {
+    setDownloadingId(id);
+    setUploadMessage("");
+    try {
+      await onDownloadDocument(id);
+    } catch (reason) {
+      setUploadMessage(reason instanceof Error ? reason.message : "No se ha podido descargar el documento.");
+    } finally {
+      setDownloadingId("");
+    }
+  }
+
+  async function uploadDocuments(files: File[]) {
+    if (!files.length) return;
+    const knownIds = new Set(CONTRACT_DOCUMENTS.map((document) => document.id));
+    const selected = files
+      .map((file) => ({ file, id: file.name.split("__", 1)[0] }))
+      .filter((entry) => knownIds.has(entry.id as (typeof CONTRACT_DOCUMENTS)[number]["id"]));
+    if (!selected.length) {
+      setUploadMessage("Los archivos seleccionados no pertenecen a la biblioteca preparada.");
+      return;
+    }
+    setUploadProgress({ current: 0, total: selected.length });
+    setUploadMessage("");
+    try {
+      for (let index = 0; index < selected.length; index += 1) {
+        await onUploadDocument(selected[index].file, selected[index].id);
+        setUploadProgress({ current: index + 1, total: selected.length });
+      }
+      setUploadMessage(`${selected.length} documentos incorporados correctamente.`);
+    } catch (reason) {
+      setUploadMessage(reason instanceof Error ? reason.message : "La importación se ha interrumpido.");
+    } finally {
+      setUploadProgress(null);
+    }
+  }
+
+  return (
+    <section className="catalog-page">
+      <div className="review-header catalog-header">
+        <button className="back-button mobile-back" type="button" onClick={onBack}><ArrowLeft size={20} /> Expedientes</button>
+        <div className="page-kicker"><ShieldCheck size={18} /> Control documental actualizado</div>
+        <h1 className="page-title">Certificados y OPFH</h1>
+        <p className="page-subtitle">Consulta vigencias, socios y parcelas desde un único control. ARRA 19 se conserva sin cambios.</p>
+        <span className="catalog-updated"><CalendarDays size={15} /> Datos cruzados a {formatDate(CONTROL_DATA_UPDATED_AT)}</span>
+      </div>
+
+      <div className="catalog-summary">
+        <article><Users size={20} /><span>Agricultores</span><strong>{summary.farmers}</strong></article>
+        <article><ShieldCheck size={20} /><span>Socios OPFH</span><strong>{summary.opfh}</strong></article>
+        <article className="catalog-alert"><AlertTriangle size={20} /><span>Certificados vencidos</span><strong>{summary.expired}</strong></article>
+        <article><CalendarDays size={20} /><span>Próximos 15 días</span><strong>{summary.soon}</strong></article>
+        <article><MapPin size={20} /><span>Fincas / recintos</span><strong>{summary.farms}</strong></article>
+        <article><FileText size={20} /><span>Documentos contractuales</span><strong>{summary.documents}</strong></article>
+      </div>
+
+      <div className="catalog-tabs" role="tablist" aria-label="Secciones del control">
+        <button type="button" className={tab === "certificates" ? "active" : ""} onClick={() => changeTab("certificates")}><FileCheck2 size={17} /> Certificados</button>
+        <button type="button" className={tab === "members" ? "active" : ""} onClick={() => changeTab("members")}><Users size={17} /> Socios OPFH</button>
+        <button type="button" className={tab === "farms" ? "active" : ""} onClick={() => changeTab("farms")}><Sprout size={17} /> Fincas</button>
+        <button type="button" className={tab === "contracts" ? "active" : ""} onClick={() => changeTab("contracts")}><FileText size={17} /> Contratos</button>
+      </div>
+
+      <div className="catalog-toolbar">
+        <label className="catalog-search">
+          <Search size={18} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "farms" ? "Buscar titular, finca, parcela o cultivo" : tab === "contracts" ? "Buscar agricultor, contrato o archivo" : "Buscar agricultor, NIF o certificación"} />
+          {query && <button type="button" onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={17} /></button>}
+        </label>
+        {tab === "certificates" && <>
+          <label><span>Empresa</span><select value={company} onChange={(event) => setCompany(event.target.value as CompanyFilter)}><option value="all">Todas</option><option>TOÑIFRUIT</option><option>MR. ORGÁNICA</option></select></label>
+          <label><span>OPFH</span><select value={memberFilter} onChange={(event) => setMemberFilter(event.target.value as MemberFilter)}><option value="all">Todos</option><option value="yes">Solo socios</option><option value="no">No socios</option></select></label>
+          <label><span>Vigencia</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as CertificateStatusFilter)}><option value="all">Todas</option><option value="expired">Vencidos</option><option value="soon">Próximos 15 días</option><option value="valid">Vigentes</option><option value="missing">Sin fecha</option></select></label>
+        </>}
+        {tab !== "contracts" && <label><span>Tipo de finca</span><select value={farmType} onChange={(event) => setFarmType(event.target.value as FarmTypeFilter)}><option value="all">Todas</option><option>Propia</option><option>De terceros</option></select></label>}
+        {tab === "contracts" && <>
+          <label><span>Empresa</span><select value={company} onChange={(event) => setCompany(event.target.value as CompanyFilter)}><option value="all">Todas</option><option>TOÑIFRUIT</option><option>MR. ORGÁNICA</option></select></label>
+          <label><span>Campaña</span><select value={campaign} onChange={(event) => setCampaign(event.target.value)}><option value="all">Todas</option>{documentCampaigns.map((value) => <option key={value}>{value}</option>)}</select></label>
+          <label><span>Tipo</span><select value={documentType} onChange={(event) => setDocumentType(event.target.value)}><option value="all">Todos</option>{documentTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
+        </>}
+      </div>
+
+      {tab === "certificates" && (
+        <div className="catalog-results">
+          <div className="catalog-result-count">{farmerGroups.length} agricultor{farmerGroups.length === 1 ? "" : "es"} · {filteredCertificates.length} certificados</div>
+          <div className="certificate-farmers">
+            {farmerGroups.map(({ base, certificates }) => {
+              const crops = [...new Set(certificates.flatMap((record) => record.crops))];
+              return (
+                <details className={`certificate-farmer ${base.preserved ? "preserved" : ""}`} key={`${base.company}-${base.farmer}`}>
+                  <summary>
+                    <div className="certificate-farmer-main">
+                      <span className="company-label">{base.company}</span>
+                      <strong>{base.farmer}</strong>
+                      <small>{base.taxId || "NIF no incorporado"}{crops.length ? ` · ${crops.join(", ")}` : ""}</small>
+                    </div>
+                    <div className="certificate-farmer-flags">
+                      <OpfhMark selected={base.opfhMember} />
+                      {base.farmType && <span className={`farm-type ${base.farmType === "Propia" ? "own" : "third"}`}>{base.farmType}</span>}
+                      {base.preserved && <span className="preserved-badge">ARRA 19 preservado</span>}
+                      <span className="certificate-count">{certificates.length}</span>
+                      <ChevronDown size={18} />
+                    </div>
+                  </summary>
+                  <div className="certificate-lines">
+                    {certificates.map((record) => {
+                      const status = certificateStatus(record.expiry);
+                      return (
+                        <div className="certificate-line" key={record.id}>
+                          <strong>{record.certification}</strong>
+                          <span>{record.crops.join(", ") || "Cultivo no indicado"}</span>
+                          <span>{formatDate(record.expiry)}</span>
+                          <span className={`certificate-status ${status.key}`}>{status.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {tab === "members" && (
+        <div className="catalog-results">
+          <div className="catalog-result-count">{filteredMembers.length} socios localizados · 3 empresas del grupo</div>
+          <div className="opfh-member-grid">
+            {filteredMembers.map((member) => (
+              <article className={member.groupCompany ? "group-company" : ""} key={member.taxId}>
+                <div className="member-heading">
+                  <OpfhMark selected />
+                  <span className={`farm-type ${member.farmType === "Propia" ? "own" : "third"}`}>{member.farmType}</span>
+                </div>
+                <strong>{member.name}</strong>
+                <span className="member-tax-id">{member.taxId}</span>
+                <small>{member.controlNames.join(" · ") || "Sin nombre equivalente en el control"}</small>
+                {member.note && <p><AlertTriangle size={15} /> {member.note}</p>}
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === "farms" && (
+        <div className="catalog-results">
+          <div className="catalog-result-count">{filteredFarms.length} fincas / recintos</div>
+          <div className="farm-table-wrap">
+            <table className="farm-table">
+              <thead><tr><th>Titular</th><th>Tipo</th><th>Finca</th><th>Municipio</th><th>Polígono</th><th>Parcela</th><th>Recinto</th><th>Cultivo</th><th>Variedad</th><th>Superficie</th></tr></thead>
+              <tbody>
+                {filteredFarms.map((farm) => (
+                  <tr key={farm.id}>
+                    <td><strong>{farm.holder}</strong><small>{farm.taxId}</small></td>
+                    <td><span className={`farm-type ${farm.farmType === "Propia" ? "own" : "third"}`}>{farm.farmType}</span></td>
+                    <td>{farm.farmName || "—"}</td>
+                    <td>{farm.municipality}</td>
+                    <td>{farm.polygon || "—"}</td>
+                    <td>{farm.parcel || "—"}</td>
+                    <td>{farm.enclosure || "—"}</td>
+                    <td>{farm.crop || "—"}</td>
+                    <td>{farm.variety || "—"}</td>
+                    <td className="surface-cell">{formatSurface(farm.surface)} ha</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === "contracts" && (
+        <div className="catalog-results">
+          <div className="document-library-heading">
+            <div className="catalog-result-count">{filteredDocuments.length} documentos contractuales</div>
+            {canEdit && (
+              <label className={`secondary-button bulk-upload-button ${uploadProgress ? "disabled" : ""}`}>
+                {uploadProgress ? <LoaderCircle className="spinning" size={17} /> : <Upload size={17} />}
+                {uploadProgress ? `Subiendo ${uploadProgress.current} de ${uploadProgress.total}` : "Importar contratos"}
+                <input
+                  data-testid="bulk-contract-upload"
+                  type="file"
+                  multiple
+                  disabled={Boolean(uploadProgress)}
+                  onChange={(event) => {
+                    const files = event.currentTarget.files ? [...event.currentTarget.files] : [];
+                    event.currentTarget.value = "";
+                    void uploadDocuments(files);
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          {uploadMessage && <div className="document-upload-message"><FileCheck2 size={17} /> {uploadMessage}</div>}
+          <div className="document-library-list">
+            {filteredDocuments.map((document) => (
+              <article key={document.id}>
+                <div className="document-icon"><FileText size={20} /></div>
+                <div className="document-main">
+                  <span>{document.company} · {document.campaign}</span>
+                  <strong>{document.filename}</strong>
+                  <small>{document.farmer} · {document.documentType} · {document.extension} · {(document.size / 1048576).toLocaleString("es-ES", { maximumFractionDigits: 1 })} MB</small>
+                </div>
+                <button className="secondary-button" type="button" disabled={downloadingId === document.id} onClick={() => void downloadDocument(document.id)}>
+                  {downloadingId === document.id ? <LoaderCircle className="spinning" size={16} /> : <Download size={16} />}
+                  Descargar
+                </button>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {((tab === "certificates" && !farmerGroups.length) || (tab === "members" && !filteredMembers.length) || (tab === "farms" && !filteredFarms.length) || (tab === "contracts" && !filteredDocuments.length)) && (
+        <div className="empty-state"><Search size={32} /><h3>No hay resultados</h3><p>Cambia los filtros o prueba con otro término.</p></div>
+      )}
+
+      <div className="catalog-source-note"><Building2 size={17} /> Actualizado desde contratos, certificados, análisis y Efectivos_productivos.xlsx.</div>
+    </section>
+  );
+}

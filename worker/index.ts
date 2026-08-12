@@ -1,5 +1,6 @@
 import { STATIC_ASSETS } from "./static-assets.generated";
 import { CONTRACT_ASSETS } from "./contract-assets.generated";
+import { CONTRACT_DOCUMENTS } from "../src/data/documentLibrary.generated";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -99,6 +100,7 @@ const encoder = new TextEncoder();
 let cachedGoogleToken = "";
 let cachedGoogleTokenExpiresAt = 0;
 let sheetSchemaReady = false;
+const libraryDocumentsById = new Map(CONTRACT_DOCUMENTS.map((document) => [document.id, document]));
 
 function base64Url(bytes: Uint8Array) {
   let binary = "";
@@ -313,6 +315,43 @@ async function storeContract(form: FormData, env: Env) {
 
 async function archiveContract(request: Request, env: Env) {
   return storeContract(await request.formData(), env);
+}
+
+function contentTypeForLibraryDocument(filename: string, supplied: string) {
+  if (supplied && supplied !== "application/octet-stream") return supplied;
+  const extension = filename.split(".").pop()?.toLocaleLowerCase("es");
+  if (extension === "pdf") return "application/pdf";
+  if (extension === "docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (extension === "doc") return "application/msword";
+  if (extension === "xlsx") return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if (extension === "odt") return "application/vnd.oasis.opendocument.text";
+  if (extension === "jpeg" || extension === "jpg") return "image/jpeg";
+  return "application/octet-stream";
+}
+
+async function storeLibraryDocument(request: Request, env: Env) {
+  if (!env.CONTRACT_FILES) throw new Error("La biblioteca documental no está configurada.");
+  const form = await request.formData();
+  const id = String(form.get("id") || "").trim();
+  const document = libraryDocumentsById.get(id);
+  if (!document) throw new InputError("El documento no pertenece a la biblioteca preparada.");
+  const file = form.get("file");
+  if (!(file instanceof File)) throw new InputError("Selecciona el documento contractual.");
+  if (file.size <= 0 || file.size > 20 * 1024 * 1024) throw new InputError("Cada documento debe ocupar entre 1 byte y 20 MB.");
+  const contentType = contentTypeForLibraryDocument(document.filename, file.type);
+  await env.CONTRACT_FILES.put(`document-library/${id}`, await file.arrayBuffer(), {
+    httpMetadata: { contentType },
+    customMetadata: {
+      filename: safeContractFilename(document.filename),
+      company: document.company,
+      farmer: document.farmer.slice(0, 180),
+      campaign: document.campaign,
+      documentType: document.documentType,
+      importedAt: new Date().toISOString(),
+      kind: "document_library",
+    },
+  });
+  return { ok: true as const, id };
 }
 
 async function storePreviousContract(request: Request, env: Env) {
@@ -992,6 +1031,29 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
+  }
+
+  if (url.pathname === "/api/document-library" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede importar documentos." }, 403);
+    return json(request, env, await storeLibraryDocument(request, env), 201);
+  }
+
+  const libraryDocumentMatch = url.pathname.match(/^\/api\/document-library\/([0-9a-f]{24})$/i);
+  if (libraryDocumentMatch && request.method === "GET") {
+    if (!env.CONTRACT_FILES) return json(request, env, { error: "La biblioteca documental no está configurada." }, 503);
+    const document = libraryDocumentsById.get(libraryDocumentMatch[1]);
+    if (!document) return json(request, env, { error: "El documento no pertenece al catálogo." }, 404);
+    const object = await env.CONTRACT_FILES.get(`document-library/${document.id}`);
+    if (!object) return json(request, env, { error: "Este documento todavía no se ha incorporado al archivo privado." }, 404);
+    const filename = safeContractFilename(document.filename);
+    return new Response(object.body, {
+      headers: {
+        "Content-Type": object.httpMetadata?.contentType || contentTypeForLibraryDocument(filename, ""),
+        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        "Cache-Control": "private, no-store",
+        ...corsHeaders(request, env),
+      },
+    });
   }
 
   if (url.pathname === "/api/contract-files" && request.method === "POST") {

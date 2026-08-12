@@ -657,4 +657,36 @@ export class WorkbookClient {
     const plain = disposition.match(/filename="([^"]+)"/i)?.[1];
     return { blob: await response.blob(), filename: encoded ? decodeURIComponent(encoded) : plain || "contrato-firmado" };
   }
+
+  async uploadLibraryDocument(file: File, id: string) {
+    const form = new FormData();
+    form.set("file", file, file.name);
+    form.set("id", id);
+    const response = await fetch(this.endpoint("/api/document-library"), {
+      method: "POST",
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+      body: form,
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || `No se ha podido subir ${file.name}.`);
+    }
+    return response.json() as Promise<{ ok: true; id: string }>;
+  }
+
+  async libraryDocument(id: string) {
+    const response = await fetch(this.endpoint(`/api/document-library/${encodeURIComponent(id)}`), {
+      cache: "no-store",
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+    });
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => ({}))) as ApiError;
+      throw new Error(detail.error || "No se ha podido descargar el documento contractual.");
+    }
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+    const plain = disposition.match(/filename="([^"]+)"/i)?.[1];
+    return { blob: await response.blob(), filename: encoded ? decodeURIComponent(encoded) : plain || "documento-contractual" };
+  }
 }
