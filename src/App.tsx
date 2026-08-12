@@ -958,10 +958,11 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-logo" aria-label="Toñifruit">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-            <strong>toñifruit</strong>
-          </span>
+          <img
+            className="brand-logo"
+            src={`${import.meta.env.BASE_URL}tonifruit-logo.png`}
+            alt="Toñifruit"
+          />
           <span className="brand-divider" aria-hidden="true" />
           <div className="brand-app-name">
             <span>Departamento de compras</span>
@@ -1038,7 +1039,7 @@ export default function App() {
             <section className={`records-pane ${view !== "records" ? "mobile-hidden" : ""}`}>
               <div className="dashboard-hero">
                 <img
-                  src={`${import.meta.env.BASE_URL}og.png`}
+                  src={`${import.meta.env.BASE_URL}dashboard-hero.webp`}
                   alt="Compras de campo: control documental, materia prima y cortes"
                   fetchPriority="high"
                   onError={(event) => { event.currentTarget.src = `${import.meta.env.BASE_URL}app-icon-512.png`; }}
@@ -1065,7 +1066,7 @@ export default function App() {
               <div className="summary-grid">
                 <article className="summary-card summary-total">
                   <ListChecks size={21} />
-                  <span>Total</span>
+                  <span>Expedientes activos</span>
                   <strong>{counts.total}</strong>
                 </article>
                 <article className="summary-card summary-ok">
@@ -1080,7 +1081,7 @@ export default function App() {
                 </article>
                 <article className="summary-card summary-documented">
                   <FileCheck2 size={21} />
-                  <span>Documentados</span>
+                  <span>Con documentación</span>
                   <strong>{counts.documented}</strong>
                 </article>
                 <article className="summary-card summary-expired">
@@ -1094,6 +1095,10 @@ export default function App() {
                   <strong>{counts.cancelled}</strong>
                 </article>
               </div>
+
+              <p className="summary-scope-note">
+                <FileText size={16} /> Estas cifras corresponden a expedientes. La biblioteca completa está en Certificados y OPFH → Contratos.
+              </p>
 
               <div className="search-box">
                 <Search size={20} />
@@ -1259,7 +1264,7 @@ function ConnectPanel({
       <div className="login-showcase">
         <div className="login-visual">
           <img
-            src={`${import.meta.env.BASE_URL}og.png`}
+            src={`${import.meta.env.BASE_URL}dashboard-hero.webp`}
             alt="Compras de campo de Toñifruit"
             fetchPriority="high"
             onError={(event) => { event.currentTarget.src = `${import.meta.env.BASE_URL}app-icon-512.png`; }}
@@ -1277,10 +1282,7 @@ function ConnectPanel({
       </div>
       <div className="connect-card">
         <div className="connect-brand">
-          <span className="brand-logo" aria-label="Toñifruit">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-            <strong>toñifruit</strong>
-          </span>
+          <img src={`${import.meta.env.BASE_URL}tonifruit-logo.png`} alt="Toñifruit" />
           <span>Herramienta interna</span>
         </div>
         <div className="connect-icon"><ShieldCheck size={30} /></div>

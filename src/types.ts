@@ -232,6 +232,7 @@ export type ControlCatalogData = {
   opfhMembers: OpfhMemberRecord[];
   farms: FarmCatalogRecord[];
   documents: ContractDocumentRecord[];
+  storedDocuments: number;
 };
 
 export type AppView = "records" | "review" | "new" | "harvest" | "certificates";

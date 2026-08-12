@@ -26,6 +26,7 @@ export const PRODUCT_CATALOG: Record<string, string[]> = {
     "Orri",
     "Murcott Seedless",
   ],
+  "Clementina": ["Clemenruby", "Oronules", "Clemenules", "Clemenvilla / Nova"],
   "Pomelo": ["Redblush", "Star Ruby"],
   "Granada": ["Smith", "Acco", "Valenciana", "Rubí", "Wonderful", "Mollar"],
   "Uva": ["Itum 17 Blanca", "Sugraone Blanca", "Itum 5 Blanca", "Itum 15 Roja", "Arra 19", "Red Globe", "Red Crimson"],

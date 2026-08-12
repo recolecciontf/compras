@@ -19,6 +19,7 @@ type ContractBucket = {
   put(key: string, value: ArrayBuffer, options?: { httpMetadata?: { contentType?: string }; customMetadata?: Record<string, string> }): Promise<unknown>;
   get(key: string): Promise<ContractObject | null>;
   delete(keys: string | string[]): Promise<unknown>;
+  list(options?: { prefix?: string; cursor?: string; limit?: number }): Promise<{ objects: Array<{ key: string }>; truncated: boolean; cursor?: string }>;
 };
 
 interface Env {
@@ -108,6 +109,18 @@ let cachedGoogleToken = "";
 let cachedGoogleTokenExpiresAt = 0;
 let sheetSchemaReady = false;
 const libraryDocumentsById = new Map(CONTRACT_DOCUMENTS.map((document) => [document.id, document]));
+
+async function storedLibraryDocumentCount(bucket?: ContractBucket) {
+  if (!bucket) return 0;
+  let count = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await bucket.list({ prefix: "document-library/", cursor, limit: 1000 });
+    count += page.objects.length;
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return count;
+}
 
 function normalizedCatalogName(value: unknown) {
   return String(value || "")
@@ -1156,12 +1169,14 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/control-catalog" && request.method === "GET") {
+    const storedDocuments = await storedLibraryDocumentCount(env.CONTRACT_FILES).catch(() => 0);
     return json(request, env, {
       updatedAt: CONTROL_DATA_UPDATED_AT,
       certificates: CERTIFICATE_RECORDS,
       opfhMembers: OPFH_MEMBERS,
       farms: FARM_RECORDS,
       documents: CONTRACT_DOCUMENTS,
+      storedDocuments,
     });
   }
 
