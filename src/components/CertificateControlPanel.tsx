@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { CertificateCatalogRecord, ControlCatalogData } from "../types";
 import { PRODUCT_CATALOG } from "../lib/catalog";
+import { companyTaxId, hasCompanyTaxId } from "../lib/fiscal";
 
 type CatalogTab = "certificates" | "farms" | "members" | "documents";
 type CompanyFilter = "all" | "MR. ORGÁNICA" | "TOÑIFRUIT";
@@ -42,10 +43,6 @@ function normalize(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("es")
     .trim();
-}
-
-function hasCompanyTaxId(value: string) {
-  return /^[ABCDEFGHJNPQRSUVW]/i.test(value.trim());
 }
 
 function certificateStatus(expiry: string) {
@@ -152,7 +149,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       if (!search) return true;
       return normalize([
         record.farmer,
-        record.taxId,
+        companyTaxId(record.taxId),
         record.certification,
         record.company,
         ...record.crops,
@@ -178,7 +175,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       if (!search) return true;
       return normalize([
         farm.holder,
-        farm.taxId,
+        companyTaxId(farm.taxId),
         farm.farmName,
         farm.municipality,
         farm.polygon,
@@ -198,7 +195,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       const key = [farm.holder, farmName, crop].map(normalize).join("|");
       const current = groups.get(key) ?? {
         holder: farm.holder,
-        taxId: farm.taxId,
+        taxId: companyTaxId(farm.taxId),
         farmType: farm.farmType,
         farmName,
         crop,
@@ -220,8 +217,8 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
     const search = normalize(query);
     return opfhMembers.filter((member) => {
       if (!search) return true;
-      const companyTaxId = hasCompanyTaxId(member.taxId) ? member.taxId : "";
-      return normalize([member.name, companyTaxId, member.note, ...member.controlNames].join(" ")).includes(search);
+      const cif = companyTaxId(member.taxId);
+      return normalize([member.name, cif, member.note, ...member.controlNames].join(" ")).includes(search);
     });
   }, [opfhMembers, query]);
 
@@ -365,7 +362,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       <div className="catalog-toolbar">
         <label className="catalog-search">
           <Search size={18} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "farms" ? "Buscar titular, finca, parcela o cultivo" : tab === "documents" ? "Buscar agricultor, documento o archivo" : tab === "members" ? "Buscar socio o empresa" : "Buscar agricultor, NIF o certificación"} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "farms" ? "Buscar titular, finca, parcela o cultivo" : tab === "documents" ? "Buscar agricultor, documento o archivo" : tab === "members" ? "Buscar socio o empresa" : "Buscar agricultor, CIF o certificación"} />
           {query && <button type="button" onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={17} /></button>}
         </label>
         {tab === "certificates" && <>
@@ -389,13 +386,15 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
           <div className="certificate-farmers">
             {farmerGroups.map(({ base, certificates }) => {
               const crops = [...new Set(certificates.flatMap((record) => record.crops))];
+              const cif = companyTaxId(base.taxId);
+              const fiscalAndCrops = [cif ? `CIF ${cif}` : "", crops.join(", ")].filter(Boolean).join(" · ");
               return (
                 <details className={`certificate-farmer ${base.preserved ? "preserved" : ""}`} key={`${base.company}-${base.farmer}`}>
                   <summary>
                     <div className="certificate-farmer-main">
                       <span className="company-label">{base.company}</span>
                       <strong>{base.farmer}</strong>
-                      <small>{base.taxId || "NIF no incorporado"}{crops.length ? ` · ${crops.join(", ")}` : ""}</small>
+                      {fiscalAndCrops && <small>{fiscalAndCrops}</small>}
                     </div>
                     <div className="certificate-farmer-flags">
                       <OpfhMark selected={base.opfhMember} />
@@ -437,7 +436,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
                     : <OpfhMark selected />}
                 </div>
                 <strong>{member.name}</strong>
-                {hasCompanyTaxId(member.taxId) && <span className="member-tax-id">CIF {member.taxId}</span>}
+                {hasCompanyTaxId(member.taxId) && <span className="member-tax-id">CIF {companyTaxId(member.taxId)}</span>}
                 <small>{member.controlNames.join(" · ") || "Sin nombre equivalente en el control"}</small>
               </article>
             ))}
@@ -456,7 +455,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
                   <summary>
                     <div className="farm-group-holder">
                       <strong>{group.holder}</strong>
-                      <small>{group.taxId}</small>
+                      {group.taxId && <small>CIF {group.taxId}</small>}
                     </div>
                     <div className="farm-group-name"><small>Finca</small><strong>{group.farmName}</strong></div>
                     <div className="farm-group-crop"><small>Cultivo</small><strong>{group.crop}</strong><span>{varieties.join(", ") || "Variedad sin indicar"}</span></div>

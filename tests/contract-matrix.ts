@@ -1,10 +1,16 @@
 import { PRODUCT_CATALOG } from "../src/lib/catalog";
 import { batchesFor, contractKind, generateContractPackage, templateName, validateContractGeneration } from "../src/lib/contractGenerator";
+import { companyTaxId } from "../src/lib/fiscal";
 import type { ContractDetails, ContractOutputFormat, ContractSignatures, MaterialItem, PurchaseForm } from "../src/types";
 
 type Check = { name: string; ok: boolean; detail?: string };
 const checks: Check[] = [];
 const record = (name: string, ok: boolean, detail = "") => checks.push({ name, ok, detail });
+
+const companyIds = ["B30236137", "B04784419", "B73636086", "F04192563"];
+const personalIds = ["52808088L", "22449292G", "00103201T", "X1234567L"];
+record("Identificadores de empresa visibles", companyIds.every((value) => companyTaxId(value) === value), companyIds.join(", "));
+record("DNI y NIE ocultos", personalIds.every((value) => companyTaxId(value) === ""), personalIds.join(", "));
 
 const companies: ContractDetails["buyerCompany"][] = ["TOÑIFRUIT, S.L.", "MR. ORGÁNICA, S.L."];
 const modelSpecies = [
