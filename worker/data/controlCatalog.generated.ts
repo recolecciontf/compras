@@ -7649,6 +7649,16 @@ export const CERTIFICATE_RECORDS = [
 
 export const OPFH_MEMBERS = [
   {
+    "name": "MR. ORGÁNICA, S.L.",
+    "taxId": "B73894065",
+    "farmType": "Propia",
+    "groupCompany": true,
+    "controlNames": [
+      "MR. Orgánica, S.L."
+    ],
+    "note": ""
+  },
+  {
     "name": "ANTONIA ROMERO MONTALBAN",
     "taxId": "52808088L",
     "farmType": "De terceros",

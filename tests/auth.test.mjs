@@ -234,6 +234,40 @@ test("guarda o copia un contrato anterior como referencia independiente", async 
   assert.equal(await download.text(), "contrato anterior");
 });
 
+test("copia como referencia un contrato importado de la biblioteca privada", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const libraryId = "0cf23a7a450748bce19a3abd";
+  await env.CONTRACT_FILES.put(
+    `document-library/${libraryId}`,
+    new TextEncoder().encode("contrato de biblioteca").buffer,
+    {
+      httpMetadata: { contentType: "application/pdf" },
+      customMetadata: { filename: "contrato-firmado-biblioteca.pdf", kind: "document_library" },
+    },
+  );
+
+  const copied = await api("/api/previous-contract-files/copy", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ archiveId: libraryId, purchaseId: "MRO-001", provider: "Agricultor de prueba" }),
+  });
+  assert.equal(copied.status, 201);
+  const cloned = await copied.json();
+  assert.notEqual(cloned.previousContractArchiveId, libraryId);
+  assert.equal(cloned.previousContractFilename, "contrato-firmado-biblioteca.pdf");
+
+  const download = await api(`/api/contract-files/${cloned.previousContractArchiveId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(download.status, 200);
+  assert.equal(await download.text(), "contrato de biblioteca");
+});
+
 test("rechaza el contrato si el archivo central no está configurado", async () => {
   const envWithoutArchive = { ...env, CONTRACT_FILES: undefined };
   const login = await worker.fetch(new Request("https://app.example/api/login", {

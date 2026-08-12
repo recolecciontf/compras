@@ -52,6 +52,19 @@ export const CERTIFICATIONS = [
 
 export const OTHER_VALUE = "__other__";
 
+export function certificationSelection(value: string | null | undefined) {
+  const seen = new Set<string>();
+  return String(value ?? "")
+    .split(/[;,·|/+]+/)
+    .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
+    .filter((item) => {
+      const key = item.toLocaleLowerCase("es");
+      if (!item || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 export function canonicalMaterial(crop: string, variety: string) {
   return { crop: crop.trim(), variety: variety.trim() };
 }

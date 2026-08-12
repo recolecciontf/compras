@@ -46,7 +46,7 @@ import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurch
 import { PurchaseFields } from "./components/PurchaseFields";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
-import { CERTIFICATIONS } from "./lib/catalog";
+import { CERTIFICATIONS, certificationSelection } from "./lib/catalog";
 import { downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
 import {
   contractArchiveHistory,
@@ -84,13 +84,6 @@ function nextPurchaseId(rows: ControlRow[], company: PurchaseForm["contractDetai
     return match ? Math.max(maximum, Number(match[1])) : maximum;
   }, 0);
   return `${purchaseIdPrefix(company)}-${String(highest + 1).padStart(3, "0")}`;
-}
-
-function certificationSelection(value: string | null | undefined) {
-  return String(value ?? "")
-    .split(/[;,]/)
-    .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
-    .filter(Boolean);
 }
 
 function authorized(row: ControlRow) {
@@ -184,6 +177,7 @@ export default function App() {
   const [view, setView] = useState<AppView>("records");
   const [filter, setFilter] = useState<RecordFilter>("all");
   const [query, setQuery] = useState("");
+  const [certificationFilter, setCertificationFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
@@ -371,13 +365,17 @@ export default function App() {
       }
       if (filter === "blocked" && authorized(row)) return false;
       if (filter === "authorized" && !authorized(row)) return false;
+      if (certificationFilter !== "all" && !certificationSelection(row.certificateType).includes(certificationFilter)) return false;
       if (!normalizedQuery) return true;
-      return [row.provider, row.id, row.taxId, row.farm, row.municipality, row.crop]
+      return [row.provider, row.id, row.taxId, row.farm, row.municipality, row.crop, row.variety, row.certificateType]
         .join(" ")
         .toLocaleLowerCase("es")
         .includes(normalizedQuery);
     });
-  }, [rows, filter, query]);
+  }, [rows, filter, query, certificationFilter]);
+
+  const certificationOptions = useMemo(() => [...new Set(rows.flatMap((row) => certificationSelection(row.certificateType)))]
+    .sort((left, right) => left.localeCompare(right, "es")), [rows]);
 
   const counts = useMemo(() => {
     const cancelled = rows.filter(isCancelled).length;
@@ -1097,13 +1095,22 @@ export default function App() {
               </div>
 
               <p className="summary-scope-note">
-                <FileText size={16} /> Estas cifras corresponden a expedientes. La biblioteca completa está en Certificados y OPFH → Contratos.
+                <FileText size={16} /> Estas cifras corresponden a expedientes. La biblioteca completa está en Certificados y OPFH → Documentos.
               </p>
 
-              <div className="search-box">
-                <Search size={20} />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar agricultor, finca o cultivo" />
-                {query && <button onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={18} /></button>}
+              <div className="record-filter-row">
+                <div className="search-box">
+                  <Search size={20} />
+                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar agricultor, finca, cultivo o certificación" />
+                  {query && <button onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={18} /></button>}
+                </div>
+                <label className="certification-filter">
+                  <span>Certificación</span>
+                  <select value={certificationFilter} onChange={(event) => setCertificationFilter(event.target.value)}>
+                    <option value="all">Todas</option>
+                    {certificationOptions.map((certificate) => <option key={certificate}>{certificate}</option>)}
+                  </select>
+                </label>
               </div>
 
               <div className="filter-tabs" role="group" aria-label="Filtrar expedientes">
@@ -1142,6 +1149,9 @@ export default function App() {
                               ? <span className="status-badge status-expired"><History size={15} /> VENCIDO</span>
                             : <StatusBadge ok={authorized(row)}>{authorized(row) ? "SÍ" : "NO"}</StatusBadge>}
                         </span>
+                        {certificationSelection(row.certificateType).length > 0 && <span className="certification-tags record-certifications">
+                          {certificationSelection(row.certificateType).map((certificate) => <span key={certificate}>{certificate}</span>)}
+                        </span>}
                         <span className="record-crop">{row.crop || "Especie sin indicar"}{row.variety ? ` · ${row.variety}` : ""}</span>
                         <span className="record-meta">
                           <span><Sprout size={15} /> {row.farm || "Finca sin indicar"}</span>

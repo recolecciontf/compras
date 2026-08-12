@@ -1,5 +1,6 @@
-import { Archive, ArchiveRestore, ArrowLeft, CheckCircle2, PackageCheck, Save, Scale, Wheat } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, CheckCircle2, PackageCheck, Save, Scale, ShieldCheck, Wheat } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
+import { certificationSelection } from "../lib/catalog";
 import { harvestFromRow, isRecordCancelled } from "../lib/workbook";
 import type { ControlRow, HarvestForm } from "../types";
 
@@ -36,6 +37,7 @@ function formatKg(value: number) {
 
 export function HarvestPanel({ rows, readOnly, saving, onSave, onBack }: Props) {
   const [filter, setFilter] = useState<CutFilter>("pending");
+  const [certificationFilter, setCertificationFilter] = useState("all");
   const [editing, setEditing] = useState<ControlRow | null>(null);
   const [draft, setDraft] = useState<HarvestForm>({ cutStatus: "No", cutKgTotal: "", archived: "No" });
 
@@ -51,12 +53,32 @@ export function HarvestPanel({ rows, readOnly, saving, onSave, onBack }: Props) 
     };
   }, [rows]);
 
+  const certificationOptions = useMemo(() => [...new Set(rows.flatMap((row) => certificationSelection(row.certificateType)))]
+    .sort((left, right) => left.localeCompare(right, "es")), [rows]);
+
   const visible = useMemo(() => rows.filter((row) => {
     if (isRecordCancelled(row)) return false;
+    if (certificationFilter !== "all" && !certificationSelection(row.certificateType).includes(certificationFilter)) return false;
     if (filter === "archived") return isArchived(row);
     if (isArchived(row)) return false;
     return filter === "cut" ? isCut(row) : !isCut(row);
-  }), [filter, rows]);
+  }), [certificationFilter, filter, rows]);
+
+  const cutGroups = useMemo(() => {
+    const groups = new Map<string, { crop: string; variety: string; rows: ControlRow[]; totalKg: number }>();
+    for (const row of visible) {
+      const crop = row.crop || "Especie pendiente";
+      const variety = row.variety || "Variedad pendiente";
+      const key = `${normalized(crop)}|${normalized(variety)}`;
+      const current = groups.get(key) ?? { crop, variety, rows: [], totalKg: 0 };
+      current.rows.push(row);
+      current.totalKg += kg(row.cutKgTotal);
+      groups.set(key, current);
+    }
+    return [...groups.values()].sort((left, right) => (
+      left.crop.localeCompare(right.crop, "es") || left.variety.localeCompare(right.variety, "es")
+    ));
+  }, [visible]);
 
   function edit(row: ControlRow) {
     setEditing(row);
@@ -72,6 +94,33 @@ export function HarvestPanel({ rows, readOnly, saving, onSave, onBack }: Props) 
 
   async function changeArchive(row: ControlRow, archived: boolean) {
     await onSave(row, { ...harvestFromRow(row), archived: archived ? "Sí" : "No" });
+  }
+
+  function renderHarvestCard(row: ControlRow) {
+    const certifications = certificationSelection(row.certificateType);
+    return (
+      <article className="harvest-card" key={`${row.id}-${row.tableIndex}`}>
+        <div className="harvest-card-main">
+          <span className={`cut-dot ${isCut(row) ? "done" : "pending"}`} />
+          <div>
+            <strong>{row.provider}</strong>
+            {certifications.length > 0 && (
+              <span className="certification-tags harvest-certifications" aria-label="Certificaciones">
+                {certifications.map((certification) => <small key={certification}><ShieldCheck size={12} /> {certification}</small>)}
+              </span>
+            )}
+            <span>{row.crop || "Especie pendiente"}{row.variety ? ` · ${row.variety}` : ""}</span>
+            <small>{row.farm || "Finca sin indicar"} · Previstos: {row.expectedKg ? `${formatKg(kg(row.expectedKg))} kg` : "sin indicar"}</small>
+          </div>
+        </div>
+        <div className="harvest-card-status"><span>{isCut(row) ? "Cortado" : "Pendiente"}</span><strong>{isCut(row) ? `${formatKg(kg(row.cutKgTotal))} kg` : "—"}</strong></div>
+        <div className="harvest-card-actions">
+          <button className="secondary-button" type="button" onClick={() => edit(row)}>{readOnly ? "Consultar" : "Actualizar corte"}</button>
+          {!readOnly && isArchived(row) && <button className="text-button" type="button" disabled={saving} onClick={() => changeArchive(row, false)}><ArchiveRestore size={17} /> Restaurar</button>}
+          {!readOnly && !isArchived(row) && isCut(row) && kg(row.cutKgTotal) > 0 && <button className="text-button archive-button" type="button" disabled={saving} onClick={() => changeArchive(row, true)}><Archive size={17} /> Archivar</button>}
+        </div>
+      </article>
+    );
   }
 
   return (
@@ -95,6 +144,14 @@ export function HarvestPanel({ rows, readOnly, saving, onSave, onBack }: Props) 
         <button className={filter === "archived" ? "active" : ""} onClick={() => { setFilter("archived"); setEditing(null); }}>Archivadas · {summary.archived}</button>
       </div>
 
+      <label className="harvest-certification-filter">
+        <span>Filtrar por certificación</span>
+        <select value={certificationFilter} onChange={(event) => setCertificationFilter(event.target.value)}>
+          <option value="all">Todas las certificaciones</option>
+          {certificationOptions.map((certification) => <option key={certification}>{certification}</option>)}
+        </select>
+      </label>
+
       {editing && (
         <form className="harvest-editor" onSubmit={submit}>
           <div className="harvest-editor-title"><div><span>Editando corte</span><strong>{editing.provider}</strong><small>{editing.crop}{editing.variety ? ` · ${editing.variety}` : ""}</small></div><button type="button" onClick={() => setEditing(null)} aria-label="Cerrar edición">×</button></div>
@@ -107,20 +164,18 @@ export function HarvestPanel({ rows, readOnly, saving, onSave, onBack }: Props) 
       )}
 
       <div className="harvest-list">
-        {visible.length ? visible.map((row) => (
-          <article className="harvest-card" key={`${row.id}-${row.tableIndex}`}>
-            <div className="harvest-card-main">
-              <span className={`cut-dot ${isCut(row) ? "done" : "pending"}`} />
-              <div><strong>{row.provider}</strong><span>{row.crop || "Especie pendiente"}{row.variety ? ` · ${row.variety}` : ""}</span><small>{row.farm || "Finca sin indicar"} · Previstos: {row.expectedKg ? `${formatKg(kg(row.expectedKg))} kg` : "sin indicar"}</small></div>
-            </div>
-            <div className="harvest-card-status"><span>{isCut(row) ? "Cortado" : "Pendiente"}</span><strong>{isCut(row) ? `${formatKg(kg(row.cutKgTotal))} kg` : "—"}</strong></div>
-            <div className="harvest-card-actions">
-              <button className="secondary-button" type="button" onClick={() => edit(row)}>{readOnly ? "Consultar" : "Actualizar corte"}</button>
-              {!readOnly && isArchived(row) && <button className="text-button" type="button" disabled={saving} onClick={() => changeArchive(row, false)}><ArchiveRestore size={17} /> Restaurar</button>}
-              {!readOnly && !isArchived(row) && isCut(row) && kg(row.cutKgTotal) > 0 && <button className="text-button archive-button" type="button" disabled={saving} onClick={() => changeArchive(row, true)}><Archive size={17} /> Archivar</button>}
-            </div>
-          </article>
-        )) : <div className="empty-state compact-empty"><PackageCheck size={32} /><h3>No hay compras en este estado</h3><p>Cuando cambie un corte, aparecerá aquí automáticamente.</p></div>}
+        {visible.length ? (
+          filter === "cut" ? cutGroups.map((group) => (
+            <section className="harvest-species-group" key={`${group.crop}-${group.variety}`}>
+              <div className="harvest-species-heading">
+                <div><small>Especie</small><strong>{group.crop}</strong></div>
+                <div><small>Variedad</small><strong>{group.variety}</strong></div>
+                <span>{group.rows.length} compra{group.rows.length === 1 ? "" : "s"} · {formatKg(group.totalKg)} kg</span>
+              </div>
+              <div className="harvest-species-list">{group.rows.map(renderHarvestCard)}</div>
+            </section>
+          )) : visible.map(renderHarvestCard)
+        ) : <div className="empty-state compact-empty"><PackageCheck size={32} /><h3>No hay compras en este estado</h3><p>Cuando cambie un corte, aparecerá aquí automáticamente.</p></div>}
       </div>
     </div>
   );
