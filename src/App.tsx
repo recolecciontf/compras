@@ -138,6 +138,17 @@ function belongsInExpiredQueue(row: ControlRow) {
   return isExpiredContract(row) || (isPreviousCampaign(row) && hasCompletedCut(row));
 }
 
+function matchesRecordFilter(row: ControlRow, filter: RecordFilter) {
+  if (filter === "cancelled") return isCancelled(row);
+  if (filter === "expired") {
+    return !isArchived(row) && !isCancelled(row) && belongsInExpiredQueue(row);
+  }
+  if (isArchived(row) || isCancelled(row) || belongsInExpiredQueue(row)) return false;
+  if (filter === "blocked") return !authorized(row);
+  if (filter === "authorized") return authorized(row);
+  return true;
+}
+
 type AutoSaveTask = {
   row: ControlRow;
   review: ReviewForm;
@@ -356,15 +367,7 @@ export default function App() {
   const visibleRows = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
     return rows.filter((row) => {
-      if (filter === "cancelled") {
-        if (!isCancelled(row)) return false;
-      } else if (filter === "expired") {
-        if (isArchived(row) || isCancelled(row) || !belongsInExpiredQueue(row)) return false;
-      } else {
-        if (isArchived(row) || isCancelled(row) || belongsInExpiredQueue(row)) return false;
-      }
-      if (filter === "blocked" && authorized(row)) return false;
-      if (filter === "authorized" && !authorized(row)) return false;
+      if (!matchesRecordFilter(row, filter)) return false;
       if (certificationFilter !== "all" && !certificationSelection(row.certificateType).includes(certificationFilter)) return false;
       if (!normalizedQuery) return true;
       return [row.provider, row.id, row.taxId, row.farm, row.municipality, row.crop, row.variety, row.certificateType]
@@ -374,8 +377,10 @@ export default function App() {
     });
   }, [rows, filter, query, certificationFilter]);
 
-  const certificationOptions = useMemo(() => [...new Set(rows.flatMap((row) => certificationSelection(row.certificateType)))]
-    .sort((left, right) => left.localeCompare(right, "es")), [rows]);
+  const certificationOptions = useMemo(() => [...new Set(rows
+    .filter((row) => matchesRecordFilter(row, filter))
+    .flatMap((row) => certificationSelection(row.certificateType)))]
+    .sort((left, right) => left.localeCompare(right, "es")), [rows, filter]);
 
   const counts = useMemo(() => {
     const cancelled = rows.filter(isCancelled).length;
