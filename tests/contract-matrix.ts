@@ -43,7 +43,7 @@ function purchase(company: ContractDetails["buyerCompany"], crop = "Uva", variet
       contractOrigin: "generated", buyerCompany: company, signatureDate: "2026-08-12", contractNumber: company.startsWith("TOÑ") ? "TON-QA-001" : "MRO-QA-001",
       sellerRepresentative: "Representante de demostración", sellerDni: "00000000T", sellerAddress: "Finca demo, Murcia", organicOperatorCode: "MU-QA/E", certifierCode: "CAAE-QA", ailimpoRegepaCode: "REG-QA",
       modality: "A KILOS", collectionBy: "Comprador", transportBy: "Comprador", pricePerKg: "0.55", totalPrice: "", ivaPercent: "12", irpfPercent: "2", advancePayment: "0", paymentDays: "30",
-      insuranceProvider: "Agroseguro", insurancePolicy: "", applyDestrio: "No", destrioLocation: "", destrioDefects: "", destrioPrice: "", sellerEmail: "agricultor@example.test", companyEmail: "compras@example.test",
+      insuranceProvider: "Agroseguro", insurancePolicy: "", applyDestrio: "No", destrioLocation: "", destrioDefects: "", destrioPrice: "", sellerEmail: "", companyEmail: "",
       buyerRepresentative: "Responsable de Compras", archiveId: "", archiveFilename: "", archivedAt: "", emailStatus: "", sellerSignedAt: "", buyerSignedAt: "", signatureMethod: "", archiveHistoryJson: "",
       previousContractMode: "none", previousContractPurchaseId: "", previousContractArchiveId: "", previousContractSourceArchiveId: "", previousContractFilename: "", previousContractStoredAt: "",
     },

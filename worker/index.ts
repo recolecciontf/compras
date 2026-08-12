@@ -383,7 +383,7 @@ async function sendContractCopies(
   bytes: ArrayBuffer,
   metadata: { filename: string; contentType: string; provider: string; sellerEmail: string; companyEmail: string; contractNumber: string },
 ) {
-  if (!env.CONTRACT_EMAIL_WEBHOOK_URL) return "pending_configuration" as const;
+  if (!env.CONTRACT_EMAIL_WEBHOOK_URL || !metadata.sellerEmail || !metadata.companyEmail) return "pending_configuration" as const;
   try {
     const form = new FormData();
     form.set("file", new Blob([bytes], { type: metadata.contentType }), metadata.filename);
@@ -423,9 +423,8 @@ async function storeContract(form: FormData, env: Env) {
     contractNumber: String(form.get("contractNumber") || "").trim().slice(0, 80),
   };
   if (!metadata.provider) throw new InputError("Falta identificar al agricultor o proveedor.");
-  if (!metadata.sellerEmail || !metadata.companyEmail) throw new InputError("Indica el correo del agricultor y el correo de la empresa.");
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(metadata.sellerEmail) || !emailPattern.test(metadata.companyEmail)) {
+  if ((metadata.sellerEmail && !emailPattern.test(metadata.sellerEmail)) || (metadata.companyEmail && !emailPattern.test(metadata.companyEmail))) {
     throw new InputError("Revisa el formato del correo del agricultor y del correo de la empresa.");
   }
 
@@ -800,7 +799,6 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     }
     const commonContractFields = [
       ["buyerCompany", "empresa compradora"], ["signatureDate", "fecha de firma"],
-      ["sellerEmail", "correo del agricultor"], ["companyEmail", "correo de la empresa"],
     ];
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,

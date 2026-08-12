@@ -171,8 +171,6 @@ test("archiva y descarga una copia firmada sin exponerla públicamente", async (
   const form = new FormData();
   form.set("file", new Blob(["contrato firmado"], { type: "application/pdf" }), "contrato-firmado.pdf");
   form.set("provider", "Agricultor de prueba");
-  form.set("sellerEmail", "agricultor@example.test");
-  form.set("companyEmail", "compras@example.test");
   form.set("contractNumber", "CMP-TEST-001");
   const upload = await api("/api/contract-files", {
     method: "POST",
