@@ -1,5 +1,6 @@
 import { AlertTriangle, ArrowLeft, CheckCircle2, CircleCheck, Download, FileCheck2, FileText, FileUp, PenLine, PlusCircle, Send, ShoppingBasket } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
+import { importPurchaseFromContract, type ContractImportReport } from "../lib/contractImport";
 import { purchaseFromRow } from "../lib/workbook";
 import type { ContractOutputFormat, ContractSignatures, ControlRow, PurchaseForm } from "../types";
 import { EMPTY_PURCHASE, PurchaseFields } from "./PurchaseFields";
@@ -16,6 +17,7 @@ export type ContractSubmission =
   | { mode: "unsigned"; previousContract: PreviousContractReference; format: ContractOutputFormat };
 
 type PurchaseStartMode = "" | "new" | "import";
+type ImportPurchaseSource = "" | "saved" | "file";
 type ContractChoice = "" | "existing" | "generated";
 type SignatureChoice = "" | "now" | "later";
 type ReuseChoice = "" | "yes" | "no";
@@ -49,7 +51,12 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   const [purchase, setPurchase] = useState<PurchaseForm>(() => structuredClone(EMPTY_PURCHASE));
   const [purchaseStartMode, setPurchaseStartMode] = useState<PurchaseStartMode>("");
   const [importBuyerCompany, setImportBuyerCompany] = useState<BuyerCompany>("");
+  const [importPurchaseSource, setImportPurchaseSource] = useState<ImportPurchaseSource>("");
   const [selectedImportedRow, setSelectedImportedRow] = useState("");
+  const [importedContractFile, setImportedContractFile] = useState<File | null>(null);
+  const [importReport, setImportReport] = useState<ContractImportReport | null>(null);
+  const [importingContract, setImportingContract] = useState(false);
+  const [importContractError, setImportContractError] = useState("");
   const [contractChoice, setContractChoice] = useState<ContractChoice>("");
   const [signatureChoice, setSignatureChoice] = useState<SignatureChoice>("");
   const [reuseChoice, setReuseChoice] = useState<ReuseChoice>("");
@@ -74,7 +81,8 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
 
   const selectedSavedContract = savedContracts.find(({ row }) => String(row.tableIndex) === selectedPreviousRow);
   const selectedImportedPurchase = importablePurchases.find(({ row }) => String(row.tableIndex) === selectedImportedRow);
-  const purchaseStartReady = purchaseStartMode === "new" || (purchaseStartMode === "import" && Boolean(selectedImportedPurchase));
+  const purchaseStartReady = purchaseStartMode === "new"
+    || (purchaseStartMode === "import" && (Boolean(selectedImportedPurchase) || Boolean(importedContractFile && importReport)));
   const reuseReady = reuseChoice === "no"
     || (reuseChoice === "yes" && previousSource === "saved" && Boolean(selectedSavedContract))
     || (reuseChoice === "yes" && previousSource === "upload" && Boolean(previousFile));
@@ -84,7 +92,12 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   function choosePurchaseStart(mode: Exclude<PurchaseStartMode, "">) {
     setPurchaseStartMode(mode);
     setImportBuyerCompany("");
+    setImportPurchaseSource("");
     setSelectedImportedRow("");
+    setImportedContractFile(null);
+    setImportReport(null);
+    setImportingContract(false);
+    setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
     setPreviousSource("");
@@ -101,7 +114,11 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
 
   function chooseImportBuyerCompany(company: Exclude<BuyerCompany, "">) {
     setImportBuyerCompany(company);
+    setImportPurchaseSource("");
     setSelectedImportedRow("");
+    setImportedContractFile(null);
+    setImportReport(null);
+    setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
     setSignatureChoice("");
@@ -111,8 +128,51 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setPurchase(next);
   }
 
+  function chooseImportPurchaseSource(source: Exclude<ImportPurchaseSource, "">) {
+    setImportPurchaseSource(source);
+    setSelectedImportedRow("");
+    setImportedContractFile(null);
+    setImportReport(null);
+    setImportContractError("");
+    setContractChoice("");
+    setReuseChoice("");
+    setSignatureChoice("");
+    const next = structuredClone(EMPTY_PURCHASE);
+    next.contractDetails.buyerCompany = importBuyerCompany;
+    setPurchase(next);
+  }
+
+  async function importContractFile(file: File | null) {
+    setImportedContractFile(null);
+    setImportReport(null);
+    setImportContractError("");
+    setContractChoice("");
+    setReuseChoice("");
+    setSignatureChoice("");
+    if (!file || !importBuyerCompany) return;
+    setImportingContract(true);
+    try {
+      const base = structuredClone(EMPTY_PURCHASE);
+      base.contractDetails.buyerCompany = importBuyerCompany;
+      const report = await importPurchaseFromContract(file, importBuyerCompany, base);
+      setPurchase(report.purchase);
+      setImportedContractFile(file);
+      setImportReport(report);
+    } catch (error) {
+      setImportContractError(error instanceof Error ? error.message : "No se ha podido leer el contrato.");
+      const next = structuredClone(EMPTY_PURCHASE);
+      next.contractDetails.buyerCompany = importBuyerCompany;
+      setPurchase(next);
+    } finally {
+      setImportingContract(false);
+    }
+  }
+
   function importPurchase(rowIndex: string) {
     setSelectedImportedRow(rowIndex);
+    setImportedContractFile(null);
+    setImportReport(null);
+    setImportContractError("");
     setContractChoice("");
     setReuseChoice("");
     setSignatureChoice("");
@@ -162,7 +222,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setPreviousSource("");
     setSelectedPreviousRow("");
     setPreviousFile(null);
-    setExistingFile(null);
+    setExistingFile(mode === "existing" ? importedContractFile : null);
     setSellerSignature("");
     setConsent(false);
     setFormError("");
@@ -278,6 +338,9 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   }
 
   function previousContractReference(): PreviousContractReference {
+    if (purchaseStartMode === "import" && importedContractFile) {
+      return { mode: "uploaded", file: importedContractFile };
+    }
     if (purchaseStartMode === "import" && selectedImportedPurchase?.purchase.contractDetails.archiveId) {
       return {
         mode: "archived",
@@ -395,13 +458,13 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
       <section className="contract-first-step" aria-labelledby="purchase-start-question">
         <span className="wizard-step-label">Paso 1 · Inicio</span>
         <h3 id="purchase-start-question">¿Cómo quieres crear la compra?</h3>
-        <p>Empieza desde cero o importa una compra anterior para recuperar todos sus datos.</p>
+        <p>Empieza desde cero, recupera una compra guardada o sube un contrato para copiar sus datos.</p>
         <div className="contract-choice-grid">
           <button type="button" className={purchaseStartMode === "new" ? "selected" : ""} onClick={() => choosePurchaseStart("new")}>
             <PlusCircle size={24} /><span><strong>Compra desde cero</strong><small>Introducir una compra nueva</small></span>{purchaseStartMode === "new" && <CheckCircle2 size={20} />}
           </button>
           <button type="button" className={purchaseStartMode === "import" ? "selected" : ""} onClick={() => choosePurchaseStart("import")}>
-            <FileText size={24} /><span><strong>Importar compra</strong><small>Reciclar todos los datos de una compra anterior</small></span>{purchaseStartMode === "import" && <CheckCircle2 size={20} />}
+            <FileText size={24} /><span><strong>Importar compra</strong><small>Elegir una compra o leer un contrato</small></span>{purchaseStartMode === "import" && <CheckCircle2 size={20} />}
           </button>
         </div>
         {purchaseStartMode === "import" && (
@@ -417,17 +480,49 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
                 </button>
               </div>
             </div>
-            {importBuyerCompany && <label className="field required-field">
-              <span>Compra de {importBuyerCompany === "TOÑIFRUIT, S.L." ? "Toñifruit" : "Mr. Orgánica"} que quieres importar</span>
-              <select required value={selectedImportedRow} onChange={(event) => importPurchase(event.target.value)}>
-                <option value="">Seleccionar compra anterior</option>
-                {companyImportablePurchases.map(({ row, purchase: previous }) => (
-                  <option key={row.tableIndex} value={row.tableIndex}>{previous.id} · {previous.provider} · {previous.crop}{previous.variety ? ` / ${previous.variety}` : ""}</option>
-                ))}
-              </select>
-            </label>}
-            {importBuyerCompany && !companyImportablePurchases.length && <div className="contract-send-warning"><AlertTriangle size={18} /><span><strong>No hay compras de esta empresa</strong><small>Selecciona la otra empresa o crea una compra desde cero.</small></span></div>}
-            {selectedImportedPurchase && <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Datos importados de {selectedImportedPurchase.purchase.id}</strong><small>Se copian finca, fruta, kilos, fechas, precio, acuerdos y datos del contrato. El nuevo expediente tendrá otro identificador, nuevas firmas y AICA pendiente.</small></span></div>}
+            {importBuyerCompany && <div className="company-import-step import-source-step">
+              <strong>Origen de los datos <span aria-hidden="true">*</span></strong>
+              <div className="contract-choice-grid" role="group" aria-label="Origen de la compra que se va a importar">
+                <button type="button" className={importPurchaseSource === "saved" ? "selected" : ""} onClick={() => chooseImportPurchaseSource("saved")}>
+                  <FileCheck2 size={22} /><span><strong>Compra guardada</strong><small>Elegir un expediente del archivo central</small></span>{importPurchaseSource === "saved" && <CheckCircle2 size={18} />}
+                </button>
+                <button type="button" className={importPurchaseSource === "file" ? "selected" : ""} onClick={() => chooseImportPurchaseSource("file")}>
+                  <FileUp size={22} /><span><strong>Subir contrato</strong><small>Leer un PDF o Word y copiar sus datos</small></span>{importPurchaseSource === "file" && <CheckCircle2 size={18} />}
+                </button>
+              </div>
+            </div>}
+            {importPurchaseSource === "saved" && <>
+              <label className="field required-field">
+                <span>Compra de {importBuyerCompany === "TOÑIFRUIT, S.L." ? "Toñifruit" : "Mr. Orgánica"} que quieres importar</span>
+                <select required value={selectedImportedRow} onChange={(event) => importPurchase(event.target.value)}>
+                  <option value="">Seleccionar compra anterior</option>
+                  {companyImportablePurchases.map(({ row, purchase: previous }) => (
+                    <option key={row.tableIndex} value={row.tableIndex}>{previous.id} · {previous.provider} · {previous.crop}{previous.variety ? ` / ${previous.variety}` : ""}</option>
+                  ))}
+                </select>
+              </label>
+              {!companyImportablePurchases.length && <div className="contract-send-warning"><AlertTriangle size={18} /><span><strong>No hay compras de esta empresa</strong><small>Puedes subir un contrato anterior o crear la compra desde cero.</small></span></div>}
+              {selectedImportedPurchase && <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Datos importados de {selectedImportedPurchase.purchase.id}</strong><small>Se copian finca, fruta, kilos, fechas, precio, acuerdos y datos del contrato. El nuevo expediente tendrá otro identificador, nuevas firmas y AICA pendiente.</small></span></div>}
+            </>}
+            {importPurchaseSource === "file" && <div className="contract-file-import">
+              <label className={`file-drop-field contract-import-upload${importingContract ? " is-reading" : ""}`}>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  disabled={importingContract}
+                  onChange={(event) => void importContractFile(event.target.files?.[0] || null)}
+                />
+                <FileUp size={20} />
+                <span>{importingContract ? "Leyendo y comprobando el contrato…" : importedContractFile ? importedContractFile.name : "Seleccionar contrato PDF o Word"}</span>
+              </label>
+              <small className="contract-import-privacy">Máximo 10 MB. La lectura se realiza en este dispositivo; después podrás corregir cualquier campo.</small>
+              {importContractError && <div className="contract-send-warning import-contract-error" role="alert"><AlertTriangle size={18} /><span><strong>No se ha podido importar</strong><small>{importContractError}</small></span></div>}
+              {importReport && importedContractFile && <div className="contract-import-report" aria-live="polite">
+                <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Contrato leído: {importedContractFile.name}</strong><small>La compra está preparada con los datos reconocidos. Revisa y completa los campos antes de guardarla.</small></span></div>
+                <div className="contract-import-detected"><strong>Datos reconocidos</strong><div>{importReport.detectedFields.map((field) => <span key={field}>{field}</span>)}</div></div>
+                {importReport.warnings.length > 0 && <div className="contract-import-warnings"><strong>Campos que debes revisar</strong><ul>{importReport.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div>}
+              </div>}
+            </div>}
           </div>
         )}
       </section>

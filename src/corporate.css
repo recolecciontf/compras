@@ -571,6 +571,85 @@ h3,
   margin-top: 7px;
 }
 
+.import-source-step {
+  padding-top: 2px;
+}
+
+.contract-file-import,
+.contract-import-report {
+  display: grid;
+  gap: 10px;
+}
+
+.contract-import-upload {
+  width: 100%;
+  max-width: none;
+  justify-content: center;
+  gap: 9px;
+}
+
+.contract-import-upload.is-reading {
+  cursor: progress;
+  opacity: 0.78;
+}
+
+.contract-import-privacy {
+  color: #6d786f;
+  font-size: 0.61rem;
+  line-height: 1.45;
+}
+
+.import-contract-error {
+  margin-top: 0;
+}
+
+.contract-import-detected,
+.contract-import-warnings {
+  padding: 12px 14px;
+  border: 1px solid #d6dfd2;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.contract-import-detected > strong,
+.contract-import-warnings > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--green-950);
+  font-size: 0.67rem;
+}
+
+.contract-import-detected > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contract-import-detected span {
+  padding: 4px 8px;
+  color: #38623d;
+  border: 1px solid #c8dcc1;
+  border-radius: 999px;
+  background: #f2f8ed;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.contract-import-warnings {
+  color: #77551d;
+  border-color: #ead29b;
+  background: #fffaf0;
+}
+
+.contract-import-warnings ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.61rem;
+  line-height: 1.45;
+}
+
 .previous-contract-upload {
   display: flex;
   max-width: none;
