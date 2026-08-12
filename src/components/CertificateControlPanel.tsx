@@ -94,6 +94,8 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
   const [statusFilter, setStatusFilter] = useState<CertificateStatusFilter>("all");
   const [campaign, setCampaign] = useState("all");
   const [documentType, setDocumentType] = useState("all");
+  const [documentSpecies, setDocumentSpecies] = useState("all");
+  const [documentVariety, setDocumentVariety] = useState("all");
   const [downloadingId, setDownloadingId] = useState("");
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [uploadMessage, setUploadMessage] = useState("");
@@ -196,13 +198,19 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       if (company !== "all" && document.company !== company) return false;
       if (campaign !== "all" && document.campaign !== campaign) return false;
       if (documentType !== "all" && document.documentType !== documentType) return false;
+      if (documentSpecies !== "all" && !document.species.includes(documentSpecies)) return false;
+      if (documentVariety !== "all" && !document.varieties.includes(documentVariety)) return false;
       if (!search) return true;
-      return normalize([document.farmer, document.filename, document.company, document.campaign, document.documentType].join(" ")).includes(search);
+      return normalize([document.farmer, document.filename, document.company, document.campaign, document.documentType, ...document.species, ...document.varieties].join(" ")).includes(search);
     });
-  }, [campaign, company, documentType, documents, query]);
+  }, [campaign, company, documentSpecies, documentType, documentVariety, documents, query]);
 
   const documentCampaigns = useMemo(() => [...new Set(documents.map((document) => document.campaign))].sort().reverse(), [documents]);
   const documentTypes = useMemo(() => [...new Set(documents.map((document) => document.documentType))].sort((left, right) => left.localeCompare(right, "es")), [documents]);
+  const documentSpeciesOptions = useMemo(() => [...new Set(documents.flatMap((document) => document.species))].sort((left, right) => left.localeCompare(right, "es")), [documents]);
+  const documentVarietyOptions = useMemo(() => [...new Set(documents
+    .filter((document) => documentSpecies === "all" || document.species.includes(documentSpecies))
+    .flatMap((document) => document.varieties))].sort((left, right) => left.localeCompare(right, "es")), [documentSpecies, documents]);
 
   function changeTab(next: CatalogTab) {
     setTab(next);
@@ -213,6 +221,8 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
     setStatusFilter("all");
     setCampaign("all");
     setDocumentType("all");
+    setDocumentSpecies("all");
+    setDocumentVariety("all");
     setUploadMessage("");
   }
 
@@ -319,6 +329,8 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
           <label><span>Empresa</span><select value={company} onChange={(event) => setCompany(event.target.value as CompanyFilter)}><option value="all">Todas</option><option>TOÑIFRUIT</option><option>MR. ORGÁNICA</option></select></label>
           <label><span>Campaña</span><select value={campaign} onChange={(event) => setCampaign(event.target.value)}><option value="all">Todas</option>{documentCampaigns.map((value) => <option key={value}>{value}</option>)}</select></label>
           <label><span>Tipo</span><select value={documentType} onChange={(event) => setDocumentType(event.target.value)}><option value="all">Todos</option>{documentTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
+          <label><span>Especie</span><select value={documentSpecies} onChange={(event) => { setDocumentSpecies(event.target.value); setDocumentVariety("all"); }}><option value="all">Todas</option>{documentSpeciesOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
+          <label><span>Variedad</span><select value={documentVariety} onChange={(event) => setDocumentVariety(event.target.value)}><option value="all">Todas</option>{documentVarietyOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
         </>}
       </div>
 
@@ -441,7 +453,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
                 <div className="document-main">
                   <span>{document.company} · {document.campaign}</span>
                   <strong>{document.filename}</strong>
-                  <small>{document.farmer} · {document.documentType} · {document.extension} · {(document.size / 1048576).toLocaleString("es-ES", { maximumFractionDigits: 1 })} MB</small>
+                  <small>{document.farmer} · {document.documentType}{document.species.length ? ` · ${document.species.join(" + ")}` : ""}{document.varieties.length ? ` · ${document.varieties.join(" + ")}` : ""} · {document.extension} · {(document.size / 1048576).toLocaleString("es-ES", { maximumFractionDigits: 1 })} MB</small>
                 </div>
                 <button className="secondary-button" type="button" disabled={downloadingId === document.id} onClick={() => void downloadDocument(document.id)}>
                   {downloadingId === document.id ? <LoaderCircle className="spinning" size={16} /> : <Download size={16} />}

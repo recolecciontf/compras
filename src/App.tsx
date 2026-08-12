@@ -384,7 +384,8 @@ export default function App() {
     const expired = rows.filter((row) => !isArchived(row) && !isCancelled(row) && belongsInExpiredQueue(row)).length;
     const active = rows.filter((row) => !isArchived(row) && !isCancelled(row) && !belongsInExpiredQueue(row));
     const yes = active.filter(authorized).length;
-    return { total: active.length, authorized: yes, blocked: active.length - yes, expired, cancelled };
+    const documented = active.filter((row) => row.documentPath.includes("Biblioteca contractual privada")).length;
+    return { total: active.length, authorized: yes, blocked: active.length - yes, documented, expired, cancelled };
   }, [rows]);
 
   const predictedRow = selected && purchase ? mergePurchase(selected, purchase) : selected;
@@ -957,11 +958,10 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <img
-            className="brand-logo"
-            src="https://tonifruit.com/wp-content/uploads/2020/06/tonifruit-logo-1-250x90.png"
-            alt="Toñifruit"
-          />
+          <span className="brand-logo" aria-label="Toñifruit">
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
+            <strong>toñifruit</strong>
+          </span>
           <span className="brand-divider" aria-hidden="true" />
           <div className="brand-app-name">
             <span>Departamento de compras</span>
@@ -1037,7 +1037,12 @@ export default function App() {
             ) : <>
             <section className={`records-pane ${view !== "records" ? "mobile-hidden" : ""}`}>
               <div className="dashboard-hero">
-                <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo: control documental, materia prima y cortes" />
+                <img
+                  src={`${import.meta.env.BASE_URL}og.png`}
+                  alt="Compras de campo: control documental, materia prima y cortes"
+                  fetchPriority="high"
+                  onError={(event) => { event.currentTarget.src = `${import.meta.env.BASE_URL}app-icon-512.png`; }}
+                />
                 <span className="hero-status"><span /> Sistema operativo</span>
               </div>
 
@@ -1072,6 +1077,11 @@ export default function App() {
                   <XCircle size={21} />
                   <span>Bloqueados</span>
                   <strong>{counts.blocked}</strong>
+                </article>
+                <article className="summary-card summary-documented">
+                  <FileCheck2 size={21} />
+                  <span>Documentados</span>
+                  <strong>{counts.documented}</strong>
                 </article>
                 <article className="summary-card summary-expired">
                   <History size={21} />
@@ -1248,7 +1258,12 @@ function ConnectPanel({
     <section className="login-layout">
       <div className="login-showcase">
         <div className="login-visual">
-          <img src={`${import.meta.env.BASE_URL}og.png`} alt="Compras de campo de Toñifruit" />
+          <img
+            src={`${import.meta.env.BASE_URL}og.png`}
+            alt="Compras de campo de Toñifruit"
+            fetchPriority="high"
+            onError={(event) => { event.currentTarget.src = `${import.meta.env.BASE_URL}app-icon-512.png`; }}
+          />
         </div>
         <div className="login-showcase-copy">
           <span>Gestión de origen</span>
@@ -1262,7 +1277,10 @@ function ConnectPanel({
       </div>
       <div className="connect-card">
         <div className="connect-brand">
-          <img src="https://tonifruit.com/wp-content/uploads/2020/06/tonifruit-logo-1-250x90.png" alt="Toñifruit" />
+          <span className="brand-logo" aria-label="Toñifruit">
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
+            <strong>toñifruit</strong>
+          </span>
           <span>Herramienta interna</span>
         </div>
         <div className="connect-icon"><ShieldCheck size={30} /></div>

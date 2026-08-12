@@ -2364,6 +2364,12 @@ p {
   background: var(--red-50) !important;
 }
 
+.summary-documented {
+  color: var(--green-800);
+  border-color: #c9dfcf !important;
+  background: var(--green-50) !important;
+}
+
 .stripe-expired {
   background: var(--red-700) !important;
 }
@@ -2403,8 +2409,12 @@ p {
   }
 
   .catalog-toolbar {
-    grid-template-columns: minmax(260px, 1.6fr) repeat(3, minmax(125px, 0.65fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: end;
+  }
+
+  .catalog-toolbar .catalog-search {
+    grid-column: 1 / -1;
   }
 
   .opfh-member-grid {
@@ -2419,6 +2429,14 @@ p {
 
   .opfh-member-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .catalog-toolbar {
+    grid-template-columns: minmax(250px, 1.5fr) repeat(5, minmax(105px, 0.58fr));
+  }
+
+  .catalog-toolbar .catalog-search {
+    grid-column: auto;
   }
 }
 

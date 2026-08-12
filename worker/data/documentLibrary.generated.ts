@@ -9,6 +9,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AGRÍCOLA JARAZUL, S.L._MANDARINA NADORCOTT_100.000 Kgs._ 03-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 134377,
     "modified": "2026-02-03T10:58:16"
@@ -20,6 +26,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AGRÍCOLA JARAZUL, S.L._MANDARINA NADORCOTT_100.000 Kgs._Fdo. 03-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 1418185,
     "modified": "2026-02-03T09:55:18"
@@ -31,6 +43,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "120250801_MODELO_DE_CUADERNO_DE_EXPLOTACION_v8.2_0.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 500648,
     "modified": "2026-02-03T09:22:02"
@@ -42,6 +56,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MANDARINA-NADORCOTT.25-26docx.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 317902,
     "modified": "2026-02-02T11:58:50"
@@ -53,6 +73,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MANDARINA-NADORCOTT.25-26docx.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "DOCX",
     "size": 351173,
     "modified": "2026-02-02T11:58:34"
@@ -64,6 +90,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AGRICOVA, S.C._LIMÓN VERNA_25.000 Kgs._11-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134198,
     "modified": "2026-05-11T15:35:06"
@@ -75,6 +107,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AGRICOVA, S.C._LIMÓN VERNA_25.000 Kgs._11-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 515469,
     "modified": "2026-05-11T09:15:22"
@@ -86,6 +124,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MROAGRICOVA25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 312802,
     "modified": "2026-05-06T11:24:30"
@@ -97,6 +137,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MROAGRICOVA25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 350391,
     "modified": "2026-05-06T11:24:20"
@@ -108,6 +150,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Modelo_Garantia_Anticipo_Agricultura_Ecologica_Campotejar_CB_nuevo.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 33454,
     "modified": "2026-07-31T09:08:18"
@@ -119,6 +163,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN 28-07.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 325409,
     "modified": "2026-07-28T14:09:20"
@@ -130,6 +178,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANE INSCRIPCIÓN CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN RODREJO_5.000 Kgs._28-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 133849,
     "modified": "2026-07-28T11:48:38"
@@ -141,6 +195,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN RODREJO_5.000 Kgs._28-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 902802,
     "modified": "2026-07-28T11:34:08"
@@ -152,6 +212,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN 28-07.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 268008,
     "modified": "2026-07-28T08:44:18"
@@ -163,6 +227,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (8).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2913,
     "modified": "2026-06-18T16:22:38"
@@ -174,6 +240,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (7).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2995,
     "modified": "2026-06-18T16:20:22"
@@ -185,6 +253,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (6).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2924,
     "modified": "2026-06-18T16:17:28"
@@ -196,6 +266,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (5).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3068,
     "modified": "2026-06-18T16:08:02"
@@ -207,6 +279,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (4).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2724,
     "modified": "2026-06-18T16:05:28"
@@ -218,6 +292,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (3).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3093,
     "modified": "2026-06-18T16:03:46"
@@ -229,6 +305,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (2).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3261,
     "modified": "2026-06-18T16:01:20"
@@ -240,6 +318,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (1).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3702,
     "modified": "2026-06-18T15:56:30"
@@ -251,6 +331,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data.xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2901,
     "modified": "2026-06-18T15:51:54"
@@ -262,6 +344,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._MANDARINA NADORCOTT Y TANGO_100.000 Kgs._18-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott",
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 133704,
     "modified": "2026-06-18T15:10:56"
@@ -273,6 +362,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN FINO Y RODREJO_55.000 Kgs._18-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 133705,
     "modified": "2026-06-18T15:09:48"
@@ -284,6 +380,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._MANDARINA NADORCOTT Y TANGO_100.000 Kgs._18-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott",
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 3005177,
     "modified": "2026-06-18T15:07:08"
@@ -295,6 +398,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN FINO Y RODREJO_55.000 Kgs._18-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 3204857,
     "modified": "2026-06-18T15:06:26"
@@ -306,6 +416,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._NECTARINA BOREAL Y POLAR KIST_02-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134142,
     "modified": "2026-06-02T09:53:44"
@@ -317,6 +431,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._NECTARINA BOREAL Y POLAR KIST_02-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1860532,
     "modified": "2026-06-02T09:27:42"
@@ -328,6 +446,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AGRICULTURA ECOLOGICA CAMPOTEJAR CB NECTARINA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 339899,
     "modified": "2026-06-01T15:13:12"
@@ -339,6 +461,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AGRICULTURA ECOLOGICA CAMPOTEJAR CB NECTARINA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61387,
     "modified": "2026-06-01T15:12:52"
@@ -350,6 +476,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO A LARGO PLAZO FRUTA DE HUESO CAMPOTEJAR CB.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 104747,
     "modified": "2026-06-01T14:11:06"
@@ -361,6 +489,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO A LARGO PLAZO FRUTA DE HUESO HERMANOS ORTEGA PIÑERO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 28563,
     "modified": "2026-06-01T14:10:40"
@@ -372,6 +502,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "AGRICULTURA ECOLOGICA CAMPOTEJAR LIMON  26_27.pdf",
     "campaign": "2026/2027",
     "documentType": "Documento contractual",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 354139,
     "modified": "2026-05-05T11:09:48"
@@ -383,6 +517,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA NADORCOTT AGRICULTURA CAMPOTEJAR CB 2027.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 338911,
     "modified": "2026-05-05T11:04:42"
@@ -394,6 +532,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA NADORCOTT AGRICULTURA CAMPOTEJAR CB 2027.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "DOCX",
     "size": 58235,
     "modified": "2026-05-05T11:04:32"
@@ -405,6 +547,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN_MANDARINA_08-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón",
+      "Mandarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134134,
     "modified": "2026-01-08T11:20:12"
@@ -416,6 +563,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AG. ECOLÓGICA CAMPOTEJAR, C.B._LIMÓN_MANDARINA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón",
+      "Mandarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 272281,
     "modified": "2026-01-08T11:16:12"
@@ -427,6 +579,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "L300 P2025 AGRICULTURA ECOLOGICA CAMPOTEJAR.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 189015,
     "modified": "2026-03-25T14:49:24"
@@ -438,6 +592,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO LARGO PLAZO MRO_AG. ECOLÓGICA CAMPOTEJAR, S.L.._MELOCOTÓN_06-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 148850,
     "modified": "2026-02-06T11:32:48"
@@ -449,6 +607,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO LARGO PLAZO MRO_AG. ECOLÓGICA CAMPOTEJAR, S.L._MELOCOTÓN.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 260413,
     "modified": "2026-02-06T11:31:08"
@@ -460,6 +622,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO VERNA24-25 y 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 313995,
     "modified": "2026-02-19T13:24:42"
@@ -471,6 +639,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO VERNA24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268133,
     "modified": "2026-02-19T13:24:30"
@@ -482,6 +656,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AGROFRUIT ALCOREÑA, S.L._LIMÓN FINO_20.000 Kgs._ 02-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134169,
     "modified": "2026-02-02T12:37:12"
@@ -493,6 +673,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AGROFRUIT ALCOREÑA, S.L._LIMÓN FINO_20.000 Kgs._Fdo. 02-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 631191,
     "modified": "2026-02-02T12:16:10"
@@ -504,6 +690,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO COMPRA MR. ORGÁNICA_NARANJA lane BIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55579,
     "modified": "2026-01-27T10:55:20"
@@ -515,6 +705,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "AGROFRUIT ALCOREÑA.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 645078,
     "modified": "2026-01-26T10:25:50"
@@ -526,6 +718,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Registro contrato agrofruit alcoreña.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134434,
     "modified": "2026-01-20T15:53:10"
@@ -537,6 +731,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Agrofuit Alcoreña-Mr Organica naranja Lane.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 548341,
     "modified": "2026-01-20T15:46:38"
@@ -548,6 +746,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO COMPRA MR. ORGÁNICA_NARANJA lane BIO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 284919,
     "modified": "2026-01-19T15:02:24"
@@ -559,6 +761,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_AGROGANADERA EL PILAR, S.A._LIMÓN FINO_27-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134370,
     "modified": "2026-02-27T11:31:46"
@@ -570,6 +778,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AGROGANADERA EL PILAR, S.A._LIMÓN FINO_Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 504415,
     "modified": "2026-02-27T10:51:32"
@@ -581,6 +795,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_AGROGANADERA EL PILAR, S.A._LIMÓN FINO_.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 466064,
     "modified": "2026-02-27T09:56:32"
@@ -592,6 +812,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ARANDA CARRASCO, SALVADOR_LIMÓN RODREJO_5.000 Kgs_ 27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134050,
     "modified": "2026-07-27T15:34:56"
@@ -603,6 +829,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ARANDA CARRASCO, SALVADOR_LIMÓN RODREJO_5.000 Kgs_Fdo. 27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2578748,
     "modified": "2026-07-27T09:12:22"
@@ -614,6 +846,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN rodrejo.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 329246,
     "modified": "2026-07-20T12:57:52"
@@ -625,6 +863,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN rodrejo.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 267934,
     "modified": "2026-07-20T12:57:38"
@@ -636,6 +880,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ARANDA CARRASCO, SALVADOR_LIMÓN VERNA_8.000 Kgs_05-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134097,
     "modified": "2026-05-05T15:06:18"
@@ -647,6 +897,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ARANDA CARRASCO, SALVADOR_NARANJA VALENCIA_5.000 Kgs_05-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134204,
     "modified": "2026-05-05T15:05:00"
@@ -658,6 +912,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ARANDA CARRASCO, SALVADOR_LIMÓN VERNA_8.000 Kgs_05-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2474895,
     "modified": "2026-05-05T12:54:36"
@@ -669,6 +929,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ARANDA CARRASCO, SALVADOR_NARANJA VALENCIA_5.000 Kgs_05-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2432289,
     "modified": "2026-05-05T12:27:08"
@@ -680,6 +944,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ARANDA CARRASCO, SALVADOR_LIMÓN VERNA_8.000 Kgs_24-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179139,
     "modified": "2026-04-27T13:20:38"
@@ -691,6 +961,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ARANDA CARRASCO, SALVADOR_NARANJA VALENCIA_5.000 Kgs_24-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 58734,
     "modified": "2026-04-24T10:37:22"
@@ -702,6 +976,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "26191000404J00001.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134088,
     "modified": "2026-07-10T10:24:44"
@@ -713,6 +989,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato firmado Gabriel sanchez serrano.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 1250073,
     "modified": "2026-07-10T10:24:44"
@@ -724,6 +1002,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS ARJAIMA  25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 314608,
     "modified": "2026-07-06T14:22:10"
@@ -735,6 +1017,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS ARJAIMA  25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268168,
     "modified": "2026-07-06T14:21:58"
@@ -746,6 +1032,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ARRETURAS PIÑERA, C.B._ALBARICOQUE CEBAS RED Y FLOPRIA_40.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 133943,
     "modified": "2026-05-04T15:31:22"
@@ -757,6 +1047,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ARRETURAS PIÑERA, C.B._ALBARICOQUE CEBAS RED Y FLOPRIA_40.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 895562,
     "modified": "2026-05-04T15:14:10"
@@ -768,6 +1062,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ARRETURAS PIÑERA ALBARICOQUE 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 337587,
     "modified": "2026-04-29T13:49:28"
@@ -779,6 +1077,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ARRETURAS PIÑERA ALBARICOQUE 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61963,
     "modified": "2026-04-29T13:49:16"
@@ -790,6 +1092,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BALLESTER CARRASCO, C.B._LIMÓN FINO_8.000 Kgs._ 16-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134344,
     "modified": "2026-03-16T15:15:56"
@@ -801,6 +1109,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BALLESTER CARRASCO, C.B._LIMÓN FINO_8.000 Kgs._ Fdo.16-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 344557,
     "modified": "2026-03-16T14:48:40"
@@ -812,6 +1126,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "FINO BALLESTER CARRASCO CB 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 352814,
     "modified": "2026-03-02T11:13:14"
@@ -823,6 +1141,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "FINO BALLESTER CARRASCO CB 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 267902,
     "modified": "2026-03-02T11:12:54"
@@ -834,6 +1156,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BELCHÍ GARCÍA LORENZO_LIMÓN RODREJO_15.000 Kgs._20-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134097,
     "modified": "2026-07-20T14:48:14"
@@ -845,6 +1173,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BELCHÍ GARCÍA LORENZO_LIMÓN RODREJO_15.000 Kgs._20-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2574967,
     "modified": "2026-07-20T14:37:02"
@@ -856,6 +1190,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS LORENZO BELCHI.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 353836,
     "modified": "2026-07-15T13:17:30"
@@ -867,6 +1205,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS LORENZO BELCHI.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268159,
     "modified": "2026-07-15T13:17:20"
@@ -878,6 +1220,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_NARANJA VALENCIA_4.000 Kgs._21-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 133942,
     "modified": "2026-04-21T15:08:56"
@@ -889,6 +1235,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_LIMÓN VERNA_20.000 Kgs._21-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 133679,
     "modified": "2026-04-21T15:06:30"
@@ -900,6 +1252,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_NARANJA VALENCIA_4.000 Kgs._Fdo. 21-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2378241,
     "modified": "2026-04-21T13:48:48"
@@ -911,6 +1267,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_LIMÓN VERNA_20.000 Kgs._Fdo. 21-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2447185,
     "modified": "2026-04-21T13:48:24"
@@ -922,6 +1284,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO COMPRA MRO_NARANJA VALENCIA_AGUSTINA BERLANGA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 58593,
     "modified": "2026-04-17T10:56:18"
@@ -933,6 +1299,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO LIMON VERNA-AGUSTINA BERLANGAMRO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 351006,
     "modified": "2026-04-17T10:50:08"
@@ -944,6 +1316,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_LIMÓN FINO_20.000 Kgs._ 16-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134116,
     "modified": "2026-03-16T13:59:56"
@@ -955,6 +1333,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_LIMÓN FINO_20.000 Kgs._Fdo. 16-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 4138139,
     "modified": "2026-03-16T13:31:00"
@@ -966,6 +1350,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO LIMON-AGUSTINA BERLANGAMRO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 310976,
     "modified": "2026-03-13T10:02:06"
@@ -977,6 +1365,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO LIMON-AGUSTINA BERLANGAMRO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 350980,
     "modified": "2026-03-13T09:59:58"
@@ -988,6 +1380,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BONACHE PROVENCIO, DOLORES_LIMÓN RODREJO_5.000 Kgs._07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134676,
     "modified": "2026-07-07T13:25:26"
@@ -999,6 +1397,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BONACHE PROVENCIO, DOLORES_LIMÓN RODREJO_5.000 Kgs._07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 525373,
     "modified": "2026-07-07T13:13:54"
@@ -1010,6 +1414,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_BONACHE PROVENCIO, DOLORES_LIMÓN VERNA_15.000 Kgs._07-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134732,
     "modified": "2026-05-07T12:50:26"
@@ -1021,6 +1431,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_BONACHE PROVENCIO, DOLORES_LIMÓN VERNA_15.000 Kgs._07-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 570189,
     "modified": "2026-05-07T12:39:10"
@@ -1032,6 +1448,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MARIA DOLORES BONACHE VERNAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 352509,
     "modified": "2026-04-29T13:29:26"
@@ -1043,6 +1463,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MARIA DOLORES BONACHE VERNAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 267640,
     "modified": "2026-04-29T13:29:18"
@@ -1054,6 +1478,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CARRILLO YEPES, CECILIA_LIMÓN FINO_7.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 2803743,
     "modified": "2026-03-11T13:02:48"
@@ -1065,6 +1495,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CARRILLO YEPES, CECILIA_LIMÓN FINO_7.000 Kgs._11-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 133967,
     "modified": "2026-03-11T12:55:58"
@@ -1076,6 +1512,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LIMON FINO CECILIA CARRILLO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 268099,
     "modified": "2026-03-06T10:12:40"
@@ -1087,6 +1529,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CASERMEIRO SÁNCHEZ, JUAN_LIMÓN VERNA12.000 Kgs._11-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134385,
     "modified": "2026-05-11T15:43:12"
@@ -1098,6 +1546,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CASERMEIRO SÁNCHEZ, JUAN_LIMÓN VERNA12.000 Kgs._11-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2403979,
     "modified": "2026-05-11T12:49:12"
@@ -1109,6 +1563,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO casermeiro sanchez juan_Kgs_24-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 349610,
     "modified": "2026-05-06T10:53:34"
@@ -1120,6 +1576,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CASES APARICIO, EVELINA_LIMÓN FINO_130.000 Kgs._ 24-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134676,
     "modified": "2026-02-24T12:01:46"
@@ -1131,6 +1593,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CASES APARICIO, EVELINA_LIMÓN FINO_130.000 Kgs._Fdo. 24-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 2282203,
     "modified": "2026-02-24T11:57:30"
@@ -1142,6 +1610,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "EVELINA CASES APARICIO FINOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 352680,
     "modified": "2026-02-19T13:13:14"
@@ -1153,6 +1625,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "EVELINA CASES APARICIO FINOS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 267759,
     "modified": "2026-02-19T13:13:02"
@@ -1164,6 +1640,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._LIMÓN EUREKA_16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 133646,
     "modified": "2026-04-16T15:08:34"
@@ -1175,6 +1655,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._NARANJA NAVEL POWELL_16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 133942,
     "modified": "2026-04-16T15:07:16"
@@ -1186,6 +1670,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._NARANJA NAVEL POWELL_Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 523176,
     "modified": "2026-04-16T14:55:34"
@@ -1197,6 +1685,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._LIMÓN EUREKA_Fdo.16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 338566,
     "modified": "2026-04-16T14:53:14"
@@ -1208,6 +1700,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._POMELO_27-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134551,
     "modified": "2026-02-27T14:59:34"
@@ -1219,6 +1715,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._NARANJA LANE LATE_27-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134338,
     "modified": "2026-02-27T14:57:06"
@@ -1230,6 +1730,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._NARANJA LANE LATE_Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 463576,
     "modified": "2026-02-27T14:52:26"
@@ -1241,6 +1745,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._POMELO_Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 489209,
     "modified": "2026-02-27T14:50:54"
@@ -1252,6 +1760,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO POMELO CITRICOS BIOLÓGICOS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 264504,
     "modified": "2026-02-27T10:40:42"
@@ -1263,6 +1775,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA CITRICOS BIOLOGICOS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55805,
     "modified": "2026-02-27T10:31:00"
@@ -1274,6 +1790,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA Y POMELO CITRICOS BIOLOGICOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja",
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 296179,
     "modified": "2026-02-26T14:05:38"
@@ -1285,6 +1806,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA Y POMELO CITRICOS BIOLOGICOS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja",
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55922,
     "modified": "2026-02-26T14:04:48"
@@ -1296,6 +1822,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CÍTRICOS MÁLAGA SAT Nº 8243_LIMÓN RODREJO_22.000 kgs._Fdo. 30-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134259,
     "modified": "2026-06-30T10:07:28"
@@ -1307,6 +1839,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CÍTRICOS MÁLAGA SAT Nº 8243_LIMÓN RODREJO_22.000 kgs._Fdo. 30-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2726491,
     "modified": "2026-06-30T09:38:20"
@@ -1318,6 +1856,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO COMPRA LIMON verna. CITRICOS MALAGA MRORGANICA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 314983,
     "modified": "2026-06-29T11:51:18"
@@ -1329,6 +1873,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO COMPRA LIMON verna. CITRICOS MALAGA MRORGANICA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 351489,
     "modified": "2026-06-29T11:51:04"
@@ -1340,6 +1890,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO COMPRA LIMON RODREJO. CITRICOS MALAGA MRORGANICA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 307161,
     "modified": "2026-06-26T11:43:56"
@@ -1351,6 +1907,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Joaquín.odt",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "ODT",
     "size": 6267,
     "modified": "2026-06-26T11:24:46"
@@ -1362,6 +1920,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CÍTRICOS MÁLAGA SAT Nº 8243_LIMÓN VERNA_120.000 kgs._ 16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134209,
     "modified": "2026-04-16T09:58:08"
@@ -1373,6 +1937,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CÍTRICOS MÁLAGA SAT Nº 8243_LIMÓN VERNA_120.000 kgs._Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2708160,
     "modified": "2026-04-16T09:15:44"
@@ -1384,6 +1954,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ACUERDO COMPRA-VENTA COSECHA LIMÓN VERNA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 244597,
     "modified": "2026-04-15T13:29:14"
@@ -1395,6 +1971,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "0757_260415104613_001.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 56688,
     "modified": "2026-04-15T13:22:22"
@@ -1406,6 +1984,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO COMPRA LIMON verna. 0,80 MRORGANICA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 351871,
     "modified": "2026-04-13T15:20:08"
@@ -1417,6 +2001,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CITRUS SUNSET, S.L.U._LIMÓN 2º RODREJOS_10.000 Kgs._03-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134517,
     "modified": "2026-07-03T10:48:08"
@@ -1428,6 +2018,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CITRUS SUNSET, S.L.U._LIMÓN 2º RODREJOS_10.000 Kgs._03-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 601416,
     "modified": "2026-07-03T10:43:54"
@@ -1439,6 +2035,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MR. ORGANICA - CITRUS SUNSET - FONTES ECO RODREJOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 508028,
     "modified": "2026-07-03T09:25:42"
@@ -1450,6 +2050,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS CITRUS SUNSET 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 354112,
     "modified": "2026-06-30T17:43:24"
@@ -1461,6 +2065,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS CITRUS SUNSET 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268063,
     "modified": "2026-06-30T17:43:14"
@@ -1472,6 +2080,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CONEJO ANTUNEZ, JOSÉ ANTONIO_LIMÓN VERNA_8.000 Kgs._14-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 127722,
     "modified": "2026-04-14T15:10:24"
@@ -1483,6 +2097,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO  25-26. JOSE ANTONIO CONEJOdocx.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 267970,
     "modified": "2026-04-14T12:19:10"
@@ -1494,6 +2112,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CONEJO ANTUNEZ, JOSÉ ANTONIO_LIMÓN VERNA_8.000 Kgs._Fdo. 14-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 616871,
     "modified": "2026-04-14T12:10:06"
@@ -1505,6 +2129,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Francisco cordero Vazquez firmado.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 1012986,
     "modified": "2026-08-03T11:22:08"
@@ -1516,6 +2142,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Justificante Francisco cordero.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 147422,
     "modified": "2026-08-03T11:21:50"
@@ -1527,6 +2155,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "WhatsApp Image 2026-07-31 at 12.00.0.4.jpeg",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "JPEG",
     "size": 340752,
     "modified": "2026-07-31T12:12:50"
@@ -1538,6 +2168,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "WhatsApp Image 2026-07-31. at 12.00.04.jpeg",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "JPEG",
     "size": 289912,
     "modified": "2026-07-31T12:12:42"
@@ -1549,6 +2181,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "WhatsApp Image 2026-07-31 at 12.00.04..jpeg",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "JPEG",
     "size": 244243,
     "modified": "2026-07-31T12:12:34"
@@ -1560,6 +2194,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "WhatsApp Image 2026-07-31 at 12.00.04.jpeg",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "JPEG",
     "size": 329540,
     "modified": "2026-07-31T12:12:20"
@@ -1571,6 +2207,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO RODREJO .pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 313481,
     "modified": "2026-07-28T15:45:50"
@@ -1582,6 +2224,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO RODREJO .docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 267846,
     "modified": "2026-07-28T15:45:36"
@@ -1593,6 +2241,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN RODREJO_ 60.000 Kgs._31-07-26.docx.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 146693,
     "modified": "2026-08-03T11:28:32"
@@ -1604,6 +2258,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN RODREJO_ 60.000 Kgs._31-07-26.docx.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 686810,
     "modified": "2026-08-03T11:27:36"
@@ -1615,6 +2275,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN rodrejo 60.000 Kgs._29-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 329559,
     "modified": "2026-07-29T11:11:46"
@@ -1626,6 +2292,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN rodrejo 60.000 Kgs._29-07-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 351116,
     "modified": "2026-07-29T10:21:16"
@@ -1637,6 +2309,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN VERNA_300.000 Kgs._28-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134342,
     "modified": "2026-04-28T15:01:58"
@@ -1648,6 +2326,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN VERNA_300.000 Kgs._28-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 326474,
     "modified": "2026-04-28T14:38:54"
@@ -1659,6 +2343,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CORTIJO CORONADO AGRÍCOLA, S.L._LIMÓN VERNA_300.000 Kgs._24-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 350350,
     "modified": "2026-04-24T10:26:42"
@@ -1670,6 +2360,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_COTTA PÉREZ, MANUEL_LIMÓN FINO_5.000 Kgs._12-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134397,
     "modified": "2026-03-12T16:29:30"
@@ -1681,6 +2377,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_COTTA PÉREZ, MANUEL_LIMÓN FINO_5.000 Kgs._Fdo. 12-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 843967,
     "modified": "2026-03-12T16:26:44"
@@ -1692,6 +2394,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO LIMON-MANUEL COTTAMRO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 319988,
     "modified": "2026-03-10T14:38:16"
@@ -1703,6 +2409,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO LIMON-MANUEL COTTAMRO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 351113,
     "modified": "2026-03-10T14:38:04"
@@ -1714,6 +2424,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_DEHESA DE PINOHERMOSO, S.L._POMELO ROJO_20.000 Kgs._ 31-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134070,
     "modified": "2026-03-31T12:51:10"
@@ -1725,6 +2439,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_DEHESA DE PINOHERMOSO, S.L._POMELO ROJO_20.000 Kgs._Fdo. 31-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 412736,
     "modified": "2026-03-31T12:38:36"
@@ -1736,6 +2454,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_DEHESA DE PINOHERMOSO, S.L._NARANJA SANGUINELLI Y MIDKNIGHT_104.000 Kgs._04-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134184,
     "modified": "2026-02-04T13:07:58"
@@ -1747,6 +2469,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_DEHESA DE PINOHERMOSO, S.L._NARANJA SANGUINELLI Y MIDKNIGHT_104.000 Kgs._Fdo. 04-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 666916,
     "modified": "2026-02-04T13:03:30"
@@ -1758,6 +2484,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_DOMÍNGUEZ RUBIO, ANTONIO_LIMÓN FINO_50.000 Kgs._18-11-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 148994,
     "modified": "2026-03-10T13:50:22"
@@ -1769,6 +2501,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_DOMÍNGUEZ RUBIO, ANTONIO_LIMÓN FINO_50.000 Kgs._Fdo. 18-11-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 1566295,
     "modified": "2026-03-10T13:50:04"
@@ -1780,6 +2518,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_DOMINGUEZ RUBIO, JUAN_LIMÓN FINO_50.000 Kgs._ 18-11-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 148869,
     "modified": "2026-03-10T13:51:14"
@@ -1791,6 +2535,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_DOMINGUEZ RUBIO, JUAN_LIMÓN FINO_50.000 Kgs._Fdo. 18-11-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 4727822,
     "modified": "2026-03-10T13:50:52"
@@ -1802,6 +2552,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ECOLÓGICOS COMALA, S.L._LIMÓN RODREJO_5.000 Kgs._01-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 133944,
     "modified": "2026-07-01T11:20:50"
@@ -1813,6 +2569,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ECOLÓGICOS COMALA, S.L._LIMÓN RODREJO_5.000 Kgs._01-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 3364790,
     "modified": "2026-07-01T11:15:00"
@@ -1824,6 +2586,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS ECOLOGICOS COMALA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 353858,
     "modified": "2026-06-30T09:54:32"
@@ -1835,6 +2601,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS ECOLOGICOS COMALA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 267729,
     "modified": "2026-06-30T09:53:00"
@@ -1846,6 +2616,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ESPARZA MOLINA, JUAN_LIMÓN RODREJO_2.500 Kgs._ 23-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134092,
     "modified": "2026-07-23T11:35:56"
@@ -1857,6 +2633,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ESPARZA MOLINA, JUAN_LIMÓN RODREJO_2.500 Kgs._Fdo. 22-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2651068,
     "modified": "2026-07-22T13:43:58"
@@ -1868,6 +2650,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 267954,
     "modified": "2026-07-22T13:35:06"
@@ -1879,6 +2665,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO 24-25 y 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 313253,
     "modified": "2026-07-22T13:20:26"
@@ -1890,6 +2680,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_EXALGA, S.L._NARANJA NAVELINA_50.000 Kgs._19-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [
+      "Navelina"
+    ],
     "extension": "PDF",
     "size": 134715,
     "modified": "2026-02-19T10:30:50"
@@ -1901,6 +2697,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_EXALGA, S.L._NARANJA NAVELINA_50.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [
+      "Navelina"
+    ],
     "extension": "PDF",
     "size": 2609637,
     "modified": "2026-02-19T10:24:52"
@@ -1912,6 +2714,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA EXAGA SL 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 257096,
     "modified": "2026-01-27T09:32:38"
@@ -1923,6 +2729,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA EXAGA SL 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 58167,
     "modified": "2026-01-27T09:32:28"
@@ -1934,6 +2744,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FARQUE, S.L._LIMÓN VERNA_45.000 Kgs._.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 351492,
     "modified": "2026-04-24T10:16:58"
@@ -1945,6 +2761,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_JOSÉ FERNÁNDEZ CORDERO_LIMÓN RODREJO_5.000 Kgs._07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134605,
     "modified": "2026-07-07T10:24:32"
@@ -1956,6 +2778,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSÉ FERNÁNDEZ CORDERO_LIMÓN RODREJO_5.000 Kgs._07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1493747,
     "modified": "2026-07-07T09:48:28"
@@ -1967,6 +2795,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Texto Contrato Compraventa M.R. ORGÁNICA_LIMONES RODREJO BIO  25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268177,
     "modified": "2026-07-06T16:44:44"
@@ -1978,6 +2812,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN RODREJO_5.000 Kgs_27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134145,
     "modified": "2026-07-27T15:37:04"
@@ -1989,6 +2829,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN RODREJO_5.000 Kgs_27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2436749,
     "modified": "2026-07-27T09:16:40"
@@ -2000,6 +2846,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN RODREJO_5.000 Kgs_27-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 289143,
     "modified": "2026-07-24T10:59:44"
@@ -2011,6 +2863,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN RODREJO_5.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 179249,
     "modified": "2026-07-24T10:38:52"
@@ -2022,6 +2880,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN RODREJO_5.000 Kgs_24-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 288453,
     "modified": "2026-07-24T10:16:50"
@@ -2033,6 +2897,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN VERNA_5.000 Kgs_05-05-26.PDF",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134551,
     "modified": "2026-05-05T14:52:04"
@@ -2044,6 +2914,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN VERNA_5.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179066,
     "modified": "2026-05-05T12:23:14"
@@ -2055,6 +2931,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FERNÁNDEZ GIL, JUAN JESÚS_LIMÓN VERNA_5.000 Kgs_05-05-26.PDF",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2278273,
     "modified": "2026-05-05T12:21:44"
@@ -2066,6 +2948,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FINCA JOVEN ARNEVA, S.L._LIMÓN FINO SEGUNDOS_10.000 Kgs._05-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134243,
     "modified": "2026-06-05T10:04:00"
@@ -2077,6 +2965,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FINCA JOVEN ARNEVA, S.L._LIMÓN FINO SEGUNDOS_10.000 Kgs._04-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 784282,
     "modified": "2026-06-05T10:00:02"
@@ -2088,6 +2982,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SEGUNDOS FINCA JOVEN ARNEVA SL 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 353515,
     "modified": "2026-06-04T12:48:50"
@@ -2099,6 +2995,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SEGUNDOS FINCA JOVEN ARNEVA SL 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 268072,
     "modified": "2026-06-04T12:48:40"
@@ -2110,6 +3008,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FINCA LOS BERMEJALES, C.B._LIMÓN FINO_50.000 Kgs._23-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134446,
     "modified": "2026-02-23T13:37:40"
@@ -2121,6 +3025,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FINCA LOS BERMEJALES, C.B._LIMÓN FINO_50.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 1445852,
     "modified": "2026-02-23T12:38:18"
@@ -2132,6 +3042,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS MORIEL FINOS 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 327850,
     "modified": "2026-02-20T15:33:30"
@@ -2143,6 +3058,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS MORIEL FINOS 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 178799,
     "modified": "2026-02-20T15:33:16"
@@ -2154,6 +3074,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FOASAT_NARANJA NAVEL FOYOS_45.000 Kgs._23-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134892,
     "modified": "2026-02-23T13:55:32"
@@ -2165,6 +3089,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FOASAT_NARANJA NAVEL FOYOS_45.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1050583,
     "modified": "2026-02-23T12:25:32"
@@ -2176,6 +3104,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FCO. Y MANUEL RUIZ PINA, C.B._LIMÓN RODREJO_20.000 Kgs._ 27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134408,
     "modified": "2026-07-27T15:50:32"
@@ -2187,6 +3121,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FCO. Y MANUEL RUIZ PINA, C.B._LIMÓN RODREJO_20.000 Kgs._Fdo. 27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 405533,
     "modified": "2026-07-27T13:47:20"
@@ -2198,6 +3138,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato_MR_Organica_Francisco_y_Manuel_Ruiz_Pina_Rodrejo_2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 326828,
     "modified": "2026-07-27T12:26:32"
@@ -2209,6 +3153,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato_MR_Organica_Francisco_y_Manuel_Ruiz_Pina_Rodrejo_2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 266543,
     "modified": "2026-07-27T12:26:18"
@@ -2220,6 +3168,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato_MR_Organica_Francisco_y_Manuel_Ruiz_Pina_Rodrejo_2026_signed.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 308629,
     "modified": "2026-07-27T12:08:10"
@@ -2231,6 +3183,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_Mª ALICIA FRUTOS FRANCO_NECTARINA ATANAIS_12.000 Kgs._03-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134684,
     "modified": "2026-06-03T14:49:08"
@@ -2242,6 +3198,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_Mª ALICIA FRUTOS FRANCO_NECTARINA ATANAIS_12.000 Kgs._03-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2860332,
     "modified": "2026-06-03T14:46:08"
@@ -2253,6 +3213,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "NECTARINA ATANAIS ALICIA FRUTOS.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 338451,
     "modified": "2026-06-03T09:43:30"
@@ -2264,6 +3228,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "NECTARINA ATANAIS ALICIA FRUTOS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61083,
     "modified": "2026-06-03T09:43:18"
@@ -2275,6 +3243,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GALIÁN RUÍZ, MANUEL ANTONIO_LIMÓN FINO_12.000 Kgs._23-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134506,
     "modified": "2026-02-23T13:46:26"
@@ -2286,6 +3260,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GALIÁN RUÍZ, MANUEL ANTONIO_LIMÓN FINO_12.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 582817,
     "modified": "2026-02-23T12:40:34"
@@ -2297,6 +3277,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MANUEL ANTONIO GALIAN.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 352073,
     "modified": "2026-02-16T09:55:22"
@@ -2308,6 +3290,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MANUEL ANTONIO GALIAN.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 267962,
     "modified": "2026-02-16T09:55:06"
@@ -2319,6 +3303,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INCRIPCIÓN CONTRATO MRO_GARCÍA ESTRADA, VICENTE_NARANJA VALENCIA_5.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 133966,
     "modified": "2026-05-04T15:29:58"
@@ -2330,6 +3318,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA ESTRADA, VICENTE_NARANJA VALENCIA_5.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2416463,
     "modified": "2026-05-04T15:08:30"
@@ -2341,6 +3333,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN_CONTRATO MRO_GARCÍA ESTRADA, VICENTE_LIMÓN VERNA_8.000 Kgs._30-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 133967,
     "modified": "2026-04-30T14:50:06"
@@ -2352,6 +3350,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA ESTRADA, VICENTE_LIMÓN VERNA_8.000 Kgs._30-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2513240,
     "modified": "2026-04-30T14:44:22"
@@ -2363,6 +3367,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA ESTRADA, VICENTE_LIMÓN VERNA_8.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179224,
     "modified": "2026-04-27T13:34:06"
@@ -2374,6 +3384,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA ESTRADA, VICENTE_NARANJA VALENCIA_5.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 58359,
     "modified": "2026-04-27T11:36:24"
@@ -2385,6 +3399,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GARCÍA LORENTE, ANGEL_LIMÓN FINO_150.000 Kgs._13-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 133789,
     "modified": "2026-04-13T16:37:44"
@@ -2396,6 +3416,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA LORENTE, ANGEL_LIMÓN FINO_150.000 Kgs._Fdo. 13-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 788471,
     "modified": "2026-04-13T15:16:32"
@@ -2407,6 +3433,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA LIMON FINO ANGEL GARCIA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 352995,
     "modified": "2026-04-13T09:44:14"
@@ -2418,6 +3450,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA LIMON FINO ANGEL GARCIA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 267874,
     "modified": "2026-04-13T09:43:52"
@@ -2429,6 +3467,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GARCÍA MARTÍN, SALVADOR_LIMÓN RODREJO_3.000 Kgs._11-08-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134185,
     "modified": "2026-08-11T09:38:28"
@@ -2440,6 +3484,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA MARTÍN, SALVADOR_LIMÓN RODREJO_3.000 Kgs._11-08-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 615468,
     "modified": "2026-08-11T09:22:00"
@@ -2451,6 +3501,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO SALVADOR GARCIA RODREJOS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 352458,
     "modified": "2026-08-10T12:22:02"
@@ -2462,6 +3516,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO SALVADOR GARCIA RODREJOS.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 305287,
     "modified": "2026-08-10T12:21:42"
@@ -2473,6 +3531,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GARCÍA MARTÍN, SALVADOR_LIMÓN VERNA_8.000 Kgs._ 16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134329,
     "modified": "2026-04-16T10:00:14"
@@ -2484,6 +3548,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA MARTÍN, SALVADOR_LIMÓN VERNA_8.000 Kgs._Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 641237,
     "modified": "2026-04-16T09:16:58"
@@ -2495,6 +3565,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO SALVADOR GARCIA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 352501,
     "modified": "2026-04-14T15:12:10"
@@ -2506,6 +3578,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO SALVADOR GARCIA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 320738,
     "modified": "2026-04-14T15:11:22"
@@ -2517,6 +3591,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GARCÍA RENGEL, VICENTE JESÚS _ LIMÓN VERNA_30.000 Kgs._15-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134820,
     "modified": "2026-05-15T12:45:26"
@@ -2528,6 +3608,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO VICENTE _ JESUS GARCIA RENGELLIMÓN VERNA_30000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 178948,
     "modified": "2026-05-15T11:59:16"
@@ -2539,6 +3625,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GARCÍA RENGEL, VICENTE JESÚS _ LIMÓN VERNA_30.000 Kgs._15-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 519228,
     "modified": "2026-05-15T11:57:36"
@@ -2550,6 +3642,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANE INSCRIPCIÓN CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN VERNA_400.000 Kgs._ 20-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134484,
     "modified": "2026-04-20T14:52:08"
@@ -2561,6 +3659,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN VERNA_400.000 Kgs._Fdo. 20-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2066974,
     "modified": "2026-04-20T12:03:16"
@@ -2572,6 +3676,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN VERNA_.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 536420,
     "modified": "2026-04-17T13:27:18"
@@ -2583,6 +3693,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE MODIFICACION CONTRATO GESTION HORTOFRUTICOLA DEL LEVANTE_LIMÓN_400.000 Kgs._10-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134780,
     "modified": "2026-02-10T10:23:44"
@@ -2594,6 +3708,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO GESTION HORTOFRUTICOLA DEL LEVANTE_LIMÓN_400.000 Kgs._Fdo. 10-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 302641,
     "modified": "2026-02-10T10:09:30"
@@ -2605,6 +3723,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN_400.000 Kgs._30-12-25_Mod. 12-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134953,
     "modified": "2026-01-12T15:50:40"
@@ -2616,6 +3738,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN_400.000 Kgs._Fdo. 30-12-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 431174,
     "modified": "2026-01-12T15:44:22"
@@ -2627,6 +3753,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GIL MARTÍNEZ, Mª DEL CARMEN_FRUTA DE HUESO_110.000 Kgs._07-05-26.PDF",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134428,
     "modified": "2026-05-07T09:58:40"
@@ -2638,6 +3766,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GIL MARTÍNEZ, Mª DEL CARMEN_FRUTA DE HUESO_110.000 Kgs._07-05-26.PDF",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 2263088,
     "modified": "2026-05-07T09:53:44"
@@ -2649,6 +3779,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GIL MARTÍNEZ, Mª DEL CARMEN_FRUTA DE HUESO_110.000 Kgs._29-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61657,
     "modified": "2026-05-02T10:20:22"
@@ -2660,6 +3792,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GRANJA GUEVARA, S.L._POMELO_10.000 Kgs._12-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 147166,
     "modified": "2026-06-15T13:13:06"
@@ -2671,6 +3807,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GRANJA GUEVARA, S.L._POMELO_10.000 Kgs._12-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1387098,
     "modified": "2026-06-15T13:11:48"
@@ -2682,6 +3822,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR.ORGÁNICA_POMELO BIO 24-25 y 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 311069,
     "modified": "2026-06-08T13:45:02"
@@ -2693,6 +3837,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR.ORGÁNICA_POMELO BIO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 266764,
     "modified": "2026-06-08T13:44:50"
@@ -2704,6 +3852,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "GRUPO FARA LIMON FINO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 345269,
     "modified": "2026-05-14T18:19:58"
@@ -2715,6 +3869,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "GRUPO FARA LIMON FINO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 264880,
     "modified": "2026-05-14T18:19:48"
@@ -2726,6 +3886,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "04-25 TANGO BIO GRUPO FARA -ASOMADA MR ORGANICA (Toñy Fruit) 26.01.26 signed Declaracion_GrupoFara.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 124976,
     "modified": "2026-01-27T09:25:34"
@@ -2737,6 +3901,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "04-25 TANGO BIO GRUPO FARA -ASOMADA MR ORGANICA (Toñy Fruit) 26.01.26 signed Grupo_Fara_C5466.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 101574,
     "modified": "2026-01-27T09:25:34"
@@ -2748,6 +3916,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GRUPO FARA 2009, S.L._MANDARINA TANGO_100.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 133932,
     "modified": "2026-01-26T15:32:04"
@@ -2759,6 +3933,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GRUPO FARA 2009, S.L._MANDARINA TANGO_100.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 514089,
     "modified": "2026-01-26T15:06:06"
@@ -2770,6 +3950,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "TANGO GRUPO FARA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 332272,
     "modified": "2026-01-23T14:34:44"
@@ -2781,6 +3965,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "TANGO GRUPO FARA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "DOCX",
     "size": 652216,
     "modified": "2026-01-23T14:34:32"
@@ -2792,6 +3980,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "TANGO GRUPO FARA 2026 v2.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 248952,
     "modified": "2026-01-21T12:34:18"
@@ -2803,6 +3995,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_GUERRERO LUCAS, JOSÉ MATEO_NARANJA LANELATE_7.000 Kgs._ 13-04-16.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134021,
     "modified": "2026-04-13T16:35:38"
@@ -2814,6 +4010,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_GUERRERO LUCAS, JOSÉ MATEO_NARANJA LANELATE_7.000 Kgs._Fdo. 13-04-16.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 6895120,
     "modified": "2026-04-13T15:50:30"
@@ -2825,6 +4025,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO JOSE MATEO GUERRERO LUCAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 341618,
     "modified": "2026-04-13T14:04:02"
@@ -2836,6 +4038,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO JOSE MATEO GUERRERO LUCAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 93409,
     "modified": "2026-04-13T14:03:46"
@@ -2847,6 +4051,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "~$NTRATO JOSE MATEO GUERRERO LUCAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 162,
     "modified": "2026-04-13T13:59:22"
@@ -2858,6 +4064,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_FRUTA DE HUESO MRO_HNOS. ORTEGA PIÑERO, S.L_25-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134458,
     "modified": "2026-03-25T15:20:30"
@@ -2869,6 +4077,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FRUTA DE HUESO MRO_HNOS. ORTEGA PIÑERO, S.L_Fdo. 25-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 2310197,
     "modified": "2026-03-25T15:09:02"
@@ -2880,6 +4090,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_HNOS. ORTEGA PIÑERO, S.L._MELOCOTÓN, NECTARINA Y PARAGUAYO_06-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Melocotón",
+      "Nectarina",
+      "Paraguayo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134664,
     "modified": "2026-02-06T11:25:00"
@@ -2891,6 +4107,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_FRUTA DE HUESO MRO_HNOS. ORTEGA PIÑERO, S.L..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 286176,
     "modified": "2026-02-06T11:18:52"
@@ -2902,6 +4120,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_HNOS. ORTEGA PIÑERO, S.L._MELOCOTÓN, NECTARINA Y PARAGUAYO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Melocotón",
+      "Nectarina",
+      "Paraguayo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 891785,
     "modified": "2026-02-03T10:46:44"
@@ -2913,6 +4137,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO A LARGO PLAZO FRUTA DE HUESO HERMANOS ORTEGA PIÑERO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 28462,
     "modified": "2026-01-27T10:08:00"
@@ -2924,6 +4150,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_HERNÁNDEZ INIESTA, JUAN_LIMÓN VERNA_3.000 Kgs._28-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134571,
     "modified": "2026-05-28T15:14:56"
@@ -2935,6 +4167,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_HERNÁNDEZ INIESTA, JUAN_LIMÓN VERNA_3.000 Kgs._28-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 521640,
     "modified": "2026-05-28T15:05:44"
@@ -2946,6 +4184,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_HERNÁNDEZ INIESTA, JUAN_LIMÓN VERNA_3.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 267819,
     "modified": "2026-05-27T17:01:34"
@@ -2957,6 +4201,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_HORTOFRUTÍCOLA POLI, S.L._MANDARINA TANGO_120.000 Kgs._ 27-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 134189,
     "modified": "2026-01-27T09:56:08"
@@ -2968,6 +4218,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_HORTOFRUTÍCOLA POLI, S.L._MANDARINA TANGO_120.000 Kgs._Fdo. 27-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 456911,
     "modified": "2026-01-27T09:52:14"
@@ -2979,6 +4235,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO-MANDARINA-TANGO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 308754,
     "modified": "2026-01-27T08:38:10"
@@ -2990,6 +4252,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO-MANDARINA-TANGO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "DOCX",
     "size": 351463,
     "modified": "2026-01-26T12:03:32"
@@ -3001,6 +4269,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Justificante presentacion contrato antonio huercano.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 133994,
     "modified": "2026-01-26T10:57:38"
@@ -3012,6 +4282,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_antonio HUERCANO ROMERO S.L. FIRMADO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 358125,
     "modified": "2026-01-26T10:55:40"
@@ -3023,6 +4295,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_antonio HUERCANO ROMERO, S.L..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 279244,
     "modified": "2026-01-23T10:17:50"
@@ -3034,6 +4308,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_antonio HUERCANO ROMERO, S.L..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 264180,
     "modified": "2026-01-23T10:17:38"
@@ -3045,6 +4321,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_INLIMES, S.L._LIMÓN FINO_200.000 Kgs._09-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134604,
     "modified": "2026-01-09T09:43:26"
@@ -3056,6 +4338,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_INLIMES, S.L._LIMÓN FINO_200.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 3757749,
     "modified": "2026-01-09T09:31:52"
@@ -3067,6 +4355,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_JIMÉNEZ LARA, ENRIQUE_NARANJA SALUSTIANA_180.000 Kgs._09-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134561,
     "modified": "2026-01-09T09:51:34"
@@ -3078,6 +4370,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JIMÉNEZ LARA, ENRIQUE_NARANJA SALUSTIANA_180.000 Kgs._Fdo. 09-01-26-comprimido (1).pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 548296,
     "modified": "2026-01-09T09:46:58"
@@ -3089,6 +4385,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JIMÉNEZ LARA, ENRIQUE_NARANJA SALUSTIANA_180.000 Kgs._Fdo. 09-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 11526722,
     "modified": "2026-01-09T09:33:04"
@@ -3100,6 +4400,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_JIMÉNEZ RICO, JUAN JOSE_LIMÓN FINO_20.000 Kgs._ 19-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134263,
     "modified": "2026-02-19T09:21:50"
@@ -3111,6 +4417,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JIMÉNEZ RICO, JUAN JOSE_LIMÓN FINO_20.000 Kgs._Fdo. 19-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 3301177,
     "modified": "2026-02-19T09:17:50"
@@ -3122,6 +4434,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "contrato limon fino 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 312733,
     "modified": "2026-02-18T15:19:44"
@@ -3133,6 +4451,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "contrato limon fino 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 351360,
     "modified": "2026-02-18T15:19:32"
@@ -3144,6 +4468,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Texto Contrato Compraventa TOÑIFRUIT_POMELOS FRESCO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 351743,
     "modified": "2026-02-18T15:18:40"
@@ -3155,6 +4483,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LA TURBINA, C.B._ALBARICOQUE FLOPRIA_10.000 Kgs._20-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2475704,
     "modified": "2026-05-20T14:45:02"
@@ -3166,6 +4498,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LA TURBINA, C.B._ALBARICOQUE FLOPRIA_10.000 Kgs._20-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134329,
     "modified": "2026-05-20T14:43:26"
@@ -3177,6 +4513,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ALBARICOQUE LA TURBINA CB 2026 FIRMADO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 4758648,
     "modified": "2026-05-20T14:37:58"
@@ -3188,6 +4528,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ALBARICOQUE LA TURBINA CB 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 338458,
     "modified": "2026-05-19T11:33:56"
@@ -3199,6 +4543,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ALBARICOQUE LA TURBINA CB 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61114,
     "modified": "2026-05-19T11:33:46"
@@ -3210,6 +4558,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSÉ RAMÓN LARROSA RIQUELME_LIMÓN SEGUNDOS Y RODREJO_15.000 Kgs_16-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 602026,
     "modified": "2026-06-16T09:24:16"
@@ -3221,6 +4575,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPICIÓN CONTRATO MRO_JOSÉ RAMÓN LARROSA RIQUELME_LIMÓN SEGUNDOS Y RODREJO_15.000 Kgs_16-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134051,
     "modified": "2026-06-16T09:21:34"
@@ -3232,6 +4592,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSE RAMON LA ROSA RIQUELMEKgs_.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 319514,
     "modified": "2026-06-15T08:59:46"
@@ -3243,6 +4605,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ES-ECO-024-MU.724-0024686.2025.001.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 57456,
     "modified": "2026-06-15T08:57:10"
@@ -3254,6 +4618,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSE RAMON LA ROSA RIQUELMEKgs_.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 268709,
     "modified": "2026-06-15T08:56:04"
@@ -3265,6 +4631,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN RODREJO_30.000 Kgs._14-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134307,
     "modified": "2026-07-14T12:25:18"
@@ -3276,6 +4648,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN RODREJO_30.000 Kgs._14-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 324562,
     "modified": "2026-07-14T12:19:52"
@@ -3287,6 +4665,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS LAS LENTISCOSAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 354152,
     "modified": "2026-07-14T10:10:50"
@@ -3298,6 +4680,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS LAS LENTISCOSAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 267698,
     "modified": "2026-07-14T10:10:36"
@@ -3309,6 +4695,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN FINO SEGUNDOS_5.000 Kgs._04-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134062,
     "modified": "2026-06-04T15:21:22"
@@ -3320,6 +4712,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN FINO SEGUNDOS_5.000 Kgs._04-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 382198,
     "modified": "2026-06-04T15:13:26"
@@ -3331,6 +4729,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LAS LENTISCOSAS finos segundos 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 324250,
     "modified": "2026-06-04T11:57:26"
@@ -3342,6 +4744,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LAS LENTISCOSAS finos segundos 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 268358,
     "modified": "2026-06-04T11:57:08"
@@ -3353,6 +4759,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN VERNA_100.000 Kgs._15-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 133758,
     "modified": "2026-04-15T13:54:00"
@@ -3364,6 +4776,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN VERNA_100.000 Kgs._Fdo. 14-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 448742,
     "modified": "2026-04-15T13:43:20"
@@ -3375,6 +4793,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LAS LENTISCOSAS VERNAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268057,
     "modified": "2026-04-14T14:45:22"
@@ -3386,6 +4808,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LAS LENTISCOSAS VERNAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 352229,
     "modified": "2026-04-14T14:40:48"
@@ -3397,6 +4823,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MANUELA LÓPEZ BERDASCO_LIMÓN VERNA_2.000 Kgs._10-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134221,
     "modified": "2026-06-10T10:59:02"
@@ -3408,6 +4840,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MANUELA LÓPEZ BERDASCO_LIMÓN VERNA_2.000 Kgs._10-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2688264,
     "modified": "2026-06-10T10:48:54"
@@ -3419,6 +4857,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO VERNA MANUELA LOPEZ BERDASCO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2500959,
     "modified": "2026-06-10T10:05:32"
@@ -3430,6 +4872,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO VERNA MANUELA BERDASCO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268227,
     "modified": "2026-06-10T10:04:10"
@@ -3441,6 +4887,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LÓPEZ GUERRERO, MARIANO_ALBARICOQUE FLOPRIA_15.000 Kgs._29-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134380,
     "modified": "2026-05-29T13:06:58"
@@ -3452,6 +4902,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LÓPEZ GUERRERO, MARIANO_ALBARICOQUE FLOPRIA_15.000 Kgs._29-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1136578,
     "modified": "2026-05-29T12:44:50"
@@ -3463,6 +4917,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LÓPEZ GUERRERO, MARIANO_ALBARICOQUE FLOPRIA_15.000 Kgs._20-05-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61088,
     "modified": "2026-05-20T12:08:46"
@@ -3474,6 +4932,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Doc1.odt",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "ODT",
     "size": 3304032,
     "modified": "2026-05-19T11:27:30"
@@ -3485,6 +4945,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LÓPEZ MARTÍNEZ, Mª DOLORES_LIMÓN VERNA_20.000 Kgs._14-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134740,
     "modified": "2026-05-14T13:00:56"
@@ -3496,6 +4962,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LÓPEZ MARTÍNEZ, Mª DOLORES_LIMÓN VERNA_20.000 Kgs._14-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 542818,
     "modified": "2026-05-14T12:39:08"
@@ -3507,6 +4979,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ LÓPEZ MARTÍNEZ, Mª DOLORES_LIMÓN FINO_4.000 Kgs._26-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134543,
     "modified": "2026-01-26T15:37:24"
@@ -3518,6 +4996,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LÓPEZ MARTÍNEZ, Mª DOLORES_LIMÓN FINO_4.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 1042336,
     "modified": "2026-01-26T14:56:14"
@@ -3529,6 +5013,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MARIA DOLORES LOPEZ FINOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 278922,
     "modified": "2026-01-26T11:00:20"
@@ -3540,6 +5028,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MARIA DOLORES LOPEZ FINOS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 267905,
     "modified": "2026-01-26T11:00:10"
@@ -3551,6 +5043,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LOS INFANTES, C.B._LIMÓN VERNA Y RODREJO_100.000 Kgs._ 16-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 133960,
     "modified": "2026-01-16T13:14:38"
@@ -3562,6 +5061,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LOS INFANTES, C.B._LIMÓN VERNA Y RODREJO_100.000 Kgs._Fdo. 16-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 523403,
     "modified": "2026-01-16T13:09:18"
@@ -3573,6 +5079,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_LOZANO BROTONS, ANTONIO_FRUTA DE HUESO_79.000 Kgs._11-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134418,
     "modified": "2026-05-11T15:45:30"
@@ -3584,6 +5092,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LOZANO BROTONS, ANTONIO_FRUTA DE HUESO_79.000 Kgs._11-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 4097181,
     "modified": "2026-05-11T12:53:26"
@@ -3595,6 +5105,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_LOZANO BROTONS, ANTONIO_FRUTA DE HUESO_79.000 Kgs._30-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61956,
     "modified": "2026-04-30T15:35:18"
@@ -3606,6 +5118,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO DE SERVICIOS_MRO_MANCERA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 4771559,
     "modified": "2026-02-16T12:39:00"
@@ -3617,6 +5131,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MAYOR CORTIJOS, JOSEFA_LIMÓN VERNA_10.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134493,
     "modified": "2026-05-04T15:28:26"
@@ -3628,6 +5148,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MAYOR CORTIJOS, JOSEFA_LIMÓN VERNA_10.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 466318,
     "modified": "2026-05-04T15:05:04"
@@ -3639,6 +5165,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "VERNAS JOSEFA MAYOR CORTIJOS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 267898,
     "modified": "2026-04-22T14:56:44"
@@ -3650,6 +5180,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "VERNAS JOSEFA MAYOR CORTIJOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 353418,
     "modified": "2026-04-22T13:18:10"
@@ -3661,6 +5195,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "260227 FICHA CONEJO JUAN A. MTNEZ RUBIO EL LLANO I_26-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 225666,
     "modified": "2026-05-26T11:29:12"
@@ -3672,6 +5208,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MEMORANDUM FINANZAS, S.L._NARANJA VALENCIA MIDNIGHT._120.000 Kgs._20-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134172,
     "modified": "2026-05-20T12:55:20"
@@ -3683,6 +5223,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MEMORANDUM FINANZAS, S.L._NARANJA VALENCIA MIDNIGHT._120.000 Kgs._20-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 406445,
     "modified": "2026-05-20T12:44:16"
@@ -3694,6 +5238,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO COMPRA MR. ORGÁNICA_NARANJA VALENCIA MIDNIGHT BIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 68523,
     "modified": "2026-05-20T12:41:24"
@@ -3705,6 +5253,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "NARANJA MIDNIGHT MEMORANDUM 2026 firmado.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2233548,
     "modified": "2026-05-20T11:01:32"
@@ -3716,6 +5268,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "NARANJA MIDNIGHT MEMORANDUM 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 221029,
     "modified": "2026-05-20T10:59:54"
@@ -3727,6 +5283,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MEMORANDUM FINANZAS, S.L._NARANJA LANELATE_100.000 Kgs._ 15-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134448,
     "modified": "2026-04-15T12:58:18"
@@ -3738,6 +5298,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MEMORANDUM FINANZAS, S.L._NARANJA LANELATE_100.000 Kgs._Fdo. 15-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 742163,
     "modified": "2026-04-15T12:38:50"
@@ -3749,6 +5313,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA LANE 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 58827,
     "modified": "2026-04-14T12:16:34"
@@ -3760,6 +5328,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA LANE 2026 v2.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 338028,
     "modified": "2026-04-14T12:12:46"
@@ -3771,6 +5343,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA LANE memorandum 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 336889,
     "modified": "2026-04-14T09:22:10"
@@ -3782,6 +5358,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO NARANJA LANE 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 337651,
     "modified": "2026-04-13T14:24:10"
@@ -3793,6 +5373,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MENDEZ OTALORA, ALFONSO_LIMÓN FINO_4.000 Kgs._ 16-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134655,
     "modified": "2026-02-16T12:59:54"
@@ -3804,6 +5390,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MENDEZ OTALORA, ALFONSO_LIMÓN FINO_4.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 725121,
     "modified": "2026-02-16T12:46:54"
@@ -3815,6 +5407,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MENGUAL MEZ. ANTONIO_NARANJA LANELATE_80.000 Kgs._17-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134399,
     "modified": "2026-02-17T10:00:26"
@@ -3826,6 +5422,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MENGUAL MEZ. ANTONIO_NARANJA LANELATE_80.000 Kgs._Fdo. 17-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1561996,
     "modified": "2026-02-17T09:56:46"
@@ -3837,6 +5437,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANTONIO MENGUAL LANE.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 279341,
     "modified": "2026-02-16T10:04:14"
@@ -3848,6 +5450,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANTONIO MENGUAL LANE.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 41842,
     "modified": "2026-02-16T10:04:00"
@@ -3859,6 +5463,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MENGUAL MEZ. ANTONIO_NARANJA SALUSTIANA_100.000 Kgs._23-12-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 149181,
     "modified": "2025-12-23T09:58:54"
@@ -3870,6 +5478,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MENGUAL MEZ. ANTONIO_NARANJA SALUSTIANA_100.000 Kgs._23-12-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1029167,
     "modified": "2025-12-23T09:58:26"
@@ -3881,6 +5493,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MIÑANO RUIZ, ISIDRO_LIMÓN VERNA_5.000 Kgs._28-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134901,
     "modified": "2026-05-28T15:16:48"
@@ -3892,6 +5510,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MIÑANO RUIZ, ISIDRO_LIMÓN VERNA_5.000 Kgs._28-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 782484,
     "modified": "2026-05-27T15:46:46"
@@ -3903,6 +5527,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Compra fino Isidro Miñano.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 268126,
     "modified": "2026-05-27T15:15:40"
@@ -3914,6 +5542,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MIÑANO RUIZ, ISIDRO_LIMÓN FINO_20.000 Kgs._29-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134354,
     "modified": "2026-04-29T15:38:48"
@@ -3925,6 +5559,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MIÑANO RUIZ, ISIDRO_LIMÓN FINO_20.000 Kgs._29-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 636440,
     "modified": "2026-04-29T15:34:58"
@@ -3936,6 +5576,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Compra fino Isidro  Miñano FINO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 268080,
     "modified": "2026-04-21T10:11:58"
@@ -3947,6 +5591,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Compra fino Isidro Miñano FINO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 354062,
     "modified": "2026-04-21T10:07:50"
@@ -3958,6 +5606,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO COMPRA MR. ORGÁNICA_MANDARINA BIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55093,
     "modified": "2025-09-03T13:39:46"
@@ -3969,6 +5621,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO COMPRA MR. ORGÁNICA_NARANJA BIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55101,
     "modified": "2025-09-03T13:39:46"
@@ -3980,6 +5636,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO COMPRA TOÑIFRUIT_MANDARINA BIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 49367,
     "modified": "2025-09-03T13:39:46"
@@ -3991,6 +5651,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO COMPRA TOÑIFRUIT_NARANJA BIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 46588,
     "modified": "2025-09-03T13:39:46"
@@ -4002,6 +5666,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Texto Contrato Compraventa LIMONES FRESCO BIO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 263864,
     "modified": "2025-09-03T13:39:46"
@@ -4013,6 +5681,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Texto Contrato Compraventa POMELOS FRESCO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 262836,
     "modified": "2025-09-03T13:39:46"
@@ -4024,6 +5696,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Texto Contrato Compraventa TOÑIFRUIT_LIMONES FRESCO BIO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 263965,
     "modified": "2025-09-03T13:39:46"
@@ -4035,6 +5711,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Texto Contrato Compraventa TOÑIFRUIT_POMELOS FRESCO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 262863,
     "modified": "2025-09-03T13:39:46"
@@ -4046,6 +5726,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓNN CONTRATO MRO_MOLDOVAN BORA, PARASCHIVA_ALBARICOQUE_50.000 Kgs._18-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134412,
     "modified": "2026-05-18T10:42:22"
@@ -4057,6 +5741,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MOLDOVAN BORA, PARASCHIVA_ALBARICOQUE_50.000 Kgs._18-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 462998,
     "modified": "2026-05-18T09:59:22"
@@ -4068,6 +5756,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "PARASCHIVA MOLDOVAN  MR. ORGÁNICA_FRUTA DE HUESO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 61269,
     "modified": "2026-05-14T10:42:26"
@@ -4079,6 +5769,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MOLINA FDEZ. SERGIO_LIMÓN VERNA_12.000 Kgs._ 20-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134381,
     "modified": "2026-04-20T14:57:52"
@@ -4090,6 +5786,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MOLINA FDEZ. SERGIO_LIMÓN VERNA_12.000 Kgs._Fdo. 20-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2426643,
     "modified": "2026-04-20T12:31:36"
@@ -4101,6 +5803,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MOLINA FDEZ. SERGIO_LIMÓN VERNA_12.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 310137,
     "modified": "2026-04-17T10:19:52"
@@ -4112,6 +5820,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO verna SERGIO Molina [1].docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 350802,
     "modified": "2026-04-17T10:01:16"
@@ -4123,6 +5835,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (20).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2967,
     "modified": "2026-05-08T12:44:36"
@@ -4134,6 +5848,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (19).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3286,
     "modified": "2026-05-08T12:42:52"
@@ -4145,6 +5861,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (18).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3286,
     "modified": "2026-05-08T12:40:30"
@@ -4156,6 +5874,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (17).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3391,
     "modified": "2026-05-08T12:38:02"
@@ -4167,6 +5887,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (16).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3537,
     "modified": "2026-05-08T12:34:10"
@@ -4178,6 +5900,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (15).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2636,
     "modified": "2026-05-08T12:21:14"
@@ -4189,6 +5913,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (14).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2621,
     "modified": "2026-05-08T12:18:52"
@@ -4200,6 +5926,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (13).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2716,
     "modified": "2026-05-08T12:16:16"
@@ -4211,6 +5939,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (12).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2712,
     "modified": "2026-05-08T12:14:42"
@@ -4222,6 +5952,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (11).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2569,
     "modified": "2026-05-08T12:13:38"
@@ -4233,6 +5965,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (10).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2983,
     "modified": "2026-05-08T12:11:26"
@@ -4244,6 +5978,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (9).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3072,
     "modified": "2026-05-08T12:09:50"
@@ -4255,6 +5991,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (8).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3097,
     "modified": "2026-05-08T12:07:40"
@@ -4266,6 +6004,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (7).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2552,
     "modified": "2026-05-08T11:52:08"
@@ -4277,6 +6017,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (6).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2556,
     "modified": "2026-05-08T11:50:30"
@@ -4288,6 +6030,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (5).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2651,
     "modified": "2026-05-08T11:48:38"
@@ -4299,6 +6043,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (4).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2745,
     "modified": "2026-05-08T11:46:52"
@@ -4310,6 +6056,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (3).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 2580,
     "modified": "2026-05-08T11:45:28"
@@ -4321,6 +6069,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (2).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3003,
     "modified": "2026-05-08T11:43:48"
@@ -4332,6 +6082,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data (1).xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3142,
     "modified": "2026-05-08T11:41:56"
@@ -4343,6 +6095,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "data.xlsx",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "XLSX",
     "size": 3147,
     "modified": "2026-05-08T11:39:54"
@@ -4354,6 +6108,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MONTERO BRENES JUAN_LIMÓN VERNA_10.000 Kgs_08-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134041,
     "modified": "2026-05-08T11:35:44"
@@ -4365,6 +6125,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MONTERO BRENES JUAN_LIMÓN VERNA_10.000 Kgs_08-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2730697,
     "modified": "2026-05-08T11:29:52"
@@ -4376,6 +6142,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MONTERO BRENES, JUAN_LIMÓN VERNA_10.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 267839,
     "modified": "2026-04-20T16:48:48"
@@ -4387,6 +6159,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN RODREJO_5.000 Kgs_27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134400,
     "modified": "2026-07-27T15:40:30"
@@ -4398,6 +6176,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN RODREJO_5.000 Kgs_27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2438008,
     "modified": "2026-07-27T13:48:18"
@@ -4409,6 +6193,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN RODREJO_5.000 Kgs_24-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 281734,
     "modified": "2026-07-24T09:36:50"
@@ -4420,6 +6210,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN RODREJO_5.000 Kgs_24-07-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 179215,
     "modified": "2026-07-24T09:36:36"
@@ -4431,6 +6227,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN VERNA_5.000 Kgs_05-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134456,
     "modified": "2026-05-05T14:50:38"
@@ -4442,6 +6244,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN VERNA_5.000 Kgs_05-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2444727,
     "modified": "2026-05-05T12:13:36"
@@ -4453,6 +6261,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MORALES LERIA, Mª JOSEFA_LIMÓN VERNA_5.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179121,
     "modified": "2026-04-27T12:48:28"
@@ -4464,6 +6278,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_JOSEFA MORENO SÁNCHEZ_LIMÓN RODREJO_12.000 Kgs._01-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134505,
     "modified": "2026-07-01T16:20:10"
@@ -4475,6 +6295,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSEFA MORENO SÁNCHEZ_LIMÓN RODREJO_12.000 Kgs._01-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 535561,
     "modified": "2026-07-01T16:10:28"
@@ -4486,6 +6312,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSEFA MORENO_LIMÓN FINO rodrejo..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268187,
     "modified": "2026-07-01T16:00:20"
@@ -4497,6 +6330,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_JOSEFA MORENO_LIMÓN FINO rodrejo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 325337,
     "modified": "2026-06-26T14:18:32"
@@ -4508,6 +6348,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN _Nº 7_CONTRATO MRO_CITRICOS LOS ALCORES_NARANJA BARBERINA_22.000 Kgs_ 18-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134257,
     "modified": "2026-03-18T14:45:10"
@@ -4519,6 +6363,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Nº 7_CONTRATO MRO_CITRICOS LOS ALCORES_NARANJA BARBERINA_22.000 Kgs_ Fdo. 18-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 294831,
     "modified": "2026-03-18T14:42:14"
@@ -4530,6 +6378,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN_Nº 6_ CONTRATO MRO_CITRICOS LOS ALCORES_NARANJA BARBERINA_22.000 Kgs_16-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134358,
     "modified": "2026-03-16T15:19:14"
@@ -4541,6 +6393,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Nº 6_CONTRATO MRO_CITRICOS LOS ALCORES_NARANJA BARBERINA_22.000 Kgs_Fdo. 16-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 276975,
     "modified": "2026-03-16T14:57:34"
@@ -4552,6 +6408,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_NAVARRO DÍAZ, JUAN ANDRÉS_ LIMÓN VERNA_6.000 Kgs_21-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134518,
     "modified": "2026-04-21T15:10:50"
@@ -4563,6 +6425,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_NAVARRO DÍAZ, JUAN ANDRÉS_ LIMÓN VERNA_6.000 Kgs_Fdo. 21-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 550054,
     "modified": "2026-04-21T13:45:02"
@@ -4574,6 +6442,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA JUAN PEDRO_LIMÓN VERNA_6.000 Kgs_.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268191,
     "modified": "2026-04-21T12:25:56"
@@ -4585,6 +6459,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_NÚÑEZ LÓPEZ, ANTONIO_LIMÓN VERNA_6.000 Kgs._ 15-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134666,
     "modified": "2026-04-15T10:49:00"
@@ -4596,6 +6476,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_NÚÑEZ LÓPEZ, ANTONIO_LIMÓN VERNA_6.000 Kgs._Fdo. 15-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 728005,
     "modified": "2026-04-15T10:01:24"
@@ -4607,6 +6493,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO ANTONIO GARCIA NUÑEZ.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 318877,
     "modified": "2026-04-14T15:19:54"
@@ -4618,6 +6506,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO AILIMPO ANTONIO GARCIA NUÑEZ.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 181543,
     "modified": "2026-04-14T15:19:44"
@@ -4629,6 +6519,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE MODIFICACIÓN CONTRATO MRO_PATATAS ALCALDE_LIMÓN VERNA SEGUNDO_75.000 Kgs._ 18-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134125,
     "modified": "2026-05-18T13:45:28"
@@ -4640,6 +6536,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN VERNA SEGUNDO_75.000 Kgs._ 18-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 1113233,
     "modified": "2026-05-18T13:40:42"
@@ -4651,6 +6553,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO RETARDÍO_75.000 Kgs._ 06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134180,
     "modified": "2026-05-06T13:54:58"
@@ -4662,6 +6570,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PATATAS ALCALDE_LIMÓN VERNA_300.000 Kgs._06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134430,
     "modified": "2026-05-06T13:48:28"
@@ -4673,6 +6587,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO RETARDÍO_75.000 Kgs._ 06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 1113189,
     "modified": "2026-05-06T13:35:00"
@@ -4684,6 +6604,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN VERNA_300.000 Kgs._06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 1104034,
     "modified": "2026-05-06T13:34:14"
@@ -4695,6 +6621,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SKM_C257i26041609370.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 147362,
     "modified": "2026-04-28T12:01:58"
@@ -4706,6 +6634,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PATATAS ALCALDE_NARANJA VALENCIA LATE_25.000 Kgs._16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [
+      "Valencia Late"
+    ],
     "extension": "PDF",
     "size": 133923,
     "modified": "2026-04-16T15:05:32"
@@ -4717,6 +6651,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PATATAS ALCALDE_NARANJA VALENCIA LATE_25.000 Kgs._Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [
+      "Valencia Late"
+    ],
     "extension": "PDF",
     "size": 919816,
     "modified": "2026-04-16T14:52:34"
@@ -4728,6 +6668,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO_150.000 Kgs._ 06-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 133779,
     "modified": "2026-03-06T11:40:22"
@@ -4739,6 +6685,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO_150.000 Kgs._Fdo. 06-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 759442,
     "modified": "2026-03-06T11:21:26"
@@ -4750,6 +6702,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO_250.000 Kgs._07-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 148572,
     "modified": "2026-01-15T10:05:18"
@@ -4761,6 +6719,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO_250.000 Kgs._Fdo. 07-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 501095,
     "modified": "2026-01-15T09:57:32"
@@ -4772,6 +6736,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato limon VERNA ..FRANCISCA PEREZ GARCIA RODREJOS.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 308064,
     "modified": "2026-08-10T13:10:02"
@@ -4783,6 +6754,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato limon VERNA ..FRANCISCA PEREZ GARCIA RODREJOS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna",
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 178876,
     "modified": "2026-08-10T13:09:02"
@@ -4794,6 +6772,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PÉREZ GARCÍA, FRANCISCA_LIMÓN VERNA_30.000 Kgs._20-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134331,
     "modified": "2026-04-20T14:45:04"
@@ -4805,6 +6789,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PÉREZ GARCÍA, FRANCISCA_LIMÓN VERNA_30.000 Kgs._Fdo. 20-04-26",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "200426",
     "size": 2408988,
     "modified": "2026-04-20T11:56:46"
@@ -4816,6 +6806,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato limon VERNA ..FRANCISCA PEREZ GARCIA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179233,
     "modified": "2026-04-17T10:15:40"
@@ -4827,6 +6823,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PÉREZ LEBRÓN, Mª JESÚS_LIMÓN RODREJO_5.000 Kgs._27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134699,
     "modified": "2026-07-27T15:38:50"
@@ -4838,6 +6840,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PÉREZ LEBRÓN, Mª JESÚS_LIMÓN RODREJO_5.000 Kgs._27-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2584260,
     "modified": "2026-07-27T13:49:00"
@@ -4849,6 +6857,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN rodrejo.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 321683,
     "modified": "2026-07-20T14:52:06"
@@ -4860,6 +6874,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN rodrejo.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268131,
     "modified": "2026-07-20T14:51:54"
@@ -4871,6 +6891,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCION CONTRATO MRO_PÉREZ LEBRÓN, Mª JESÚS_LIMÓN VERNA_5.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134906,
     "modified": "2026-05-12T16:42:30"
@@ -4882,6 +6908,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PÉREZ LEBRÓN, Mª JESÚS_LIMÓN VERNA_5.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2459994,
     "modified": "2026-05-12T15:36:30"
@@ -4893,6 +6925,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PÉREZ LEBRÓN, Mª JESÚS_LIMÓN VERNA_5.000 Kgs,,,_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179173,
     "modified": "2026-04-30T12:26:06"
@@ -4904,6 +6942,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PÉREZ LEBRÓN, Mª JESÚS_LIMÓN VERNA_5.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 179173,
     "modified": "2026-04-30T12:22:34"
@@ -4915,6 +6959,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PORRAS ROMERO, FRANCISCO MIGUEL_LIMÓN RODREJO_3.500 Kgs_07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134264,
     "modified": "2026-07-07T13:17:50"
@@ -4926,6 +6976,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, FRANCISCO MIGUEL_LIMÓN rodrejo Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268262,
     "modified": "2026-07-07T13:07:54"
@@ -4937,6 +6993,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, FRANCISCO MIGUEL_LIMÓN RODREJO_3.500 Kgs_07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1512600,
     "modified": "2026-07-07T12:49:14"
@@ -4948,6 +7010,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, FRANCISCO MIGUEL_LIMÓN rodrejo Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 323980,
     "modified": "2026-06-29T13:31:28"
@@ -4959,6 +7027,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO FRANCISCO MIGUEL PORRAS.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 175243,
     "modified": "2026-06-04T10:42:14"
@@ -4970,6 +7040,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO FRANCISCO MIGUEL PORRAS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 334044,
     "modified": "2026-06-04T10:41:58"
@@ -4981,6 +7053,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PORRAS ROMERO FRANCISCO MIGUEL_LIMÓN VERNA_10.000 Kgs_03-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134095,
     "modified": "2026-06-03T15:22:56"
@@ -4992,6 +7070,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO FRANCISCO MIGUEL_LIMÓN VERNA_10.000 Kgs_03-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2558730,
     "modified": "2026-06-03T15:15:08"
@@ -5003,6 +7087,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, FRANCISCO MIGUEL_LIMÓN VERNA_10.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268329,
     "modified": "2026-04-20T16:57:48"
@@ -5014,6 +7104,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PORRAS ROMERO, GABRIEL JESÚS_LIMÓN VERNA_3.500 Kgs_07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134221,
     "modified": "2026-07-07T13:19:26"
@@ -5025,6 +7121,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, GABRIEL JESÚS_LIMÓN RODREJO_3.500 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268397,
     "modified": "2026-07-07T13:11:14"
@@ -5036,6 +7138,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, GABRIEL JESÚS_LIMÓN VERNA_10.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268385,
     "modified": "2026-07-07T13:10:44"
@@ -5047,6 +7155,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, GABRIEL JESÚS_LIMÓN VERNA_3.500 Kgs_07-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 1510616,
     "modified": "2026-07-07T12:40:14"
@@ -5058,6 +7172,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO, GABRIEL JESÚS_LIMÓN RODREJO_3.500 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 316742,
     "modified": "2026-06-29T13:52:50"
@@ -5069,6 +7189,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO GABRIEL JESUS PORRAS.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 175126,
     "modified": "2026-06-04T10:55:08"
@@ -5080,6 +7202,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO GABRIEL JESUS PORRAS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 334059,
     "modified": "2026-06-04T10:54:58"
@@ -5091,6 +7215,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PORRAS ROMERO GABRIEL JESÚS_LIMÓN VERNA_10.000 Kgs_03-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134162,
     "modified": "2026-06-03T15:24:18"
@@ -5102,6 +7232,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO GABRIEL JESÚS_LIMÓN VERNA_10.000 Kgs_03-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2530209,
     "modified": "2026-06-03T15:15:52"
@@ -5113,6 +7249,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PORRAS ROMERO GABRIEL JESÚS_LIMÓN VERNA_10.000 Kgs_.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 315908,
     "modified": "2026-05-05T11:32:00"
@@ -5124,6 +7266,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN SEGUNDOS Y RODREJO_20.000 Kgs._08-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134794,
     "modified": "2026-07-08T16:04:00"
@@ -5135,6 +7283,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN SEGUNDOS Y RODREJO_20.000 Kgs._08-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1743344,
     "modified": "2026-07-08T15:59:56"
@@ -5146,6 +7300,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN_CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN VERNA_130.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134690,
     "modified": "2026-05-04T15:22:52"
@@ -5157,6 +7317,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN VERNA_130.000 Kgs._04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2824791,
     "modified": "2026-05-04T14:58:40"
@@ -5168,6 +7334,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN FINO Y EUREKA_300.000 Kgs._24-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134647,
     "modified": "2026-02-24T11:08:44"
@@ -5179,6 +7351,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN FINO Y EUREKA_300.000 Kgs._Fdo. 24-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 2024854,
     "modified": "2026-02-24T10:37:04"
@@ -5190,6 +7368,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "DECLARACIÓN ALIMENTARIA_15-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 173269,
     "modified": "2026-07-15T12:25:36"
@@ -5201,6 +7381,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_PROMOCIONES TORRE EDAR, S.L._LIMÓN RODREJO_15.000 Kgs._14-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 133973,
     "modified": "2026-07-14T11:00:26"
@@ -5212,6 +7398,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_PROMOCIONES TORRE EDAR, S.L._LIMÓN RODREJO_15.000 Kgs._14-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 3749135,
     "modified": "2026-07-14T10:56:00"
@@ -5223,6 +7415,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "declaración de exclusión LIMÓN.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 312382,
     "modified": "2026-07-14T10:54:14"
@@ -5234,6 +7430,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "declaración de exclusión LIMÓN.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 2555326,
     "modified": "2026-07-14T10:52:06"
@@ -5245,6 +7445,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS PROMOCIONES TORRE EDAR.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 354831,
     "modified": "2026-07-09T11:33:22"
@@ -5256,6 +7460,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "RODREJOS PROMOCIONES TORRE EDAR.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268164,
     "modified": "2026-07-09T11:33:12"
@@ -5267,6 +7475,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_QUIRANTE FRUITS, S.L._NARANJA_100.000 Kgs._Fdo. 25-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134668,
     "modified": "2026-03-25T11:31:54"
@@ -5278,6 +7490,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_QUIRANTE FRUITS, S.L._NARANJA_100.000 Kgs._Fdo. 25-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1109916,
     "modified": "2026-03-25T11:26:06"
@@ -5289,6 +7505,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_QUIRANTE FRUITS, S.L._NARANJA_100.000 Kgs._Fdo. 12-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 815677,
     "modified": "2026-01-12T13:47:00"
@@ -5300,6 +7520,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REINA VILA, FRANCISCA_LIMÓN rodrejo_5.000 Kgs_.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 288846,
     "modified": "2026-08-10T13:07:30"
@@ -5311,6 +7537,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REINA VILA, FRANCISCA_LIMÓN rodrejo_5.000 Kgs_.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 179117,
     "modified": "2026-08-10T13:07:16"
@@ -5322,6 +7554,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN_CONTRATO MRO_REINA VILA, FRANCISCA_LIMÓN VERNA_5.000 Kgs_30-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134200,
     "modified": "2026-04-30T14:51:56"
@@ -5333,6 +7571,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REINA VILA, FRANCISCA_LIMÓN VERNA_5.000 Kgs_30-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2512897,
     "modified": "2026-04-30T14:39:26"
@@ -5344,6 +7588,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REINA VILA, FRANCISCA_LIMÓN VERNA_5.000 Kgs_27-04-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 178695,
     "modified": "2026-04-27T12:34:08"
@@ -5355,6 +7605,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_CATALINA REYES_LIMÓN RODREJO_3.000 Kgs._03-08-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134045,
     "modified": "2026-08-03T12:07:30"
@@ -5366,6 +7622,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CATALINA REYES_LIMÓN RODREJO_3.000 Kgs._03-08-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1356942,
     "modified": "2026-08-03T11:58:34"
@@ -5377,6 +7639,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO MARIA DOLORES REYES_LIMÓN RODREJO_3.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 324204,
     "modified": "2026-07-24T14:33:02"
@@ -5388,6 +7656,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO MARIA DOLORES REYES_LIMÓN RODREJO_3.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268733,
     "modified": "2026-07-24T14:32:40"
@@ -5399,6 +7673,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CATALINA REYES_LIMÓN RODREJO_3.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 324558,
     "modified": "2026-07-24T14:19:56"
@@ -5410,6 +7690,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_CATALINA REYES_LIMÓN RODREJO_3.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268705,
     "modified": "2026-07-24T14:19:14"
@@ -5421,6 +7707,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANE INSCRIPCIÓN CONTRATO MRO_REYES GARCÍA, CATALINA_LIMÓN VERNA_5.000 Kgs._21-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 133995,
     "modified": "2026-05-21T14:53:22"
@@ -5432,6 +7724,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REYES GARCÍA, CATALINA_LIMÓN VERNA_5.000 Kgs._21-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2619812,
     "modified": "2026-05-21T14:49:00"
@@ -5443,6 +7741,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CATALINA REYES GARCIA VERNAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 261930,
     "modified": "2026-05-21T14:43:10"
@@ -5454,6 +7756,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_REYES GARCÍA, Mª DOLORES_LIMÓN RODREJO_3.000 Kgs._28-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134205,
     "modified": "2026-07-28T13:07:00"
@@ -5465,6 +7773,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REYES GARCÍA, Mª DOLORES_LIMÓN RODREJO_3.000 Kgs._28-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1547201,
     "modified": "2026-07-28T12:56:20"
@@ -5476,6 +7790,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO MARIA DOLORES REYES_LIMÓN RODREJO_3.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 316848,
     "modified": "2026-07-24T14:34:30"
@@ -5487,6 +7807,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO MARIA DOLORES REYES_LIMÓN RODREJO_3.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268724,
     "modified": "2026-07-24T14:34:16"
@@ -5498,6 +7824,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_REYES GARCÍA, Mª DOLORES_LIMÓN VERNA_5.000 Kgs._21-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134242,
     "modified": "2026-05-21T14:51:46"
@@ -5509,6 +7841,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_REYES GARCÍA, Mª DOLORES_LIMÓN VERNA_5.000 Kgs._21-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2571921,
     "modified": "2026-05-21T14:45:30"
@@ -5520,6 +7858,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MARIA DOLORES REYES GARCIA VERNAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 272690,
     "modified": "2026-04-28T14:24:50"
@@ -5531,6 +7873,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ROMERO MONTALBÁN, ANDRÉS RAUL_LIMÓN VERNA_15.000 Kgs._18-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134376,
     "modified": "2026-05-18T11:33:46"
@@ -5542,6 +7890,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ROMERO MONTALBÁN, ANDRÉS RAUL_LIMÓN VERNA_15.000 Kgs._18-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 705388,
     "modified": "2026-05-18T11:29:44"
@@ -5553,6 +7907,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANDRES RAUL ROMERO VERNAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 346002,
     "modified": "2026-05-18T10:59:12"
@@ -5564,6 +7922,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANDRES RAUL ROMERO VERNAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 264858,
     "modified": "2026-05-18T10:59:02"
@@ -5575,6 +7937,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_ROYUELA AMORÓS, CARMEN_MANDARINA GOLD NUGGET_50.000 Kgs._ 02-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134554,
     "modified": "2026-02-02T12:34:40"
@@ -5586,6 +7952,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_ROYUELA AMORÓS, CARMEN_MANDARINA GOLD NUGGET_50.000 Kgs._Fdo. 02-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 421067,
     "modified": "2026-02-02T12:23:18"
@@ -5597,6 +7967,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "~$NTRATO GOLD NUGGET CARMEN ROYUELA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 162,
     "modified": "2026-01-28T11:57:10"
@@ -5608,6 +7980,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO GOLD NUGGET CARMEN ROYUELA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 248999,
     "modified": "2026-01-27T14:22:30"
@@ -5619,6 +7993,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO GOLD NUGGET CARMEN ROYUELA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55329,
     "modified": "2026-01-27T14:22:18"
@@ -5630,6 +8006,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Registro contrato Carmen Royuela Amoros.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134465,
     "modified": "2026-01-21T12:17:30"
@@ -5641,6 +8019,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato limon fino Carmen Royuela Amoros-Mr Organica.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 466005,
     "modified": "2026-01-21T12:08:04"
@@ -5652,6 +8036,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_RUBIO PAZ, S.L._LIMÓN RODREJO_4.500 Kgs._22-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134700,
     "modified": "2026-07-22T17:11:36"
@@ -5663,6 +8053,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_RUBIO PAZ, S.L._LIMÓN RODREJO_4.500 Kgs._Fdo. 22-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2705914,
     "modified": "2026-07-22T12:18:36"
@@ -5674,6 +8070,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_RUBIO PAZ, S.L._LIMÓN RODREJO_4.500 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 315538,
     "modified": "2026-07-20T13:36:54"
@@ -5685,6 +8087,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_RUBIO PAZ, S.L._LIMÓN RODREJO_4.500 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268189,
     "modified": "2026-07-20T13:36:40"
@@ -5696,6 +8104,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_RUBIO PAZ S.L._LIMÓN VERNA_8.000 Kgs_08-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134500,
     "modified": "2026-05-08T15:19:48"
@@ -5707,6 +8121,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_RUBIO PAZ S.L._LIMÓN VERNA_8.000 Kgs_08-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2739826,
     "modified": "2026-05-08T15:15:44"
@@ -5718,6 +8138,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_RUBIO PAZ, S.L._LIMÓN VERNA_8.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268064,
     "modified": "2026-04-20T16:52:02"
@@ -5729,6 +8155,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_RUIPEREZ SÁNCHEZ, ANTONIA_LIMÓN FINO_6.000 Kgs._03-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134922,
     "modified": "2026-02-03T11:00:04"
@@ -5740,6 +8172,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_RUIPEREZ SÁNCHEZ, ANTONIA_LIMÓN FINO_6.000 Kgs._Fdo. 03-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 2373923,
     "modified": "2026-02-03T09:40:10"
@@ -5751,6 +8189,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA FINOS  ANTONIA RUIPEREZ.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 263741,
     "modified": "2026-01-16T11:51:56"
@@ -5762,6 +8204,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA FINOS  ANTONIA RUIPEREZ.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "DOCX",
     "size": 264943,
     "modified": "2026-01-16T11:51:44"
@@ -5773,6 +8219,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Justificante presentacion Josefa Ruiz Grao.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134291,
     "modified": "2026-01-20T16:05:08"
@@ -5784,6 +8232,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Josefa Ruiz Grao-Mr Organica naranja Lanelate firmado.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 379435,
     "modified": "2026-01-20T16:00:00"
@@ -5795,6 +8247,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LANELATE JOSEFA RUIZ GRAO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 248684,
     "modified": "2026-01-19T11:23:56"
@@ -5806,6 +8260,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LANELATE JOSEFA RUIZ GRAO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55260,
     "modified": "2026-01-19T11:23:46"
@@ -5817,6 +8273,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO SAT RAMBLA AMARGA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 2935738,
     "modified": "2026-07-06T12:58:26"
@@ -5828,6 +8286,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SAT RAMBLA AMARGA_UVA ITUM 17_30.000 Kgs._02-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 468474,
     "modified": "2026-07-06T12:53:30"
@@ -5839,6 +8301,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODELO CONTRATO UVA 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 58697,
     "modified": "2026-07-06T12:52:42"
@@ -5850,6 +8316,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "26184000962J00001.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134408,
     "modified": "2026-07-03T16:36:18"
@@ -5861,6 +8329,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_IVÁN PEDRO SÁNCHEZ GARCÍA_LIMÓN VERNA_5.000 Kgs._04-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134798,
     "modified": "2026-06-04T13:08:22"
@@ -5872,6 +8346,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_IVÁN PEDRO SÁNCHEZ GARCÍA_LIMÓN VERNA_5.000 Kgs._04-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 672747,
     "modified": "2026-06-04T10:58:22"
@@ -5883,6 +8363,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "VERNAS IVAN PEDRO SANCHEZ 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 353762,
     "modified": "2026-06-03T14:46:46"
@@ -5894,6 +8378,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "VERNAS IVAN PEDRO SANCHEZ 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268032,
     "modified": "2026-06-03T14:46:32"
@@ -5905,6 +8393,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SÁNCHEZ LUCENA, JUAN PEDRO_LIMÓN RODREJO_4.500 Kgs._ 22-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134641,
     "modified": "2026-07-22T17:19:40"
@@ -5916,6 +8410,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA, JUAN PEDRO_LIMÓN 4.500 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 268009,
     "modified": "2026-07-22T13:12:52"
@@ -5927,6 +8425,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA, JUAN PEDRO_LIMÓN RODREJO_4.500 Kgs._Fdo. 22-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 611725,
     "modified": "2026-07-22T13:09:22"
@@ -5938,6 +8442,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA, JUAN PEDRO_LIMÓN 4.500 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 314516,
     "modified": "2026-07-20T12:03:08"
@@ -5949,6 +8457,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SÁNCHEZ LUCENA JUAN PEDRO_LIMÓN VERNA_10.000 Kgs_13-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134623,
     "modified": "2026-05-14T13:07:34"
@@ -5960,6 +8474,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA JUAN PEDRO_LIMÓN VERNA_10.000 Kgs_13-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2668447,
     "modified": "2026-05-14T12:51:10"
@@ -5971,6 +8491,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA, JUAN PEDRO_LIMÓN VERNA_10.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268051,
     "modified": "2026-04-20T17:05:30"
@@ -5982,6 +8508,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Justificante Juan Sanchez.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 147232,
     "modified": "2026-08-03T09:35:26"
@@ -5993,6 +8521,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Juan Sanchez Sanchez firmado.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 2505275,
     "modified": "2026-08-03T09:34:48"
@@ -6004,6 +8534,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SÁNCHEZ SÁNCHEZ, JUAN_LIMÓN VERNA_65.000 KGS._06-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134433,
     "modified": "2026-04-06T14:52:56"
@@ -6015,6 +8551,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SÁNCHEZ SÁNCHEZ, JUAN_LIMÓN VERNA_65.000 KGS._Fdo. 06-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 2499153,
     "modified": "2026-04-06T14:44:02"
@@ -6026,6 +8568,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SANTIAGO MUÑOZ, MANUEL_LIMÓN RODREJO 3.000 Kgs._28-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134639,
     "modified": "2026-07-28T13:05:16"
@@ -6037,6 +8585,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTIAGO MUÑOZ, MANUEL_LIMÓN RODREJO 3.000 Kgs._28-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1583393,
     "modified": "2026-07-28T12:57:32"
@@ -6048,6 +8602,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTIAGO MUÑOZ, MANUEL_LIMÓN RODREJO 5.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 315497,
     "modified": "2026-07-27T09:33:44"
@@ -6059,6 +8619,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTIAGO MUÑOZ, MANUEL_LIMÓN RODREJO 5.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268492,
     "modified": "2026-07-27T09:33:30"
@@ -6070,6 +8636,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SANTIAGO MUÑOZ MANUEL_LIMÓN VERNA_20.000 Kgs_20-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134168,
     "modified": "2026-05-20T12:59:38"
@@ -6081,6 +8653,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "DNI_2.jpeg",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "JPEG",
     "size": 165740,
     "modified": "2026-05-20T12:21:04"
@@ -6092,6 +8666,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "DNI_1.jpeg",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "JPEG",
     "size": 120569,
     "modified": "2026-05-20T12:20:52"
@@ -6103,6 +8679,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTIAGO MUÑOZ MANUEL_LIMÓN VERNA_20.000 Kgs_.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 5279475,
     "modified": "2026-05-20T12:15:30"
@@ -6114,6 +8696,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTIAGO MUÑOZ, MANUEL_LIMÓN VERNA_20.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 267895,
     "modified": "2026-04-20T17:04:02"
@@ -6125,6 +8713,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO RODREJO 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268385,
     "modified": "2026-07-06T13:27:40"
@@ -6136,6 +8730,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN RODREJO_30.000 Kgs._Fdo. 29-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134083,
     "modified": "2026-06-29T14:41:44"
@@ -6147,6 +8747,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN RODREJO_30.000 Kgs._Fdo. 29-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 332215,
     "modified": "2026-06-29T14:39:22"
@@ -6158,6 +8764,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO RODREJO 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 314515,
     "modified": "2026-06-26T10:23:18"
@@ -6169,6 +8781,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN VERNA_150.000 Kgs._30-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 134610,
     "modified": "2026-03-30T12:29:36"
@@ -6180,6 +8798,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN VERNA_150.000 Kgs._Fdo. 30-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 504076,
     "modified": "2026-03-30T12:20:16"
@@ -6191,6 +8815,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN VERNA_150.000 Kgs._Fdo. 03-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 472584,
     "modified": "2026-02-03T16:04:28"
@@ -6202,6 +8832,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ ANTONIO MIGUEL SANTOS  24-25 y 25-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 326598,
     "modified": "2026-02-03T13:20:16"
@@ -6213,6 +8845,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO 24-25 y 25-26.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 268053,
     "modified": "2026-02-03T13:19:34"
@@ -6224,6 +8860,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SAURA LACAL, ANDRÉS_LIMÓN RODREJO_5.000 Kgs._Fdo. 23-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 353690,
     "modified": "2026-07-23T12:19:00"
@@ -6235,6 +8877,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SAURA LACAL, ANDRÉS_LIMÓN RODREJO_5.000 Kgs._ 23-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134161,
     "modified": "2026-07-23T12:16:38"
@@ -6246,6 +8894,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANDRES SAURA LACAL RODREJO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 323075,
     "modified": "2026-07-23T09:35:08"
@@ -6257,6 +8909,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANDRES SAURA LACAL RODREJO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268542,
     "modified": "2026-07-23T09:34:44"
@@ -6268,6 +8924,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SAURA LACAL, ANDRÉS_LIMÓN VERNA_20.000 Kgs._ 17-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 133697,
     "modified": "2026-04-17T11:54:42"
@@ -6279,6 +8941,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SAURA LACAL, ANDRÉS_LIMÓN VERNA_20.000 Kgs._Fdo. 17-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 617818,
     "modified": "2026-04-17T09:12:04"
@@ -6290,6 +8958,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANDRES SAURA LACAL VERNAS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 353584,
     "modified": "2026-04-15T13:12:16"
@@ -6301,6 +8973,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANDRES SAURA LACAL VERNAS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "DOCX",
     "size": 268366,
     "modified": "2026-04-15T13:11:52"
@@ -6312,6 +8988,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SINGULAR FRUIT COMPANY, S.L._LIMÓN RODREJO_20.000 Kgs._01-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 961179,
     "modified": "2026-07-01T10:42:20"
@@ -6323,6 +9005,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SINGULAR FRUIT COMPANY, S.L._LIMÓN RODREJO_20.000 Kgs._01-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 133975,
     "modified": "2026-07-01T10:22:48"
@@ -6334,6 +9022,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MR. ORGANICA - SINGULAR FRUIT - ANTAS ECO RODREJOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 508229,
     "modified": "2026-06-30T17:43:12"
@@ -6345,6 +9037,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SINGULAR FRUIT RODREJOS 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268189,
     "modified": "2026-06-30T10:15:12"
@@ -6356,6 +9052,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SINGULAR FRUIT RODREJOS 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 354372,
     "modified": "2026-06-30T10:14:18"
@@ -6367,6 +9067,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Registro contrato Jesus Teruel Oltra.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134274,
     "modified": "2026-01-20T16:11:04"
@@ -6378,6 +9080,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Jesus Teruel Oltra-Mr Organica naranja Lanelate FIRMADO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 456964,
     "modified": "2026-01-20T16:08:08"
@@ -6389,6 +9095,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LANELATE JESUS TERUEL OLTRA 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55677,
     "modified": "2026-01-19T14:12:02"
@@ -6400,6 +9108,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LANELATE JESUS TERUEL OLTRA 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 248509,
     "modified": "2026-01-19T11:08:40"
@@ -6411,6 +9121,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SILVIA TORRES MARTÍNEZ_LIMON FINO 2º Y RODREJO_24-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134629,
     "modified": "2026-06-24T09:37:40"
@@ -6422,6 +9139,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SILVIA TORRES MARTÍNEZ_LIMON FINO 2º Y RODREJO_24-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 1858205,
     "modified": "2026-06-23T17:30:20"
@@ -6433,6 +9157,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA FINOS SILVIA TORRES 2026 SEGUNDOS Y RODREJOS.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 326817,
     "modified": "2026-06-23T12:43:30"
@@ -6444,6 +9173,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA FINOS SILVIA TORRES 2026 SEGUNDOS Y RODREJOS.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Fino",
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 267748,
     "modified": "2026-06-23T12:42:48"
@@ -6455,6 +9189,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE MODIFICACIÓN CONTRATO DE LIMÓN FINO Y CHAPARRO DE FECHA 22-06-26_URANIO INVESTMENTS, S.L._21-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134243,
     "modified": "2026-07-21T16:36:24"
@@ -6466,6 +9206,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACIÓN CONTRATO DE LIMÓN FINO Y CHAPARRO DE FECHA 22-06-26_URANIO INVESTMENTS, S.L._21-07-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 309640,
     "modified": "2026-07-21T16:27:24"
@@ -6477,6 +9223,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO URANIO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 175014,
     "modified": "2026-07-21T15:11:08"
@@ -6488,6 +9236,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MODIFICACION CONTRATO URANIO.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 334286,
     "modified": "2026-07-21T15:10:58"
@@ -6499,6 +9249,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_URANIO INVESTMENTS, S.L._LIMÓN FINO Y FINO CHAPARRO_180.000 Kgs._23-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino chaparro",
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134345,
     "modified": "2026-06-23T09:25:22"
@@ -6510,6 +9267,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_URANIO INVESTMENTS, S.L._LIMÓN FINO Y FINO CHAPARRO_180.000 Kgs._23-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino chaparro",
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 2750181,
     "modified": "2026-06-23T09:23:10"
@@ -6521,6 +9285,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LIMON RODREJO URANIO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 354508,
     "modified": "2026-06-22T14:20:32"
@@ -6532,6 +9302,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LIMON RODREJO URANIO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 268008,
     "modified": "2026-06-22T14:20:20"
@@ -6543,6 +9319,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_URANIO INVESTMENTS, S.L._LIMÓN FINO Y FINO CHAPARRO_24.000 Kgs._08-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino chaparro",
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134569,
     "modified": "2026-06-08T17:07:32"
@@ -6554,6 +9337,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_URANIO INVESTMENTS, S.L._LIMÓN FINO Y FINO CHAPARRO_24.000 Kgs._08-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino chaparro",
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 318405,
     "modified": "2026-06-08T17:05:38"
@@ -6565,6 +9355,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LIMON SEGUNDO URANIO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 354150,
     "modified": "2026-06-05T12:14:58"
@@ -6576,6 +9370,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "LIMON SEGUNDO URANIO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 267914,
     "modified": "2026-06-05T12:14:26"
@@ -6587,6 +9385,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_VILA BLANCO, JOSÉ ANTONIO_LIMÓN VERNA_4.000 Kgs._14-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 127672,
     "modified": "2026-04-14T15:11:18"
@@ -6598,6 +9402,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_VILA BLANCO, JOSÉ ANTONIO_LIMÓN VERNA_4.000 Kgs._Fdo. 14-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Verna"
+    ],
     "extension": "PDF",
     "size": 548125,
     "modified": "2026-04-14T12:27:46"
@@ -6609,6 +9419,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO  25-26. JOSE ANTONIO VILAdocx.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 321928,
     "modified": "2026-04-14T09:44:12"
@@ -6620,6 +9434,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "MOD. COMPRA MR. ORGÁNICA_ LIMÓN BIO  25-26. JOSE ANTONIO VILAdocx.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 268143,
     "modified": "2026-04-14T09:44:00"
@@ -6631,6 +9449,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN 4- CONTRATO TOÑIFRUIT_AGROMÍN DEL SUR_MANDARINA NADORCOTT Y TANGO_325.000 Kgs._05-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott",
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 148893,
     "modified": "2026-02-12T10:08:30"
@@ -6642,6 +9467,13 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "4- CONTRATO TOÑIFRUIT_AGROMÍN DEL SUR_MANDARINA NADORCOTT Y TANGO_325.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Nadorcott",
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 152748,
     "modified": "2026-02-12T10:08:10"
@@ -6653,6 +9485,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_CITRISOL (FINCA D. ANA)_LIMÓN FINO_400.000 Kgs._ 09-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 134538,
     "modified": "2026-03-09T13:13:14"
@@ -6664,6 +9502,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Registro contrato citrisol.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 148778,
     "modified": "2026-03-09T13:09:06"
@@ -6675,6 +9515,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "10-2026 Limon Fino Citrisol_FDA-Toñifruit.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 3791237,
     "modified": "2026-03-09T13:08:42"
@@ -6686,6 +9532,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_CITRISOL (FINCA D. ANA)_LIMÓN FINO_400.000 Kgs._Fdo. 09-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Fino"
+    ],
     "extension": "PDF",
     "size": 2464549,
     "modified": "2026-03-09T13:05:06"
@@ -6697,6 +9549,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Registro contrato Espafruit.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134501,
     "modified": "2026-01-20T16:15:18"
@@ -6708,6 +9562,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Espafruit-Toñifruit naranja Lanelate FIRMADO.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 809880,
     "modified": "2026-01-20T16:13:54"
@@ -6719,6 +9577,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPICIÓN CONTRATO TOÑIFRUIT_FOASAT_NARANJA LANE LATE_200.000 Kgs._ 12-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134626,
     "modified": "2026-03-12T12:37:30"
@@ -6730,6 +9592,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_FOASAT_NARANJA LANE LATE_200.000 Kgs._Fdo. 12-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1183147,
     "modified": "2026-03-12T12:29:54"
@@ -6741,6 +9607,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_FOASAT_NARANJA SALUSTIANA_80.000 Kgs._Fdo. 16-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134777,
     "modified": "2026-02-16T12:54:58"
@@ -6752,6 +9622,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_FOASAT_NARANJA SALUSTIANA_80.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1810996,
     "modified": "2026-02-16T12:29:10"
@@ -6763,6 +9637,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_FRUTALES SANTIAGO APOSTOL DE ISSO, SOC. COOP._ MELOCOTÓN ROMEA_15.000 Kgs._19-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1669724,
     "modified": "2026-06-22T15:38:16"
@@ -6774,6 +9652,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "FRUTALES SANTIAGO APOSTOL DE ISSO MELOCOTON ROMEA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 55257,
     "modified": "2026-06-18T15:23:44"
@@ -6785,6 +9667,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "FRUTALES SANTIAGO APOSTOL DE ISSO MELOCOTON ROMEA.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 296008,
     "modified": "2026-06-16T15:27:48"
@@ -6796,6 +9682,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Melocoton CoopS.Apostol-Tñ.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 5928,
     "modified": "2026-06-15T09:28:44"
@@ -6807,6 +9697,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_GARCÍA CHUECOS, PEDRO_ALBARICOQUE (VARIOS)_30-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134245,
     "modified": "2026-04-30T09:30:16"
@@ -6818,6 +9712,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_GARCÍA CHUECOS, PEDRO_ALBARICOQUE (VARIOS)_29-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 3020577,
     "modified": "2026-04-29T15:30:24"
@@ -6829,6 +9727,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "PEDRO GARCIA CHUECOS FRUTA HUESO 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 358714,
     "modified": "2026-04-28T10:45:36"
@@ -6840,6 +9740,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "PEDRO GARCIA CHUECOS FRUTA HUESO 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [],
     "extension": "DOCX",
     "size": 53032,
     "modified": "2026-04-28T10:43:42"
@@ -6851,6 +9753,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_LOZANO BROTONS, ANTONIO_FRUTA DE HUESO VARIA_27-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 3361611,
     "modified": "2026-04-28T09:21:50"
@@ -6862,6 +9766,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_LOZANO BROTONS, JUAN JOSÉ_ALBARICOQUE MIRLO NARANJA Y FLOPRIA_6.000 Kgs._13-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja",
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134645,
     "modified": "2026-05-13T12:10:06"
@@ -6873,6 +9782,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_LOZANO BROTONS, JUAN JOSÉ_ALBARICOQUE MIRLO NARANJA Y FLOPRIA_6.000 Kgs._13-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja",
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 384017,
     "modified": "2026-05-13T12:04:38"
@@ -6884,6 +9798,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_LOZANO BROTONS, JUAN JOSÉ_ALBARICOQUE MIRLO NARANJA Y FLOPRIA_6.000 KGS..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja",
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 384260,
     "modified": "2026-05-13T11:42:54"
@@ -6895,6 +9814,11 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_LOZANO BROTONS, JUAN JOSÉ_ALBARICOQUE MIRLO NARANJA Y FLOPRIA_6.000 KGS..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Naranja",
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 52748,
     "modified": "2026-05-13T11:41:34"
@@ -6906,6 +9830,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MANCERA (ALMAZARRON)_NARANJA VALENCIA_120.000 Kgs._14-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134962,
     "modified": "2026-05-14T15:39:46"
@@ -6917,6 +9845,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MANCERA (ALMAZARRON)_NARANJA VALENCIA_120.000 Kgs._14-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 3495539,
     "modified": "2026-05-14T15:30:12"
@@ -6928,6 +9860,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_MANCERA (LA CANGREJERA, S.C.)_NARANJA POWELL_20.000 Kgs.(ECO)_2.500 Kgs. (Convencional)_04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134440,
     "modified": "2026-05-04T15:36:26"
@@ -6939,6 +9875,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_MANCERA (LA CANGREJERA, S.C.)_NARANJA POWELL_20.000 Kgs.(ECO)_2.500 Kgs. (Convencional)_04-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 3097132,
     "modified": "2026-05-04T12:47:54"
@@ -6950,6 +9890,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE CONTRATO TOÑIFRUIT, S.L._FINCA LA GITANA_NARANJA LANE LATE Y POWELL_80.000 Kgs._03-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 133931,
     "modified": "2026-03-03T12:28:06"
@@ -6961,6 +9905,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._FINCA LA GITANA_NARANJA LANE LATE Y POWELL_80.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 394827,
     "modified": "2026-03-03T12:22:44"
@@ -6972,6 +9920,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_MANCERA (ALMAZARRON)_MANDARINA TANGO_200.000 Kgs._03-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 134713,
     "modified": "2026-03-03T11:24:24"
@@ -6983,6 +9937,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_MANCERA (ALMAZARRON)_MANDARINA TANGO_200.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Mandarina"
+    ],
+    "varieties": [
+      "Tango"
+    ],
     "extension": "PDF",
     "size": 6173874,
     "modified": "2026-03-03T10:53:28"
@@ -6994,6 +9954,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_MANCERA (LA CANGREJERA, S.C.)_NARANJA LANE LATE_60.000 Kgs._30-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134408,
     "modified": "2026-01-30T11:15:44"
@@ -7005,6 +9969,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_MANCERA (LA CANGREJERA, S.C.)_NARANJA LANE LATE_60.000 Kgs._Fdo. 30-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 264771,
     "modified": "2026-01-30T10:27:02"
@@ -7016,6 +9984,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Registro contrato mancera.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134007,
     "modified": "2026-01-21T15:42:18"
@@ -7027,6 +9997,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "Contrato Lane Alamazarron-Toñifruit.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 264790,
     "modified": "2026-01-21T15:39:24"
@@ -7038,6 +10010,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "contrato-uva-TON-031-S-A-T-LAS-HACIENDAS-N-9995.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 317534,
     "modified": "2026-08-11T12:52:04"
@@ -7049,6 +10025,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO MRO_SAT LAS HACIENDAS_UVA ARRA SWEETIES_5.000 Kgs._06-08-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134683,
     "modified": "2026-08-06T11:40:20"
@@ -7060,6 +10040,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO MRO_SAT LAS HACIENDAS_UVA ARRA SWEETIES_5.000 Kgs._06-08-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 1696535,
     "modified": "2026-08-06T11:39:14"
@@ -7071,6 +10055,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "HACIENDAS BIO CONTRATO UVA v2.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 300543,
     "modified": "2026-08-05T14:02:40"
@@ -7082,6 +10070,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "HACIENDAS BIO CONTRATO UVA v2.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 53682,
     "modified": "2026-08-05T14:02:22"
@@ -7093,6 +10085,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "HACIENDAS BIO CONTRATO UVA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 53049,
     "modified": "2026-08-05T13:27:16"
@@ -7104,6 +10100,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "HACIENDAS BIO CONTRATO UVA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 334746,
     "modified": "2026-08-04T11:05:08"
@@ -7115,6 +10115,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NARANJA VALENCIA DELTA_40.000 Kgs._07-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134490,
     "modified": "2026-05-07T12:48:02"
@@ -7126,6 +10130,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NARANJA VALENCIA DELTA_40.000 Kgs._07-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2548206,
     "modified": "2026-05-07T12:41:12"
@@ -7137,6 +10145,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NARANJA MIDKNIGHT_80.000 Kgs._30-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134049,
     "modified": "2026-04-30T09:28:40"
@@ -7148,6 +10160,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NARANJA MIDKNIGHT_80.000 Kgs._29-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 308789,
     "modified": "2026-04-29T15:15:52"
@@ -7159,6 +10175,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NAVEL POWELL_50.000 Kgs._31-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134698,
     "modified": "2026-03-31T13:01:00"
@@ -7170,6 +10188,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NAVEL POWELL_50.000 Kgs._Fdo. 31-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 816038,
     "modified": "2026-03-31T12:43:56"
@@ -7181,6 +10201,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NAVEL LANE LATE_21.000 Kgs._ 10-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 134737,
     "modified": "2026-03-10T12:23:26"
@@ -7192,6 +10214,8 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NAVEL LANE LATE_21.000 Kgs._Fdo. 10-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [],
     "extension": "PDF",
     "size": 810750,
     "modified": "2026-03-10T12:19:06"
@@ -7203,6 +10227,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NADORCOTT_150.000 Kgs._ 10-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 134725,
     "modified": "2026-02-10T10:29:56"
@@ -7214,6 +10242,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NADORCOTT_150.000 Kgs._Fdo. 10-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 556342,
     "modified": "2026-02-10T09:20:58"
@@ -7225,6 +10257,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NADORCOTT_150.000 Kgs._26-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 134548,
     "modified": "2026-01-26T15:45:10"
@@ -7236,6 +10272,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NADORCOTT_150.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Nadorcott"
+    ],
     "extension": "PDF",
     "size": 838133,
     "modified": "2026-01-26T15:03:38"
@@ -7247,6 +10287,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT ISSO FRUIT Nº 8399_ALBARICOQUE_50.000 Kgs._22-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 784656,
     "modified": "2026-06-04T14:42:08"
@@ -7258,6 +10302,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT ISSO FRUIT Nº 8399_ALBARICOQUE_50.000 Kgs._22-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134637,
     "modified": "2026-05-22T12:48:24"
@@ -7269,6 +10317,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT ISSO FRUIT Nº 8399_ALBARICOQUE_50.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 446647,
     "modified": "2026-05-18T13:19:32"
@@ -7280,6 +10332,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT ISSO FRUIT Nº 8399_ALBARICOQUE_50.000 Kgs..docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 52627,
     "modified": "2026-05-18T12:56:54"
@@ -7291,6 +10347,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "contrato albaricoque issodocx.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 321115,
     "modified": "2026-05-18T12:39:42"
@@ -7302,6 +10362,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "contrato albaricoque issodocx.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 316255,
     "modified": "2026-05-18T12:39:28"
@@ -7313,6 +10377,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_MELOCOTÓN LOLA_3.000 Kgs._02-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 147438,
     "modified": "2026-06-02T10:53:22"
@@ -7324,6 +10392,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_MELOCOTÓN LOLA_3.000 Kgs._02-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Melocotón"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 385909,
     "modified": "2026-06-02T09:18:08"
@@ -7335,6 +10407,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_PARAGUAYO ZODIAC_6.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Paraguayo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134620,
     "modified": "2026-05-12T13:45:12"
@@ -7346,6 +10422,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_NECTARINA GARCIMA_28.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134332,
     "modified": "2026-05-12T13:43:52"
@@ -7357,6 +10437,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_NECTARINA BORA_7.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134329,
     "modified": "2026-05-12T13:40:48"
@@ -7368,6 +10452,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_NECTARINA BORA_7.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 177760,
     "modified": "2026-05-12T13:30:12"
@@ -7379,6 +10467,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_NECTARINA GARCIMA_28.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 112793,
     "modified": "2026-05-12T13:28:50"
@@ -7390,6 +10482,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_PARAGUAYO ZODIAC_6.000 Kgs._12-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Paraguayo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 475420,
     "modified": "2026-05-12T13:27:30"
@@ -7401,6 +10497,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_NECTARINA.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 380634,
     "modified": "2026-05-11T18:02:12"
@@ -7412,6 +10512,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_NECTARINA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Nectarina"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 52764,
     "modified": "2026-05-11T18:01:22"
@@ -7423,6 +10527,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_ALBARICOQUE.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 52646,
     "modified": "2026-05-11T16:55:30"
@@ -7434,6 +10542,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_ALBARICOQUE BORSALINO Y CEBAS RED_06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134953,
     "modified": "2026-05-06T11:45:38"
@@ -7445,6 +10557,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCION CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_ALBARICOQUE BORSALINO_06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134651,
     "modified": "2026-05-06T11:44:18"
@@ -7456,6 +10572,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_ALBARICOQUE BORSALINO_Fdo.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2418145,
     "modified": "2026-05-06T09:29:20"
@@ -7467,6 +10587,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_ALBARICOQUE BORSALINO Y CEBAS RED_06-05-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2493170,
     "modified": "2026-05-06T09:28:44"
@@ -7478,6 +10602,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_ALBARICOQUE.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 346571,
     "modified": "2026-05-05T10:52:18"
@@ -7489,6 +10617,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CAMPOTEJAR DEL SEGURA_ALBARICOQUE mayo a 2€.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 347900,
     "modified": "2026-05-05T10:08:50"
@@ -7500,6 +10632,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT N.9867-MU MILCO (Fco. Mez. López)_ALBARICOQUE KOSMOS,DOMINO,PACHA,FLOPIA,CYRANO_10.000 Kgs._06-05-26pdf.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134470,
     "modified": "2026-05-06T13:45:26"
@@ -7511,6 +10647,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT N.9867-MU MILCO (Fco. Mez. López)_ALBARICOQUE KOSMOS,DOMINO,PACHA,FLOPIA,CYRANO_10.000 Kgs._06-05-26pdf.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2350985,
     "modified": "2026-05-06T13:36:46"
@@ -7522,6 +10662,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SAT MILCO ALBARICOQUE (FILIBERTO) 04-06-262026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 298088,
     "modified": "2026-05-06T12:01:12"
@@ -7533,6 +10677,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SAT MILCO ALBARICOQUE (FILIBERTO) 04-06-262026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 53981,
     "modified": "2026-05-06T12:00:58"
@@ -7544,6 +10692,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT N.9867-MU MILCO (Fco. Mez. López)_ALBARICOQUE LUCAS_10.000 Kgs._06-05-25.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134453,
     "modified": "2026-05-06T11:40:54"
@@ -7555,6 +10707,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT N.9867-MU MILCO (Fco. Mez. López)_ALBARICOQUE LUCAS_10.000 Kgs.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 2335005,
     "modified": "2026-05-06T10:25:26"
@@ -7566,6 +10722,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SAT MILCO ALBARICOQUE (FILIBERTO) 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Documento contractual",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 502535,
     "modified": "2026-05-04T16:42:56"
@@ -7577,6 +10737,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "SAT MILCO ALBARICOQUE (FILIBERTO) 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Albaricoque"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 53768,
     "modified": "2026-04-30T10:30:38"
@@ -7588,6 +10752,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_21.000 Kgs_01-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134632,
     "modified": "2026-04-01T13:33:50"
@@ -7599,6 +10767,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_21.000 Kgs.Fdo.01-04-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Anexo",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 349384,
     "modified": "2026-04-01T12:44:30"
@@ -7610,6 +10782,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ADENDA 06747 Venta POMELO ECO TOÑIFRUIT.pdf",
     "campaign": "2025/2026",
     "documentType": "Anexo",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 300164,
     "modified": "2026-04-01T12:00:42"
@@ -7621,6 +10797,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_21.000 Kgs.23-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134458,
     "modified": "2026-03-23T11:53:14"
@@ -7632,6 +10812,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_21.000 Kgs.Fdo.23-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 391216,
     "modified": "2026-03-23T11:49:34"
@@ -7643,6 +10827,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LAVALLE_50.000 Kgs._11-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134439,
     "modified": "2026-03-11T12:26:38"
@@ -7654,6 +10842,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LAVALLE_50.000 Kgs._Fdo. 09-03-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 359793,
     "modified": "2026-03-11T12:23:42"
@@ -7665,6 +10857,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_40.000 Kgs._ 27-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134624,
     "modified": "2026-02-27T11:49:34"
@@ -7676,6 +10872,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_40.000 Kgs._Fdo. 27-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Anexo",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 391992,
     "modified": "2026-02-27T10:54:16"
@@ -7687,6 +10887,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LANE LATE_90.000 Kgs._ 20-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134450,
     "modified": "2026-02-20T13:53:20"
@@ -7698,6 +10902,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_40.000 Kgs._20-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134446,
     "modified": "2026-02-20T13:50:38"
@@ -7709,6 +10917,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_40.000 Kgs..pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Pomelo"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 366597,
     "modified": "2026-02-20T13:40:08"
@@ -7720,6 +10932,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LANE LATE_90.000 Kgs._Fdo. 20-02-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Anexo",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 436831,
     "modified": "2026-02-20T13:37:40"
@@ -7731,6 +10947,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LANE LATE_90.000 Kgs._16-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 134278,
     "modified": "2026-01-16T15:08:04"
@@ -7742,6 +10962,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LANE LATE_90.000 Kgs._Fdo. 16-01-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Naranja"
+    ],
+    "varieties": [],
     "extension": "PDF",
     "size": 360221,
     "modified": "2026-01-16T15:04:18"
@@ -7753,6 +10977,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO UVA.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [
+      "Uva"
+    ],
+    "varieties": [],
     "extension": "DOCX",
     "size": 53218,
     "modified": "2026-07-02T15:27:42"
@@ -7764,6 +10992,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "JUSTIFICANTE INSCRIPCIÓN CONTRATO TOÑIFRUIT, S.L._JUAN FCO. TORRES MARTÍNEZ_LIMÓN RODREJO_15.000 Kgs._23-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Justificante / registro",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 134329,
     "modified": "2026-06-23T13:21:42"
@@ -7775,6 +11009,12 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "CONTRATO TOÑIFRUIT, S.L._JUAN FCO. TORRES MARTÍNEZ_LIMÓN RODREJO_15.000 Kgs._23-06-26.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [
+      "Limón"
+    ],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 2118278,
     "modified": "2026-06-23T13:02:40"
@@ -7786,6 +11026,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA RODREJOS JUAN FRANCISCO TORRES 2026.pdf",
     "campaign": "2025/2026",
     "documentType": "Contrato",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "PDF",
     "size": 354245,
     "modified": "2026-06-18T13:41:50"
@@ -7797,6 +11041,10 @@ export const CONTRACT_DOCUMENTS = [
     "filename": "COMPRA RODREJOS JUAN FRANCISCO TORRES 2026.docx",
     "campaign": "2025/2026",
     "documentType": "Contrato editable",
+    "species": [],
+    "varieties": [
+      "Rodrejo"
+    ],
     "extension": "DOCX",
     "size": 267856,
     "modified": "2026-06-18T13:41:40"

@@ -7,6 +7,7 @@ import {
   OPFH_MEMBERS,
 } from "./data/controlCatalog.generated";
 import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
+import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -107,6 +108,121 @@ let cachedGoogleToken = "";
 let cachedGoogleTokenExpiresAt = 0;
 let sheetSchemaReady = false;
 const libraryDocumentsById = new Map(CONTRACT_DOCUMENTS.map((document) => [document.id, document]));
+
+function normalizedCatalogName(value: unknown) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleUpperCase("es")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b(SOCIEDAD|LIMITADA|ANONIMA|SAT|S\s*A\s*T|SLU?|SA|SC|SCA|CB)\b/g, " ")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function catalogNamesMatch(left: unknown, right: unknown) {
+  const a = normalizedCatalogName(left);
+  const b = normalizedCatalogName(right);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (Math.min(a.length, b.length) >= 10 && (a.includes(b) || b.includes(a))) return true;
+  const leftTokens = new Set(a.split(" ").filter((token) => token.length > 2));
+  const rightTokens = new Set(b.split(" ").filter((token) => token.length > 2));
+  const common = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  return common >= 2 && common / Math.min(leftTokens.size, rightTokens.size) >= 0.75;
+}
+
+function normalizedCatalogText(value: unknown) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleUpperCase("es");
+}
+
+function isArra19Record(values: unknown[]) {
+  return normalizedCatalogText(`${values[1] || ""} ${values[5] || ""} ${values[29] || ""}`).includes("ARRA 19")
+    || normalizedCatalogText(values[1]).includes("LAS HACIENDAS");
+}
+
+function libraryDocumentScore(document: (typeof CONTRACT_DOCUMENTS)[number], values: unknown[]) {
+  const crop = normalizedCatalogText(values[5]);
+  const variety = normalizedCatalogText(values[29]);
+  const campaign = String(values[6] || "").trim();
+  const details = parseJsonRecord(values[34]);
+  const buyer = normalizedCatalogText(details.buyerCompany);
+  const company = normalizedCatalogText(document.company);
+  let score = 0;
+  if (campaign && document.campaign === campaign) score += 5;
+  if (document.species.some((value) => crop && normalizedCatalogText(value).includes(crop))) score += 5;
+  if (document.varieties.some((value) => variety && (variety.includes(normalizedCatalogText(value)) || normalizedCatalogText(value).includes(variety)))) score += 3;
+  if (buyer && company && (buyer.includes(company) || company.includes(buyer))) score += 8;
+  if (document.documentType === "Contrato") score += 4;
+  if (document.extension === "PDF") score += 2;
+  if (/FDO\.?|FIRMAD|JUSTIFICANTE.*INSCRIPCI/i.test(document.filename)) score += 5;
+  return score;
+}
+
+function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unknown[] }>) {
+  const today = new Date().toISOString().slice(0, 10);
+  return rows.map((row) => {
+    const values = [...row.values];
+    if (isArra19Record(values)) return { ...row, values };
+    const provider = String(values[1] || "").trim();
+    const documents = CONTRACT_DOCUMENTS
+      .filter((document) => catalogNamesMatch(provider, document.farmer))
+      .sort((left, right) => libraryDocumentScore(right, values) - libraryDocumentScore(left, values) || right.modified.localeCompare(left.modified));
+    const signedDocument = documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
+      || documents.find((document) => document.extension === "PDF");
+    const selectedCompany = signedDocument?.company;
+    const certificates = CERTIFICATE_RECORDS
+      .filter((record) => catalogNamesMatch(provider, record.farmer) && (!selectedCompany || record.company === selectedCompany))
+      .sort((left, right) => {
+        const leftScore = (left.expiry >= today ? 10 : 0) + (normalizedCatalogText(left.certification).includes("ECO") ? 4 : 0);
+        const rightScore = (right.expiry >= today ? 10 : 0) + (normalizedCatalogText(right.certification).includes("ECO") ? 4 : 0);
+        return rightScore - leftScore || right.expiry.localeCompare(left.expiry);
+      });
+    const support = SUPPORT_SUMMARIES.find((entry) => catalogNamesMatch(provider, entry.farmer) && (!selectedCompany || entry.company === selectedCompany));
+    const farms = FARM_RECORDS.filter((farm) => catalogNamesMatch(provider, farm.holder));
+
+    if (signedDocument) {
+      values[7] = "Sí";
+      values[24] = `Biblioteca contractual privada · ${documents.length} documento${documents.length === 1 ? "" : "s"}`;
+      const existingDetails = parseJsonRecord(values[34]);
+      values[34] = JSON.stringify({
+        ...existingDetails,
+        contractOrigin: "existing",
+        buyerCompany: signedDocument.company === "TOÑIFRUIT" ? "TOÑIFRUIT, S.L." : "MR. ORGÁNICA, S.L.",
+        signatureDate: String(existingDetails.signatureDate || signedDocument.modified.slice(0, 10)),
+        archiveId: signedDocument.id,
+        archiveFilename: signedDocument.filename,
+        archivedAt: signedDocument.modified,
+        signatureMethod: "uploaded",
+      });
+    }
+    if (documents.some((document) => document.documentType === "Justificante / registro")) values[32] = "Sí";
+    if (certificates[0]) {
+      values[17] = certificates[0].certification;
+      values[18] = certificates[0].expiry;
+    }
+    if (farms.length) {
+      if (!String(values[3] || "").trim()) values[3] = [...new Set(farms.map((farm) => farm.farmName).filter(Boolean))].slice(0, 4).join(" · ") || "Fincas documentadas";
+      if (!String(values[4] || "").trim()) values[4] = [...new Set(farms.map((farm) => farm.municipality).filter(Boolean))].join(" · ");
+      values[12] = "Sí";
+    }
+    if (support) {
+      if (support.notebookCount > 0) {
+        values[13] = "Sí";
+        values[14] = support.notebookLatest.slice(0, 10);
+      }
+      if (support.analysisCount > 0) {
+        if (!String(values[15] || "").trim()) values[15] = "Pendiente de revisión";
+        values[16] = support.analysisLatest.slice(0, 10);
+      }
+      if (support.otherCount > 0 || support.certificateFileCount > 0) values[19] = "Sí";
+      if (!String(values[20] || "").trim()) values[20] = "Actualización documental 12/08/2026";
+      values[21] = today;
+    }
+    return { ...row, values };
+  });
+}
 
 function base64Url(bytes: Uint8Array) {
   let binary = "";
@@ -1118,7 +1234,7 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/rows" && request.method === "GET") {
-    return json(request, env, { rows: await loadRows(env) });
+    return json(request, env, { rows: enrichRowsFromPrivateCatalog(await loadRows(env)) });
   }
 
   if (url.pathname === "/api/rows" && request.method === "POST") {

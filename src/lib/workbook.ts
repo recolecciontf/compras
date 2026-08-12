@@ -293,10 +293,13 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   if (!row.campaign.trim()) issues.push("Falta la campaña");
   if (!["sí", "si"].includes(normalized(row.registeredIca))) issues.push("Registro en AICA pendiente de validación");
   if (normalized(row.contractSigned) !== "sí") issues.push("Contrato no firmado");
-  if (!contract.buyerCompany) issues.push("Falta la empresa compradora");
-  if (!contract.signatureDate) issues.push("Falta la fecha de firma del contrato");
-  if (!contract.sellerEmail) issues.push("Falta el correo del agricultor");
-  if (!contract.companyEmail) issues.push("Falta el correo de la empresa");
+  const archivedExistingContract = contract.contractOrigin === "existing" && Boolean(contract.archiveId);
+  if (!archivedExistingContract) {
+    if (!contract.buyerCompany) issues.push("Falta la empresa compradora");
+    if (!contract.signatureDate) issues.push("Falta la fecha de firma del contrato");
+    if (!contract.sellerEmail) issues.push("Falta el correo del agricultor");
+    if (!contract.companyEmail) issues.push("Falta el correo de la empresa");
+  }
   if (contract.contractOrigin !== "existing") {
     if (!contract.modality) issues.push("Falta la modalidad de compraventa");
     if (!contract.collectionBy) issues.push("Falta indicar quién asume la recolección");
@@ -649,6 +652,7 @@ export class WorkbookClient {
   }
 
   async archivedContract(archiveId: string) {
+    if (/^[0-9a-f]{24}$/i.test(archiveId)) return this.libraryDocument(archiveId);
     const response = await fetch(this.endpoint(`/api/contract-files/${encodeURIComponent(archiveId)}`), {
       cache: "no-store",
       headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},

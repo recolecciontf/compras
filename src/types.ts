@@ -219,6 +219,8 @@ export type ContractDocumentRecord = {
   filename: string;
   campaign: string;
   documentType: string;
+  species: string[];
+  varieties: string[];
   extension: string;
   size: number;
   modified: string;
