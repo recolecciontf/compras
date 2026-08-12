@@ -17,24 +17,19 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import {
-  CERTIFICATE_RECORDS,
-  CONTROL_DATA_UPDATED_AT,
-  FARM_RECORDS,
-  OPFH_MEMBERS,
-} from "../data/controlCatalog.generated";
-import { CONTRACT_DOCUMENTS } from "../data/documentLibrary.generated";
+import { useEffect, useMemo, useState } from "react";
+import type { CertificateCatalogRecord, ControlCatalogData } from "../types";
 
 type CatalogTab = "certificates" | "farms" | "members" | "contracts";
 type CompanyFilter = "all" | "MR. ORGÁNICA" | "TOÑIFRUIT";
 type MemberFilter = "all" | "yes" | "no";
 type FarmTypeFilter = "all" | "Propia" | "De terceros";
 type CertificateStatusFilter = "all" | "expired" | "soon" | "valid" | "missing";
-type CertificateRecord = (typeof CERTIFICATE_RECORDS)[number];
+type CertificateRecord = CertificateCatalogRecord;
 
 type Props = {
   canEdit: boolean;
+  onLoadCatalog: () => Promise<ControlCatalogData>;
   onDownloadDocument: (id: string) => Promise<void>;
   onUploadDocument: (file: File, id: string) => Promise<void>;
   onBack: () => void;
@@ -78,8 +73,20 @@ function OpfhMark({ selected }: { selected: boolean }) {
   );
 }
 
-export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, onUploadDocument }: Props) {
+const EMPTY_CATALOG: ControlCatalogData = {
+  updatedAt: "",
+  certificates: [],
+  opfhMembers: [],
+  farms: [],
+  documents: [],
+};
+
+export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDownloadDocument, onUploadDocument }: Props) {
   const [tab, setTab] = useState<CatalogTab>("certificates");
+  const [catalog, setCatalog] = useState<ControlCatalogData>(EMPTY_CATALOG);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+  const [catalogRevision, setCatalogRevision] = useState(0);
   const [query, setQuery] = useState("");
   const [company, setCompany] = useState<CompanyFilter>("all");
   const [memberFilter, setMemberFilter] = useState<MemberFilter>("all");
@@ -90,24 +97,44 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
   const [downloadingId, setDownloadingId] = useState("");
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [uploadMessage, setUploadMessage] = useState("");
+  const { certificates, opfhMembers, farms, documents } = catalog;
+
+  useEffect(() => {
+    let active = true;
+    setCatalogLoading(true);
+    setCatalogError("");
+    onLoadCatalog()
+      .then((data) => {
+        if (active) setCatalog(data);
+      })
+      .catch((reason) => {
+        if (active) setCatalogError(reason instanceof Error ? reason.message : "No se ha podido cargar el control documental.");
+      })
+      .finally(() => {
+        if (active) setCatalogLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [catalogRevision, onLoadCatalog]);
 
   const summary = useMemo(() => {
-    const uniqueFarmers = new Set(CERTIFICATE_RECORDS.map((record) => `${record.company}|${record.farmer}`)).size;
-    const expired = CERTIFICATE_RECORDS.filter((record) => certificateStatus(record.expiry).key === "expired").length;
-    const soon = CERTIFICATE_RECORDS.filter((record) => certificateStatus(record.expiry).key === "soon").length;
+    const uniqueFarmers = new Set(certificates.map((record) => `${record.company}|${record.farmer}`)).size;
+    const expired = certificates.filter((record) => certificateStatus(record.expiry).key === "expired").length;
+    const soon = certificates.filter((record) => certificateStatus(record.expiry).key === "soon").length;
     return {
       farmers: uniqueFarmers,
-      opfh: OPFH_MEMBERS.length,
+      opfh: opfhMembers.length,
       expired,
       soon,
-      farms: FARM_RECORDS.length,
-      documents: CONTRACT_DOCUMENTS.length,
+      farms: farms.length,
+      documents: documents.length,
     };
-  }, []);
+  }, [certificates, documents, farms, opfhMembers]);
 
   const filteredCertificates = useMemo(() => {
     const search = normalize(query);
-    return CERTIFICATE_RECORDS.filter((record) => {
+    return certificates.filter((record) => {
       if (company !== "all" && record.company !== company) return false;
       if (memberFilter === "yes" && !record.opfhMember) return false;
       if (memberFilter === "no" && record.opfhMember) return false;
@@ -122,7 +149,7 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
         ...record.crops,
       ].join(" ")).includes(search);
     });
-  }, [company, farmType, memberFilter, query, statusFilter]);
+  }, [certificates, company, farmType, memberFilter, query, statusFilter]);
 
   const farmerGroups = useMemo(() => {
     const groups = new Map<string, { base: CertificateRecord; certificates: CertificateRecord[] }>();
@@ -137,7 +164,7 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
 
   const filteredFarms = useMemo(() => {
     const search = normalize(query);
-    return FARM_RECORDS.filter((farm) => {
+    return farms.filter((farm) => {
       if (farmType !== "all" && farm.farmType !== farmType) return false;
       if (!search) return true;
       return normalize([
@@ -152,30 +179,30 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
         farm.ownerLessor,
       ].join(" ")).includes(search);
     });
-  }, [farmType, query]);
+  }, [farms, farmType, query]);
 
   const filteredMembers = useMemo(() => {
     const search = normalize(query);
-    return OPFH_MEMBERS.filter((member) => {
+    return opfhMembers.filter((member) => {
       if (farmType !== "all" && member.farmType !== farmType) return false;
       if (!search) return true;
       return normalize([member.name, member.taxId, member.note, ...member.controlNames].join(" ")).includes(search);
     });
-  }, [farmType, query]);
+  }, [farmType, opfhMembers, query]);
 
   const filteredDocuments = useMemo(() => {
     const search = normalize(query);
-    return CONTRACT_DOCUMENTS.filter((document) => {
+    return documents.filter((document) => {
       if (company !== "all" && document.company !== company) return false;
       if (campaign !== "all" && document.campaign !== campaign) return false;
       if (documentType !== "all" && document.documentType !== documentType) return false;
       if (!search) return true;
       return normalize([document.farmer, document.filename, document.company, document.campaign, document.documentType].join(" ")).includes(search);
     });
-  }, [campaign, company, documentType, query]);
+  }, [campaign, company, documentType, documents, query]);
 
-  const documentCampaigns = useMemo(() => [...new Set(CONTRACT_DOCUMENTS.map((document) => document.campaign))].sort().reverse(), []);
-  const documentTypes = useMemo(() => [...new Set(CONTRACT_DOCUMENTS.map((document) => document.documentType))].sort((left, right) => left.localeCompare(right, "es")), []);
+  const documentCampaigns = useMemo(() => [...new Set(documents.map((document) => document.campaign))].sort().reverse(), [documents]);
+  const documentTypes = useMemo(() => [...new Set(documents.map((document) => document.documentType))].sort((left, right) => left.localeCompare(right, "es")), [documents]);
 
   function changeTab(next: CatalogTab) {
     setTab(next);
@@ -203,10 +230,10 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
 
   async function uploadDocuments(files: File[]) {
     if (!files.length) return;
-    const knownIds = new Set(CONTRACT_DOCUMENTS.map((document) => document.id));
+    const knownIds = new Set(documents.map((document) => document.id));
     const selected = files
       .map((file) => ({ file, id: file.name.split("__", 1)[0] }))
-      .filter((entry) => knownIds.has(entry.id as (typeof CONTRACT_DOCUMENTS)[number]["id"]));
+      .filter((entry) => knownIds.has(entry.id));
     if (!selected.length) {
       setUploadMessage("Los archivos seleccionados no pertenecen a la biblioteca preparada.");
       return;
@@ -226,6 +253,30 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
     }
   }
 
+  if (catalogLoading) {
+    return (
+      <section className="catalog-page">
+        <div className="catalog-loading"><LoaderCircle className="spinning" size={30} /><strong>Cargando el control documental privado…</strong></div>
+      </section>
+    );
+  }
+
+  if (catalogError) {
+    return (
+      <section className="catalog-page">
+        <div className="empty-state">
+          <AlertTriangle size={32} />
+          <h3>No se ha podido abrir el control documental</h3>
+          <p>{catalogError}</p>
+          <div className="catalog-error-actions">
+            <button className="secondary-button" type="button" onClick={onBack}><ArrowLeft size={17} /> Volver</button>
+            <button className="primary-button" type="button" onClick={() => setCatalogRevision((value) => value + 1)}>Reintentar</button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="catalog-page">
       <div className="review-header catalog-header">
@@ -233,7 +284,7 @@ export function CertificateControlPanel({ canEdit, onBack, onDownloadDocument, o
         <div className="page-kicker"><ShieldCheck size={18} /> Control documental actualizado</div>
         <h1 className="page-title">Certificados y OPFH</h1>
         <p className="page-subtitle">Consulta vigencias, socios y parcelas desde un único control. ARRA 19 se conserva sin cambios.</p>
-        <span className="catalog-updated"><CalendarDays size={15} /> Datos cruzados a {formatDate(CONTROL_DATA_UPDATED_AT)}</span>
+        <span className="catalog-updated"><CalendarDays size={15} /> Datos cruzados a {formatDate(catalog.updatedAt)}</span>
       </div>
 
       <div className="catalog-summary">

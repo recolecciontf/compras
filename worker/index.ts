@@ -1,6 +1,12 @@
 import { STATIC_ASSETS } from "./static-assets.generated";
 import { CONTRACT_ASSETS } from "./contract-assets.generated";
-import { CONTRACT_DOCUMENTS } from "../src/data/documentLibrary.generated";
+import {
+  CERTIFICATE_RECORDS,
+  CONTROL_DATA_UPDATED_AT,
+  FARM_RECORDS,
+  OPFH_MEMBERS,
+} from "./data/controlCatalog.generated";
+import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -1031,6 +1037,16 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
+  }
+
+  if (url.pathname === "/api/control-catalog" && request.method === "GET") {
+    return json(request, env, {
+      updatedAt: CONTROL_DATA_UPDATED_AT,
+      certificates: CERTIFICATE_RECORDS,
+      opfhMembers: OPFH_MEMBERS,
+      farms: FARM_RECORDS,
+      documents: CONTRACT_DOCUMENTS,
+    });
   }
 
   if (url.pathname === "/api/document-library" && request.method === "POST") {

@@ -3,6 +3,7 @@ import type {
   AppConfig,
   ContractArchiveHistoryEntry,
   ContractDetails,
+  ControlCatalogData,
   ControlRow,
   HarvestForm,
   MaterialItem,
@@ -419,6 +420,10 @@ export class WorkbookClient {
   async rows() {
     const result = await this.request<{ rows: ApiSheetRow[] }>("/api/rows");
     return result.rows.map(rowFromValues).filter((row) => row.provider);
+  }
+
+  async controlCatalog() {
+    return this.request<ControlCatalogData>("/api/control-catalog");
   }
 
   async saveReview(row: ControlRow, review: ReviewForm) {

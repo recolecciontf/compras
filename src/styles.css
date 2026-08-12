@@ -1767,6 +1767,27 @@ p {
   margin-bottom: 18px;
 }
 
+.catalog-loading {
+  display: flex;
+  min-height: 55vh;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--green-800);
+  text-align: center;
+}
+
+.catalog-error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.catalog-error-actions > button {
+  width: auto;
+}
+
 .catalog-updated {
   display: inline-flex;
   align-items: center;

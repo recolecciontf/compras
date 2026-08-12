@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -747,6 +748,11 @@ export default function App() {
     await client.uploadLibraryDocument(file, id);
   }
 
+  const loadControlCatalog = useCallback(async () => {
+    if (!client || demoMode) throw new Error("El control documental privado solo está disponible con una sesión real.");
+    return client.controlCatalog();
+  }, [client, demoMode]);
+
   async function attachSignedContract(file: File) {
     if (!purchase || !selected) return;
     setSaving(true);
@@ -1023,6 +1029,7 @@ export default function App() {
             {view === "certificates" ? (
               <CertificateControlPanel
                 canEdit={Boolean(canEdit && !demoMode)}
+                onLoadCatalog={loadControlCatalog}
                 onDownloadDocument={downloadLibraryDocument}
                 onUploadDocument={uploadLibraryDocument}
                 onBack={() => setView("records")}

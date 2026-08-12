@@ -173,5 +173,64 @@ export type ReviewForm = Pick<
   | "lastReviewDate"
 >;
 
+export type CertificateCatalogRecord = {
+  id: string;
+  company: string;
+  farmer: string;
+  taxId: string;
+  opfhMember: boolean;
+  farmType: "" | "Propia" | "De terceros";
+  certification: string;
+  expiry: string;
+  crops: string[];
+  preserved: boolean;
+};
+
+export type OpfhMemberRecord = {
+  name: string;
+  taxId: string;
+  farmType: "Propia" | "De terceros";
+  groupCompany: boolean;
+  controlNames: string[];
+  note: string;
+};
+
+export type FarmCatalogRecord = {
+  id: string;
+  holder: string;
+  taxId: string;
+  farmType: "Propia" | "De terceros";
+  farmName: string;
+  municipality: string;
+  polygon: string;
+  parcel: string;
+  enclosure: string;
+  crop: string;
+  variety: string;
+  surface: number;
+  ownerLessor: string;
+  sourceSheet: string;
+};
+
+export type ContractDocumentRecord = {
+  id: string;
+  company: string;
+  farmer: string;
+  filename: string;
+  campaign: string;
+  documentType: string;
+  extension: string;
+  size: number;
+  modified: string;
+};
+
+export type ControlCatalogData = {
+  updatedAt: string;
+  certificates: CertificateCatalogRecord[];
+  opfhMembers: OpfhMemberRecord[];
+  farms: FarmCatalogRecord[];
+  documents: ContractDocumentRecord[];
+};
+
 export type AppView = "records" | "review" | "new" | "harvest" | "certificates";
 export type RecordFilter = "all" | "blocked" | "authorized" | "expired" | "cancelled";
