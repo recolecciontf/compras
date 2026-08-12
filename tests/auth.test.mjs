@@ -71,6 +71,26 @@ test("crea una sesión temporal y permite consultar el perfil", async () => {
   });
 });
 
+test("incluye Naturland para los titulares confirmados", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const response = await api("/api/control-catalog", { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal(response.status, 200);
+  const { certificates } = await response.json();
+  const normalize = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
+  const holders = ["Toñifruit", "Martínez Romero Bibio", "MR Orgánica", "Agrollans", "Patatas Alcalde"];
+  for (const holder of holders) {
+    assert.ok(certificates.some((record) => (
+      normalize(record.farmer).includes(normalize(holder))
+      && normalize(record.certification) === "naturland"
+    )), `Falta Naturland para ${holder}`);
+  }
+});
+
 test("el usuario de consulta no puede guardar cambios", async () => {
   const login = await api("/api/login", {
     method: "POST",

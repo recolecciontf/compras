@@ -377,9 +377,11 @@ export default function App() {
     });
   }, [rows, filter, query, certificationFilter]);
 
-  const certificationOptions = useMemo(() => [...new Set(rows
+  const certificationOptions = useMemo(() => certificationSelection(rows
     .filter((row) => matchesRecordFilter(row, filter))
-    .flatMap((row) => certificationSelection(row.certificateType)))]
+    .flatMap((row) => certificationSelection(row.certificateType))
+    .concat("Naturland")
+    .join("; "))
     .sort((left, right) => left.localeCompare(right, "es")), [rows, filter]);
 
   const counts = useMemo(() => {

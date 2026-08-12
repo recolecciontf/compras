@@ -8,6 +8,7 @@ import {
 } from "./data/controlCatalog.generated";
 import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
 import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
+import { certificationSelection } from "../src/lib/catalog";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -187,8 +188,11 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
       || documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
       || documents.find((document) => document.extension === "PDF");
     const selectedCompany = signedDocument?.company;
+    // La certificación pertenece al agricultor/titular, no a la carpeta de la
+    // empresa compradora. Cruzar por selectedCompany hacía desaparecer, entre
+    // otras, Naturland cuando el contrato estaba archivado en la otra empresa.
     const certificates = CERTIFICATE_RECORDS
-      .filter((record) => catalogNamesMatch(provider, record.farmer) && (!selectedCompany || record.company === selectedCompany))
+      .filter((record) => catalogNamesMatch(provider, record.farmer))
       .sort((left, right) => {
         const leftScore = (left.expiry >= today ? 10 : 0) + (normalizedCatalogText(left.certification).includes("ECO") ? 4 : 0);
         const rightScore = (right.expiry >= today ? 10 : 0) + (normalizedCatalogText(right.certification).includes("ECO") ? 4 : 0);
@@ -214,7 +218,7 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
     }
     if (documents.some((document) => document.documentType === "Justificante / registro")) values[32] = "Sí";
     if (certificates[0]) {
-      values[17] = [...new Set(certificates.map((record) => record.certification).filter(Boolean))].join("; ");
+      values[17] = certificationSelection(certificates.map((record) => record.certification).join("; ")).join("; ");
       values[18] = certificates[0].expiry;
     }
     if (farms.length) {
