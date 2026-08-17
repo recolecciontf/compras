@@ -1,6 +1,6 @@
 import type { ControlRow, HarvestForm, PurchaseForm, ReviewForm, UserProfile } from "../types";
 
-const DB_NAME = "compras-de-campo-offline-v1";
+const DB_NAME = "compras-de-campo-offline-v2-clean-2026-08-18";
 const DB_VERSION = 1;
 const STATE_STORE = "state";
 const QUEUE_STORE = "queue";
@@ -9,6 +9,21 @@ const ROWS_KEY = "rows";
 const PROFILE_KEY = "profile";
 const CREDENTIALS_KEY_PREFIX = "credentials";
 const OFFLINE_KEY_ITERATIONS = 150_000;
+const LEGACY_DB_NAMES = ["compras-de-campo-offline-v1"];
+
+function discardLegacyOfflineData() {
+  if (typeof indexedDB === "undefined") return;
+  for (const name of LEGACY_DB_NAMES) {
+    if (name === DB_NAME) continue;
+    try {
+      indexedDB.deleteDatabase(name);
+    } catch {
+      // La base nueva utiliza otro nombre y no depende de que una pestaña antigua libere esta copia.
+    }
+  }
+}
+
+discardLegacyOfflineData();
 
 type OfflineCredentials = {
   username: string;

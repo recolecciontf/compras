@@ -2,12 +2,12 @@ import { STATIC_ASSETS } from "./static-assets.generated";
 import { CONTRACT_ASSETS } from "./contract-assets.generated";
 import {
   CERTIFICATE_RECORDS,
+  CONTRACT_DOCUMENTS,
   CONTROL_DATA_UPDATED_AT,
   FARM_RECORDS,
   OPFH_MEMBERS,
-} from "./data/controlCatalog.generated";
-import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
-import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
+  SUPPORT_SUMMARIES,
+} from "./data/cleanCatalog";
 import { certificationSelection } from "../src/lib/catalog";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
@@ -703,103 +703,6 @@ async function loadRows(env: Env) {
     .filter((row) => String(row.values[1] || "").trim());
 }
 
-async function listContractFileKeys(bucket: ContractBucket | undefined) {
-  if (!bucket) return [] as string[];
-  const keys: string[] = [];
-  let cursor: string | undefined;
-  do {
-    const page = await bucket.list({ cursor, limit: 1000 });
-    keys.push(...page.objects.map((object) => object.key));
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
-  return keys.sort((left, right) => left.localeCompare(right, "es"));
-}
-
-async function resetInventory(env: Env) {
-  const [rows, contractFileKeys] = await Promise.all([
-    loadRows(env),
-    listContractFileKeys(env.CONTRACT_FILES),
-  ]);
-  return {
-    rows,
-    contractFileKeys,
-    counts: {
-      rows: rows.length,
-      contractFiles: contractFileKeys.filter((key) => !key.startsWith("backups/")).length,
-      certificates: CERTIFICATE_RECORDS.length,
-      farms: FARM_RECORDS.length,
-      opfhMembers: OPFH_MEMBERS.length,
-      documents: CONTRACT_DOCUMENTS.length,
-      supportSummaries: SUPPORT_SUMMARIES.length,
-    },
-  };
-}
-
-async function startFreshDatabase(env: Env, value: unknown, session: Session) {
-  if (!env.CONTRACT_FILES) throw new Error("El archivo privado de restauración no está configurado.");
-  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
-  if (String(source.confirmation || "").trim() !== "EMPEZAR DE CERO") {
-    throw new InputError("Falta la confirmación reforzada para iniciar la base limpia.");
-  }
-
-  const inventory = await resetInventory(env);
-  const createdAt = new Date().toISOString();
-  const stamp = createdAt.replace(/[:.]/g, "-");
-  const backupKey = `backups/pre-reset-2026-08-18/${stamp}/snapshot.json`;
-  const snapshot = {
-    format: "compras-de-campo-backup-v1",
-    createdAt,
-    createdBy: session.sub,
-    effectiveDate: "2026-08-18",
-    worksheet: env.GOOGLE_WORKSHEET_NAME || "Control documental",
-    dataBounds: dataBounds(env),
-    rows: inventory.rows,
-    contractFileKeys: inventory.contractFileKeys,
-    catalogs: {
-      certificates: CERTIFICATE_RECORDS,
-      farms: FARM_RECORDS,
-      opfhMembers: OPFH_MEMBERS,
-      documents: CONTRACT_DOCUMENTS,
-      supportSummaries: SUPPORT_SUMMARIES,
-    },
-  };
-  const snapshotBytes = encoder.encode(JSON.stringify(snapshot));
-  const snapshotHash = await sha256Hex(new TextDecoder().decode(snapshotBytes));
-  await env.CONTRACT_FILES.put(backupKey, snapshotBytes.buffer, {
-    httpMetadata: { contentType: "application/json" },
-    customMetadata: {
-      kind: "external_restore_snapshot",
-      createdAt,
-      createdBy: session.sub,
-      effectiveDate: "2026-08-18",
-      sha256: snapshotHash,
-    },
-  });
-
-  const { start, end } = dataBounds(env);
-  const range = `'${sheetName(env)}'!A${start}:AN${end}`;
-  const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}:clear`;
-  await sheetsRequest(env, clearUrl, { method: "POST", body: "{}" });
-  const remainingRows = await loadRows(env);
-  if (remainingRows.length) throw new Error("La copia se ha guardado, pero la base activa no ha quedado completamente vacía.");
-
-  const marker = encoder.encode(JSON.stringify({
-    format: "compras-de-campo-reset-marker-v1",
-    createdAt,
-    createdBy: session.sub,
-    effectiveDate: "2026-08-18",
-    backupKey,
-    sha256: snapshotHash,
-    counts: inventory.counts,
-  }));
-  await env.CONTRACT_FILES.put("backups/pre-reset-2026-08-18/latest.json", marker.buffer, {
-    httpMetadata: { contentType: "application/json" },
-    customMetadata: { kind: "external_restore_pointer", createdAt, backupKey },
-  });
-
-  return { backupKey, sha256: snapshotHash, counts: inventory.counts, remainingRows: 0 };
-}
-
 async function loadRowValues(env: Env, row: number) {
   const { start, end } = dataBounds(env);
   if (!Number.isInteger(row) || row < start || row > end) throw new InputError("La fila seleccionada no es válida.");
@@ -1272,18 +1175,6 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
-  }
-
-  if (url.pathname === "/api/admin/start-fresh/preview" && request.method === "GET") {
-    if (session.role !== "admin") return json(request, env, { error: "Solo el administrador puede preparar el reinicio." }, 403);
-    const inventory = await resetInventory(env);
-    return json(request, env, { counts: inventory.counts });
-  }
-
-  if (url.pathname === "/api/admin/start-fresh" && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Solo el administrador puede iniciar una base limpia." }, 403);
-    const body = await request.json().catch(() => ({}));
-    return json(request, env, { ok: true, ...await startFreshDatabase(env, body, session) });
   }
 
   if (url.pathname === "/api/control-catalog" && request.method === "GET") {

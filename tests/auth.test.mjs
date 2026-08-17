@@ -71,7 +71,7 @@ test("crea una sesión temporal y permite consultar el perfil", async () => {
   });
 });
 
-test("incluye Naturland para los titulares confirmados", async () => {
+test("inicia los catálogos operativos sin datos históricos", async () => {
   const login = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -80,15 +80,12 @@ test("incluye Naturland para los titulares confirmados", async () => {
   const { token } = await login.json();
   const response = await api("/api/control-catalog", { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(response.status, 200);
-  const { certificates } = await response.json();
-  const normalize = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
-  const holders = ["Toñifruit", "Martínez Romero Bibio", "MR Orgánica", "Agrollans", "Patatas Alcalde"];
-  for (const holder of holders) {
-    assert.ok(certificates.some((record) => (
-      normalize(record.farmer).includes(normalize(holder))
-      && normalize(record.certification) === "naturland"
-    )), `Falta Naturland para ${holder}`);
-  }
+  const catalog = await response.json();
+  assert.equal(catalog.updatedAt, "2026-08-18");
+  assert.deepEqual(catalog.certificates, []);
+  assert.deepEqual(catalog.opfhMembers, []);
+  assert.deepEqual(catalog.farms, []);
+  assert.deepEqual(catalog.documents, []);
 });
 
 test("el usuario de consulta no puede guardar cambios", async () => {
@@ -252,7 +249,7 @@ test("guarda o copia un contrato anterior como referencia independiente", async 
   assert.equal(await download.text(), "contrato anterior");
 });
 
-test("copia como referencia un contrato importado de la biblioteca privada", async () => {
+test("no permite recuperar referencias de la biblioteca histórica vaciada", async () => {
   const login = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -260,30 +257,26 @@ test("copia como referencia un contrato importado de la biblioteca privada", asy
   });
   const { token } = await login.json();
   const libraryId = "0cf23a7a450748bce19a3abd";
-  await env.CONTRACT_FILES.put(
-    `document-library/${libraryId}`,
-    new TextEncoder().encode("contrato de biblioteca").buffer,
-    {
-      httpMetadata: { contentType: "application/pdf" },
-      customMetadata: { filename: "contrato-firmado-biblioteca.pdf", kind: "document_library" },
-    },
-  );
-
   const copied = await api("/api/previous-contract-files/copy", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ archiveId: libraryId, purchaseId: "MRO-001", provider: "Agricultor de prueba" }),
   });
-  assert.equal(copied.status, 201);
-  const cloned = await copied.json();
-  assert.notEqual(cloned.previousContractArchiveId, libraryId);
-  assert.equal(cloned.previousContractFilename, "contrato-firmado-biblioteca.pdf");
+  assert.equal(copied.status, 400);
+  assert.match((await copied.json()).error, /contrato anterior válido/i);
+});
 
-  const download = await api(`/api/contract-files/${cloned.previousContractArchiveId}`, {
+test("la operación temporal de reinicio no queda expuesta", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const response = await api("/api/admin/start-fresh/preview", {
     headers: { Authorization: `Bearer ${token}` },
   });
-  assert.equal(download.status, 200);
-  assert.equal(await download.text(), "contrato de biblioteca");
+  assert.equal(response.status, 404);
 });
 
 test("rechaza el contrato si el archivo central no está configurado", async () => {
