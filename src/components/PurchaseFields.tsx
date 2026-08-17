@@ -232,8 +232,8 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
         <div className="two-columns contract-data-grid">
           <label className="field"><span>Representante del vendedor</span><input disabled={disabled} value={contract.sellerRepresentative} onChange={(event) => updateContract("sellerRepresentative", event.target.value)} placeholder="Solo si actúa en representación" /></label>
           <label className="field"><span>DNI del representante</span><input disabled={disabled} value={contract.sellerDni} onChange={(event) => updateContract("sellerDni", event.target.value)} placeholder="Solo si existe representante" /></label>
-          <label className="field required-field"><span>Correo del agricultor</span><input required disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} placeholder="agricultor@correo.es" /></label>
-          <label className="field required-field"><span>Correo de la empresa</span><input required disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} placeholder="compras@empresa.es" /></label>
+          <label className="field"><span>Correo del agricultor (opcional)</span><input disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} placeholder="agricultor@correo.es" /></label>
+          <label className="field"><span>Correo de la empresa (opcional)</span><input disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} placeholder="compras@empresa.es" /></label>
           <label className="field field-span"><span>Domicilio del vendedor</span><input disabled={disabled} value={contract.sellerAddress} onChange={(event) => updateContract("sellerAddress", event.target.value)} placeholder="Si consta o resulta aplicable" /></label>
           <label className="field"><span>Código operador ecológico</span><input disabled={disabled} value={contract.organicOperatorCode} onChange={(event) => updateContract("organicOperatorCode", event.target.value)} placeholder="Si resulta aplicable" /></label>
           <label className="field"><span>Código certificadora</span><input disabled={disabled} value={contract.certifierCode} onChange={(event) => updateContract("certifierCode", event.target.value)} /></label>
@@ -269,8 +269,8 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
           <label className="field"><span>N.º de contrato</span><input disabled={disabled} value={contract.contractNumber} onChange={(event) => updateContract("contractNumber", event.target.value)} /></label>
           <label className="field required-field"><span>Inicio del contrato</span><input required disabled={disabled} type="date" value={value.contractStart} onInput={(event) => update("contractStart", event.currentTarget.value)} /></label>
           <label className="field required-field"><span>Fin del contrato</span><input required disabled={disabled} type="date" min={value.contractStart || undefined} value={value.contractEnd} onInput={(event) => update("contractEnd", event.currentTarget.value)} /></label>
-          <label className="field required-field"><span>Correo del agricultor</span><input required disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} /></label>
-          <label className="field required-field"><span>Correo de la empresa</span><input required disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} /></label>
+          <label className="field"><span>Correo del agricultor (opcional)</span><input disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} /></label>
+          <label className="field"><span>Correo de la empresa (opcional)</span><input disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} /></label>
         </div>
       </>}
 

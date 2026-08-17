@@ -9,7 +9,7 @@ const CONTENT_TYPES_NS = "http://schemas.openxmlformats.org/package/2006/content
 const CORE_PROPERTIES_NS = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
 const DUBLIN_CORE_NS = "http://purl.org/dc/elements/1.1/";
 
-type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina" | "uva";
+export type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina" | "uva";
 
 export const CONTRACT_TEMPLATE_NAMES = [
   "mro-limon.docx",
@@ -31,7 +31,7 @@ function normalized(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("es");
 }
 
-function contractKind(crop: string): ContractKind | null {
+export function contractKind(crop: string): ContractKind | null {
   const value = normalized(crop);
   if (value === "limon") return "limon";
   if (value === "pomelo") return "pomelo";
@@ -41,7 +41,7 @@ function contractKind(crop: string): ContractKind | null {
   return null;
 }
 
-function templateName(company: PurchaseForm["contractDetails"]["buyerCompany"], kind: ContractKind) {
+export function templateName(company: PurchaseForm["contractDetails"]["buyerCompany"], kind: ContractKind) {
   const buyer = normalized(company);
   // Los expedientes importados pueden contener pequeñas diferencias de
   // puntuación o acentuación. El modelo se resuelve por empresa y especie,
@@ -80,7 +80,7 @@ function buyerParagraphText(company: PurchaseForm["contractDetails"]["buyerCompa
   return "";
 }
 
-function batchesFor(purchase: PurchaseForm) {
+export function batchesFor(purchase: PurchaseForm) {
   const grouped = new Map<ContractKind, MaterialItem[]>();
   const unsupportedSpecies: string[] = [];
   const speciesWithoutCompanyTemplate: string[] = [];
@@ -828,14 +828,16 @@ type ReamModule = {
 // Keep the converter inside the application. Mobile browsers and some company
 // networks block runtime modules loaded from public CDNs, so a remote import
 // made PDF generation fail even when the rest of the application was online.
-const REAM_MODULE_URL = new URL(
-  "vendor/reamkit-1.27.0.js",
-  new URL(import.meta.env.BASE_URL, window.location.href),
-).href;
+function reamModuleUrl() {
+  return new URL(
+    "vendor/reamkit-1.27.0.js",
+    new URL(import.meta.env.BASE_URL, window.location.href),
+  ).href;
+}
 
 async function convertDocxToPdf(docx: Blob) {
   try {
-    const module = await import(/* @vite-ignore */ REAM_MODULE_URL) as ReamModule;
+    const module = await import(/* @vite-ignore */ reamModuleUrl()) as ReamModule;
     const source = new Uint8Array(await docx.arrayBuffer());
     const result = await module.Ream.parse(source).convertWithReport("pdf");
     if (result.losses.length) console.warn("La conversión del contrato a PDF ha comunicado avisos:", result.losses);
@@ -859,7 +861,7 @@ export function triggerDownload(blob: Blob, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
 }
 
-function validateContractGeneration(purchase: PurchaseForm) {
+export function validateContractGeneration(purchase: PurchaseForm) {
   const details = purchase.contractDetails;
   const required = [
     [purchase.provider, "agricultor o razón social"],

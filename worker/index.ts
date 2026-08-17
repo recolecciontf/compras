@@ -8,6 +8,7 @@ import {
 } from "./data/controlCatalog.generated";
 import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
 import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
+import { certificationSelection } from "../src/lib/catalog";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -187,8 +188,11 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
       || documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
       || documents.find((document) => document.extension === "PDF");
     const selectedCompany = signedDocument?.company;
+    // La certificación pertenece al agricultor/titular, no a la carpeta de la
+    // empresa compradora. Cruzar por selectedCompany hacía desaparecer, entre
+    // otras, Naturland cuando el contrato estaba archivado en la otra empresa.
     const certificates = CERTIFICATE_RECORDS
-      .filter((record) => catalogNamesMatch(provider, record.farmer) && (!selectedCompany || record.company === selectedCompany))
+      .filter((record) => catalogNamesMatch(provider, record.farmer))
       .sort((left, right) => {
         const leftScore = (left.expiry >= today ? 10 : 0) + (normalizedCatalogText(left.certification).includes("ECO") ? 4 : 0);
         const rightScore = (right.expiry >= today ? 10 : 0) + (normalizedCatalogText(right.certification).includes("ECO") ? 4 : 0);
@@ -214,7 +218,7 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
     }
     if (documents.some((document) => document.documentType === "Justificante / registro")) values[32] = "Sí";
     if (certificates[0]) {
-      values[17] = [...new Set(certificates.map((record) => record.certification).filter(Boolean))].join("; ");
+      values[17] = certificationSelection(certificates.map((record) => record.certification).join("; ")).join("; ");
       values[18] = certificates[0].expiry;
     }
     if (farms.length) {
@@ -383,7 +387,7 @@ async function sendContractCopies(
   bytes: ArrayBuffer,
   metadata: { filename: string; contentType: string; provider: string; sellerEmail: string; companyEmail: string; contractNumber: string },
 ) {
-  if (!env.CONTRACT_EMAIL_WEBHOOK_URL) return "pending_configuration" as const;
+  if (!env.CONTRACT_EMAIL_WEBHOOK_URL || !metadata.sellerEmail || !metadata.companyEmail) return "pending_configuration" as const;
   try {
     const form = new FormData();
     form.set("file", new Blob([bytes], { type: metadata.contentType }), metadata.filename);
@@ -423,9 +427,8 @@ async function storeContract(form: FormData, env: Env) {
     contractNumber: String(form.get("contractNumber") || "").trim().slice(0, 80),
   };
   if (!metadata.provider) throw new InputError("Falta identificar al agricultor o proveedor.");
-  if (!metadata.sellerEmail || !metadata.companyEmail) throw new InputError("Indica el correo del agricultor y el correo de la empresa.");
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(metadata.sellerEmail) || !emailPattern.test(metadata.companyEmail)) {
+  if ((metadata.sellerEmail && !emailPattern.test(metadata.sellerEmail)) || (metadata.companyEmail && !emailPattern.test(metadata.companyEmail))) {
     throw new InputError("Revisa el formato del correo del agricultor y del correo de la empresa.");
   }
 
@@ -800,7 +803,6 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     }
     const commonContractFields = [
       ["buyerCompany", "empresa compradora"], ["signatureDate", "fecha de firma"],
-      ["sellerEmail", "correo del agricultor"], ["companyEmail", "correo de la empresa"],
     ];
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,

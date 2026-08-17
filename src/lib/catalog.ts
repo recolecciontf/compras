@@ -52,13 +52,41 @@ export const CERTIFICATIONS = [
 
 export const OTHER_VALUE = "__other__";
 
+const CERTIFICATION_ALIASES: Record<string, (typeof CERTIFICATIONS)[number]> = {
+  eco: "Ecológico",
+  ecologico: "Ecológico",
+  globalgap: "GlobalG.A.P.",
+  grasp: "GRASP",
+  spring: "SPRING",
+  naturland: "Naturland",
+  biosuisse: "Bio Suisse",
+  demeter: "Demeter",
+  demetersoloalmacen: "Demeter",
+  brcgsfoodsafety: "BRCGS Food Safety",
+  ifsfood: "IFS Food",
+};
+
+function certificationKey(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+export function canonicalCertification(value: string | null | undefined): string {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return "";
+  return CERTIFICATION_ALIASES[certificationKey(trimmed)] ?? trimmed;
+}
+
 export function certificationSelection(value: string | null | undefined) {
   const seen = new Set<string>();
   return String(value ?? "")
     .split(/[;,·|/+]+/)
-    .map((item) => item.trim() === "ECO" ? "Ecológico" : item.trim())
+    .map(canonicalCertification)
     .filter((item) => {
-      const key = item.toLocaleLowerCase("es");
+      const key = certificationKey(item);
       if (!item || seen.has(key)) return false;
       seen.add(key);
       return true;
