@@ -773,7 +773,7 @@ function purchaseValues(value: unknown): PurchasePayload {
   return { ...base, materials, contractDetails } as PurchasePayload;
 }
 
-function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
+export function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
   const required: Array<[keyof PurchasePayload, string]> = [
     ["provider", "agricultor o proveedor"],
     ["taxId", "NIF o CIF"],
@@ -808,8 +808,6 @@ function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
     ];
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,
-      ["sellerRepresentative", "representante del vendedor"], ["sellerDni", "DNI del representante"],
-      ["sellerAddress", "domicilio del vendedor"], ["organicOperatorCode", "código de operador ecológico"],
       ["modality", "modalidad de compraventa"], ["collectionBy", "responsable de recolección"],
       ["transportBy", "responsable de transporte"], ["paymentDays", "plazo de pago"],
       ["sellerSignedAt", "firma del vendedor"],

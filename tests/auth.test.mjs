@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker } = await import(workerUrl.href);
+const { default: worker, validatePurchase } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -264,6 +264,50 @@ test("no permite recuperar referencias de la biblioteca histórica vaciada", asy
   });
   assert.equal(copied.status, 400);
   assert.match((await copied.json()).error, /contrato anterior válido/i);
+});
+
+test("acepta contratos sin representante ni datos opcionales del vendedor", () => {
+  assert.doesNotThrow(() => validatePurchase({
+    id: "TON-001",
+    provider: "Proveedor de prueba",
+    taxId: "B00000000",
+    farm: "Finca de prueba",
+    municipality: "Municipio de prueba",
+    crop: "Uva roja",
+    variety: "Arra 19",
+    expectedKg: "5000",
+    campaign: "2026/2027",
+    contractSigned: "Pendiente de firma del comprador",
+    contractStart: "2026-08-17",
+    contractEnd: "2026-08-31",
+    documentPath: "Pendiente de archivo central",
+    otherAgreements: "",
+    registeredIca: "Pendiente",
+    materials: [{
+      id: "material-1",
+      crop: "Uva roja",
+      variety: "Arra 19",
+      expectedKg: "5000",
+      situation: "",
+      municipality: "Municipio de prueba",
+      paraje: "",
+      polygon: "",
+      plot: "",
+      hectares: "",
+    }],
+    contractDetails: {
+      contractOrigin: "generated",
+      buyerCompany: "TOÑIFRUIT, S.L.",
+      signatureDate: "2026-08-17",
+      modality: "A KILOS",
+      collectionBy: "Comprador",
+      transportBy: "Comprador",
+      paymentDays: "30",
+      sellerSignedAt: "2026-08-17T12:00:00.000Z",
+      pricePerKg: "1.05",
+      applyDestrio: "No",
+    },
+  }));
 });
 
 test("la operación temporal de reinicio no queda expuesta", async () => {
