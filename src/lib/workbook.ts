@@ -421,6 +421,16 @@ export class WorkbookClient {
     return Boolean(this.token);
   }
 
+  sessionToken() {
+    return this.token;
+  }
+
+  restoreSessionToken(token: string) {
+    this.token = token;
+    this.cachedProfile = null;
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
   async signIn(username: string, password: string) {
     const result = await this.request<{ token: string; profile: UserProfile }>(
       "/api/login",

@@ -7,6 +7,16 @@ const QUEUE_STORE = "queue";
 
 const ROWS_KEY = "rows";
 const PROFILE_KEY = "profile";
+const CREDENTIALS_KEY = "credentials";
+const OFFLINE_KEY_ITERATIONS = 150_000;
+
+type OfflineCredentials = {
+  username: string;
+  salt: string;
+  iv: string;
+  encryptedToken: string;
+  iterations: number;
+};
 
 export type OfflineOperation =
   | {
@@ -68,12 +78,90 @@ async function getState<T>(key: string) {
   return withStore<StoredValue<T> | undefined>(STATE_STORE, "readonly", (store) => store.get(key));
 }
 
+function normalizedUsername(value: string) {
+  return value.trim().toLocaleUpperCase("es");
+}
+
+function bytesToBase64(value: Uint8Array) {
+  let binary = "";
+  for (const byte of value) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function base64ToBytes(value: string) {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function asArrayBuffer(value: Uint8Array) {
+  const buffer = new ArrayBuffer(value.byteLength);
+  new Uint8Array(buffer).set(value);
+  return buffer;
+}
+
+async function offlineEncryptionKey(password: string, salt: Uint8Array, iterations: number) {
+  const material = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", hash: "SHA-256", salt: asArrayBuffer(salt), iterations },
+    material,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
 export async function cacheOfflineSession(profile: UserProfile, rows: ControlRow[]) {
   await Promise.all([putState(PROFILE_KEY, profile), putState(ROWS_KEY, rows)]);
 }
 
 export async function cacheOfflineRows(rows: ControlRow[]) {
   await putState(ROWS_KEY, rows);
+}
+
+export async function cacheOfflineCredentials(username: string, password: string, sessionToken: string) {
+  if (!sessionToken) throw new Error("No se ha podido preparar el acceso sin conexión.");
+  const normalized = normalizedUsername(username);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await offlineEncryptionKey(password, salt, OFFLINE_KEY_ITERATIONS);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: asArrayBuffer(iv), additionalData: new TextEncoder().encode(normalized) },
+    key,
+    new TextEncoder().encode(sessionToken),
+  );
+  const credentials: OfflineCredentials = {
+    username: normalized,
+    salt: bytesToBase64(salt),
+    iv: bytesToBase64(iv),
+    encryptedToken: bytesToBase64(new Uint8Array(encrypted)),
+    iterations: OFFLINE_KEY_ITERATIONS,
+  };
+  await putState(CREDENTIALS_KEY, credentials);
+}
+
+export async function unlockOfflineSession(username: string, password: string) {
+  const stored = await getState<OfflineCredentials>(CREDENTIALS_KEY);
+  const credentials = stored?.value;
+  const normalized = normalizedUsername(username);
+  if (!credentials || credentials.username !== normalized) return null;
+  try {
+    const iv = base64ToBytes(credentials.iv);
+    const key = await offlineEncryptionKey(password, base64ToBytes(credentials.salt), credentials.iterations);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: asArrayBuffer(iv), additionalData: new TextEncoder().encode(normalized) },
+      key,
+      base64ToBytes(credentials.encryptedToken),
+    );
+    return new TextDecoder().decode(decrypted) || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function loadOfflineSession() {

@@ -51,13 +51,14 @@ import { CONTRACT_TEMPLATE_NAMES, downloadContracts, generateContractPackage, tr
 import {
   cacheOfflineRows,
   cacheOfflineSession,
-  clearOfflineSession,
+  cacheOfflineCredentials,
   listOfflineOperations,
   loadOfflineSession,
   offlineOperationCount,
   queueOfflineCreate,
   queueOfflineUpdate,
   removeOfflineOperation,
+  unlockOfflineSession,
 } from "./lib/offlineStore";
 import {
   contractArchiveHistory,
@@ -633,6 +634,7 @@ export default function App() {
       setProfile(user);
       await storeRowsLocally(workbookRows);
       await cacheOfflineSession(user, workbookRows);
+      await cacheOfflineCredentials(username, password, client.sessionToken());
       void client.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES).catch(() => undefined);
       setOfflineSession(false);
       setSelectedIndex(workbookRows[0]?.tableIndex ?? null);
@@ -640,7 +642,30 @@ export default function App() {
       setView("records");
       window.scrollTo({ top: 0, behavior: "auto" });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se ha podido iniciar sesión.");
+      if (!navigator.onLine || isNetworkUnavailable(reason)) {
+        const [cached, token] = await Promise.all([
+          loadOfflineSession(),
+          unlockOfflineSession(username, password),
+        ]);
+        if (!cached) {
+          setError("Este dispositivo todavía no tiene una copia offline. Conéctate una vez a internet e inicia sesión.");
+        } else if (!token) {
+          setError("El usuario o la contraseña no coinciden con el último acceso online guardado en este dispositivo.");
+        } else {
+          client.restoreSessionToken(token);
+          setIsOnline(false);
+          setSignedIn(true);
+          setOfflineSession(true);
+          setProfile(cached.profile);
+          setRows(cached.rows);
+          setLastSyncedAt(new Date(cached.savedAt));
+          setSelectedIndex(cached.rows[0]?.tableIndex ?? null);
+          setView("records");
+          setToast("Sesión offline iniciada; los cambios se sincronizarán al recuperar conexión");
+        }
+      } else {
+        setError(reason instanceof Error ? reason.message : "No se ha podido iniciar sesión.");
+      }
     } finally {
       setLoading(false);
     }
@@ -652,7 +677,6 @@ export default function App() {
       return;
     }
     client?.signOut();
-    await clearOfflineSession().catch(() => undefined);
     setSignedIn(false);
     setProfile(null);
     setRows([]);
@@ -1392,6 +1416,7 @@ export default function App() {
         ) : !signedIn && !demoMode ? (
           <ConnectPanel
             loading={loading}
+            isOnline={isOnline}
             onConnect={connect}
             onDemo={startDemo}
           />
@@ -1631,10 +1656,12 @@ export default function App() {
 
 function ConnectPanel({
   loading,
+  isOnline,
   onConnect,
   onDemo,
 }: {
   loading: boolean;
+  isOnline: boolean;
   onConnect: (username: string, password: string) => Promise<void>;
   onDemo: () => void;
 }) {
@@ -1675,11 +1702,11 @@ function ConnectPanel({
           <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="ADMINISTRADOR o CONSULTAS" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
           <label className="field required-field"><span>Contraseña</span><input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           <button className="primary-button" type="submit" disabled={loading || !username.trim() || !password}>
-            <LogIn size={20} /> {loading ? "Comprobando…" : "Entrar"}
+            <LogIn size={20} /> {loading ? "Comprobando…" : isOnline ? "Entrar" : "Entrar sin conexión"}
           </button>
         </form>
         <button className="secondary-button" onClick={onDemo}>Ver demostración</button>
-        <div className="security-note"><ShieldCheck size={17} /><span>Acceso restringido al departamento de Compras. Los datos se sincronizan con el registro central.</span></div>
+        <div className="security-note"><ShieldCheck size={17} /><span>{isOnline ? "Acceso restringido al departamento de Compras. Los datos se sincronizan con el registro central." : "Acceso offline protegido con las credenciales del último inicio online en este dispositivo."}</span></div>
       </div>
     </section>
   );
