@@ -11,6 +11,16 @@ const DUBLIN_CORE_NS = "http://purl.org/dc/elements/1.1/";
 
 type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina" | "uva";
 
+export const CONTRACT_TEMPLATE_NAMES = [
+  "mro-limon.docx",
+  "mro-pomelo.docx",
+  "mro-naranja.docx",
+  "mro-mandarina.docx",
+  "tonifruit-naranja.docx",
+  "tonifruit-mandarina.docx",
+  "tonifruit-uva.docx",
+] as const;
+
 type ContractBatch = {
   kind: ContractKind;
   materials: MaterialItem[];

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { CertificateCatalogRecord, ControlCatalogData } from "../types";
+import { PRODUCT_CATALOG } from "../lib/catalog";
 
 type CatalogTab = "certificates" | "farms" | "members" | "contracts";
 type CompanyFilter = "all" | "MR. ORGÁNICA" | "TOÑIFRUIT";
@@ -79,6 +80,7 @@ const EMPTY_CATALOG: ControlCatalogData = {
   opfhMembers: [],
   farms: [],
   documents: [],
+  storedDocuments: 0,
 };
 
 export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDownloadDocument, onUploadDocument }: Props) {
@@ -131,8 +133,9 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       soon,
       farms: farms.length,
       documents: documents.length,
+      storedDocuments: catalog.storedDocuments,
     };
-  }, [certificates, documents, farms, opfhMembers]);
+  }, [catalog.storedDocuments, certificates, documents, farms, opfhMembers]);
 
   const filteredCertificates = useMemo(() => {
     const search = normalize(query);
@@ -207,7 +210,10 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
 
   const documentCampaigns = useMemo(() => [...new Set(documents.map((document) => document.campaign))].sort().reverse(), [documents]);
   const documentTypes = useMemo(() => [...new Set(documents.map((document) => document.documentType))].sort((left, right) => left.localeCompare(right, "es")), [documents]);
-  const documentSpeciesOptions = useMemo(() => [...new Set(documents.flatMap((document) => document.species))].sort((left, right) => left.localeCompare(right, "es")), [documents]);
+  const documentSpeciesOptions = useMemo(() => [...new Set([
+    ...Object.keys(PRODUCT_CATALOG),
+    ...documents.flatMap((document) => document.species),
+  ])].sort((left, right) => left.localeCompare(right, "es")), [documents]);
   const documentVarietyOptions = useMemo(() => [...new Set(documents
     .filter((document) => documentSpecies === "all" || document.species.includes(documentSpecies))
     .flatMap((document) => document.varieties))].sort((left, right) => left.localeCompare(right, "es")), [documentSpecies, documents]);
@@ -303,7 +309,7 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
         <article className="catalog-alert"><AlertTriangle size={20} /><span>Certificados vencidos</span><strong>{summary.expired}</strong></article>
         <article><CalendarDays size={20} /><span>Próximos 15 días</span><strong>{summary.soon}</strong></article>
         <article><MapPin size={20} /><span>Fincas / recintos</span><strong>{summary.farms}</strong></article>
-        <article><FileText size={20} /><span>Documentos contractuales</span><strong>{summary.documents}</strong></article>
+        <article><FileText size={20} /><span>Contratos cargados</span><strong>{summary.storedDocuments}/{summary.documents}</strong></article>
       </div>
 
       <div className="catalog-tabs" role="tablist" aria-label="Secciones del control">

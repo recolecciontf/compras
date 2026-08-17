@@ -188,6 +188,26 @@ p {
   background: #ffe6ad;
 }
 
+.offline-banner button {
+  display: inline-flex;
+  min-height: 30px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  padding: 5px 10px;
+  color: #623400;
+  border: 1px solid #c88b20;
+  border-radius: 999px;
+  background: #fff7e3;
+  font: inherit;
+}
+
+.offline-banner button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .demo-banner {
   color: #17472f;
   border-bottom: 1px solid #c6e3d0;

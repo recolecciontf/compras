@@ -17,6 +17,19 @@ type ApiSheetRow = { index: number; values: unknown[] };
 type ApiError = { error?: string };
 
 const TOKEN_KEY = "compras-de-campo-session-v1";
+const CONTRACT_TEMPLATE_CACHE = "compras-de-campo-contract-templates-v1";
+
+export class NetworkUnavailableError extends Error {
+  constructor() {
+    super("No hay conexión con el registro central.");
+    this.name = "NetworkUnavailableError";
+  }
+}
+
+export function isNetworkUnavailable(error: unknown) {
+  return error instanceof NetworkUnavailableError
+    || (error instanceof TypeError && /fetch|network|failed|load/i.test(error.message));
+}
 
 function text(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -364,15 +377,21 @@ export class WorkbookClient {
   }
 
   private async request<T>(path: string, init: RequestInit = {}, authenticated = true): Promise<T> {
-    const response = await fetch(this.endpoint(path), {
-      ...init,
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-        ...(authenticated && this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-        ...init.headers,
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetch(this.endpoint(path), {
+        ...init,
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authenticated && this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+          ...init.headers,
+        },
+      });
+    } catch (error) {
+      if (!navigator.onLine || error instanceof TypeError) throw new NetworkUnavailableError();
+      throw error;
+    }
     if (!response.ok) {
       const detail = (await response.json().catch(() => ({}))) as ApiError;
       if (response.status === 401 && authenticated) {
@@ -392,9 +411,14 @@ export class WorkbookClient {
     try {
       this.cachedProfile = await this.request<UserProfile>("/api/profile");
       return true;
-    } catch {
+    } catch (error) {
+      if (isNetworkUnavailable(error)) throw error;
       return false;
     }
+  }
+
+  hasStoredSession() {
+    return Boolean(this.token);
   }
 
   async signIn(username: string, password: string) {
@@ -531,21 +555,49 @@ export class WorkbookClient {
   }
 
   async contractTemplate(name: string) {
-    if (name === "tonifruit-uva.docx") {
-      const publicTemplate = await fetch(`${import.meta.env.BASE_URL}contract-templates/${encodeURIComponent(name)}`, {
-        cache: "no-store",
-      });
-      if (publicTemplate.ok) return publicTemplate.arrayBuffer();
-    }
-    const response = await fetch(this.endpoint(`/api/contract-templates/${encodeURIComponent(name)}`), {
-      cache: "no-store",
+    const publicUrl = `${import.meta.env.BASE_URL}contract-templates/${encodeURIComponent(name)}`;
+    const protectedUrl = this.endpoint(`/api/contract-templates/${encodeURIComponent(name)}`);
+    const cache = "caches" in window ? await caches.open(CONTRACT_TEMPLATE_CACHE) : null;
+    const protectedRequest = new Request(protectedUrl, {
       headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
     });
+
+    if (!navigator.onLine) {
+      const cached = (await cache?.match(protectedRequest)) || (await cache?.match(publicUrl));
+      if (cached) return cached.arrayBuffer();
+    }
+
+    try {
+      const publicTemplate = await fetch(publicUrl, { cache: navigator.onLine ? "no-store" : "force-cache" });
+      if (publicTemplate.ok && (name === "tonifruit-uva.docx" || !navigator.onLine)) {
+        await cache?.put(publicUrl, publicTemplate.clone());
+        return publicTemplate.arrayBuffer();
+      }
+    } catch {
+      const cached = (await cache?.match(protectedRequest)) || (await cache?.match(publicUrl));
+      if (cached) return cached.arrayBuffer();
+      if (!navigator.onLine) throw new NetworkUnavailableError();
+    }
+    let response: Response;
+    try {
+      response = await fetch(protectedRequest, {
+        cache: "no-store",
+      });
+    } catch {
+      const cached = await cache?.match(protectedRequest);
+      if (cached) return cached.arrayBuffer();
+      throw new NetworkUnavailableError();
+    }
     if (!response.ok) {
       const detail = (await response.json().catch(() => ({}))) as ApiError;
       throw new Error(detail.error || "No se ha podido abrir el modelo contractual.");
     }
+    await cache?.put(protectedRequest, response.clone());
     return response.arrayBuffer();
+  }
+
+  async prepareContractTemplates(names: readonly string[]) {
+    for (const name of names) await this.contractTemplate(name);
   }
 
   async archiveContract(file: Blob, filename: string, purchase: PurchaseForm) {

@@ -47,9 +47,21 @@ import { PurchaseFields } from "./components/PurchaseFields";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS } from "./lib/catalog";
-import { downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
+import { CONTRACT_TEMPLATE_NAMES, downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
+import {
+  cacheOfflineRows,
+  cacheOfflineSession,
+  clearOfflineSession,
+  listOfflineOperations,
+  loadOfflineSession,
+  offlineOperationCount,
+  queueOfflineCreate,
+  queueOfflineUpdate,
+  removeOfflineOperation,
+} from "./lib/offlineStore";
 import {
   contractArchiveHistory,
+  isNetworkUnavailable,
   isRecordCancelled,
   purchaseFromRow,
   recordStatusHistory,
@@ -153,6 +165,37 @@ type AutoSaveTask = {
   purchaseChanged: boolean;
 };
 
+function rowFromOfflinePurchase(purchase: PurchaseForm, tableIndex: number): ControlRow {
+  return {
+    ...purchase,
+    tableIndex,
+    contractAlert: purchase.contractStart && purchase.contractEnd ? "PENDIENTE DE SINCRONIZAR" : "SIN FECHAS",
+    plannedCutDate: "",
+    farmChecked: "",
+    fieldNotebook: "",
+    notebookReviewDate: "",
+    analysisStatus: "",
+    analysisDate: "",
+    certificateType: "",
+    certificateExpiry: "",
+    otherDocuments: "",
+    reviewer: "",
+    lastReviewDate: "",
+    canHarvest: "NO",
+    blockageReason: "Pendiente de sincronizar con el registro central",
+    cutStatus: "No",
+    cutKgTotal: "",
+    archived: "No",
+    materialsJson: JSON.stringify(purchase.materials),
+    contractDetailsJson: JSON.stringify(purchase.contractDetails),
+    recordStatus: "Activo",
+    statusReason: "",
+    statusUpdatedAt: "",
+    statusUpdatedBy: "",
+    statusHistoryJson: "",
+  };
+}
+
 function StatusBadge({ ok, children }: { ok: boolean; children: ReactNode }) {
   return (
     <span className={`status-badge ${ok ? "status-ok" : "status-blocked"}`}>
@@ -192,6 +235,10 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [demoMode, setDemoMode] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineSession, setOfflineSession] = useState(false);
+  const [pendingOfflineCount, setPendingOfflineCount] = useState(0);
+  const [syncingOffline, setSyncingOffline] = useState(false);
+  const [preparingOffline, setPreparingOffline] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const autoSaveTimer = useRef<number | null>(null);
   const autoSaveBusy = useRef(false);
@@ -216,6 +263,10 @@ export default function App() {
       window.removeEventListener("offline", offline);
       window.removeEventListener("beforeinstallprompt", beforeInstall);
     };
+  }, []);
+
+  useEffect(() => {
+    void offlineOperationCount().then(setPendingOfflineCount).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -250,11 +301,39 @@ export default function App() {
           if (!active) return;
           setProfile(user);
           setRows(workbookRows);
+          setOfflineSession(false);
+          await cacheOfflineSession(user, workbookRows);
+          void nextClient.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES).catch(() => undefined);
           setLastSyncedAt(new Date());
           setSelectedIndex((current) => current ?? workbookRows[0]?.tableIndex ?? null);
+        } else if (!navigator.onLine && nextClient.hasStoredSession()) {
+          const cached = await loadOfflineSession();
+          if (!active || !cached) return;
+          setSignedIn(true);
+          setOfflineSession(true);
+          setProfile(cached.profile);
+          setRows(cached.rows);
+          setLastSyncedAt(new Date(cached.savedAt));
+          setSelectedIndex((current) => current ?? cached.rows[0]?.tableIndex ?? null);
         }
       })
-      .catch((reason) => active && setError(reason instanceof Error ? reason.message : "No se ha podido iniciar la aplicación."))
+      .catch(async (reason) => {
+        if (!active) return;
+        if ((!navigator.onLine || isNetworkUnavailable(reason)) && nextClient.hasStoredSession()) {
+          const cached = await loadOfflineSession();
+          if (cached && active) {
+            setIsOnline(false);
+            setSignedIn(true);
+            setOfflineSession(true);
+            setProfile(cached.profile);
+            setRows(cached.rows);
+            setLastSyncedAt(new Date(cached.savedAt));
+            setSelectedIndex(cached.rows[0]?.tableIndex ?? null);
+            return;
+          }
+        }
+        setError(reason instanceof Error ? reason.message : "No se ha podido iniciar la aplicación.");
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -298,17 +377,34 @@ export default function App() {
         const issues = reviewBlockages(mergedPurchase, task.review);
         setAutoSaveStatus("saving");
 
+        const merged = mergeReview(mergedPurchase, task.review, issues.length === 0, issues);
         if (!demoMode) {
           if (!client) throw new Error("No hay conexión con Google Sheets.");
-          if (task.purchaseChanged) await client.savePurchase(task.row, task.purchase);
-          if (task.reviewChanged) await client.saveReview(task.row, task.review);
+          try {
+            if (task.purchaseChanged) await client.savePurchase(task.row, task.purchase);
+            if (task.reviewChanged) await client.saveReview(task.row, task.review);
+          } catch (reason) {
+            if (!isNetworkUnavailable(reason)) throw reason;
+            await queueOfflineUpdate(task.row, {
+              purchase: task.purchaseChanged ? task.purchase : undefined,
+              review: task.reviewChanged ? task.review : undefined,
+            });
+            setIsOnline(false);
+            setOfflineSession(true);
+            merged.canHarvest = "NO";
+            merged.blockageReason = [...issues, "Cambios pendientes de sincronizar"].join("; ");
+            await updateOfflineCount();
+          }
         }
 
-        const merged = mergeReview(mergedPurchase, task.review, issues.length === 0, issues);
-        setRows((current) => current.map((row) => row.tableIndex === task.row.tableIndex ? merged : row));
+        setRows((current) => {
+          const nextRows = current.map((row) => row.tableIndex === task.row.tableIndex ? merged : row);
+          void cacheOfflineRows(nextRows);
+          return nextRows;
+        });
         reviewFingerprint.current = JSON.stringify(task.review);
         purchaseFingerprint.current = JSON.stringify(task.purchase);
-        setLastSyncedAt(new Date());
+        if (navigator.onLine) setLastSyncedAt(new Date());
       }
       setAutoSaveStatus("saved");
     } catch (reason) {
@@ -322,7 +418,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!selected || !review || !purchase || (!signedIn && !demoMode) || !isOnline || view !== "review" || !canEdit) return;
+    if (!selected || !review || !purchase || (!signedIn && !demoMode) || view !== "review" || !canEdit) return;
     const nextFingerprint = JSON.stringify(review);
     const nextPurchaseFingerprint = JSON.stringify(purchase);
     const reviewChanged = nextFingerprint !== reviewFingerprint.current;
@@ -336,6 +432,23 @@ export default function App() {
     setAutoSaveStatus("pending");
 
     autoSaveTimer.current = window.setTimeout(() => {
+      if (!demoMode && !isOnline) {
+        const mergedPurchase = mergePurchase(rowSnapshot, purchaseSnapshot);
+        const issues = reviewBlockages(mergedPurchase, reviewSnapshot);
+        const merged = mergeReview(mergedPurchase, reviewSnapshot, false, [...issues, "Cambios pendientes de sincronizar"]);
+        void queueOfflineUpdate(rowSnapshot, {
+          purchase: purchaseChanged ? purchaseSnapshot : undefined,
+          review: reviewChanged ? reviewSnapshot : undefined,
+        }).then(async () => {
+          const nextRows = rows.map((row) => row.tableIndex === rowSnapshot.tableIndex ? merged : row);
+          await storeRowsLocally(nextRows);
+          reviewFingerprint.current = JSON.stringify(reviewSnapshot);
+          purchaseFingerprint.current = JSON.stringify(purchaseSnapshot);
+          setAutoSaveStatus("saved");
+          await updateOfflineCount();
+        }).catch(() => setAutoSaveStatus("error"));
+        return;
+      }
       pendingAutoSave.current = {
         row: rowSnapshot,
         review: reviewSnapshot,
@@ -349,7 +462,7 @@ export default function App() {
     return () => {
       if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     };
-  }, [review, purchase, selected, signedIn, isOnline, view, demoMode, client, canEdit]);
+  }, [review, purchase, selected, signedIn, isOnline, view, demoMode, client, canEdit, rows]);
 
   useEffect(() => {
     if (!client || !signedIn || demoMode || !isOnline || !["records", "harvest"].includes(view)) return;
@@ -392,6 +505,89 @@ export default function App() {
   const predictedIssues = predictedRow && review ? reviewBlockages(predictedRow, review) : [];
   const predictedAuthorized = Boolean(selected && review && predictedIssues.length === 0);
 
+  async function updateOfflineCount() {
+    setPendingOfflineCount(await offlineOperationCount());
+  }
+
+  async function storeRowsLocally(nextRows: ControlRow[]) {
+    setRows(nextRows);
+    await cacheOfflineRows(nextRows);
+  }
+
+  async function synchronizeOfflineChanges() {
+    if (!client || !signedIn || demoMode || !navigator.onLine || syncingOffline) return;
+    const operations = await listOfflineOperations();
+    if (!operations.length) {
+      setPendingOfflineCount(0);
+      setOfflineSession(false);
+      return;
+    }
+    setSyncingOffline(true);
+    try {
+      let currentRows = await client.rows();
+      const synchronizedIds = new Map<string, string>();
+      for (const operation of operations) {
+        if (operation.kind === "create") {
+          const existing = currentRows.find((row) => row.id === operation.purchase.id);
+          if (existing && existing.provider === operation.purchase.provider && existing.taxId === operation.purchase.taxId) {
+            synchronizedIds.set(operation.purchase.id, existing.id);
+          } else {
+            const finalId = existing
+              ? nextPurchaseId(currentRows, operation.purchase.contractDetails.buyerCompany)
+              : operation.purchase.id;
+            const finalPurchase = finalId === operation.purchase.id ? operation.purchase : {
+              ...operation.purchase,
+              id: finalId,
+              contractDetails: { ...operation.purchase.contractDetails, contractNumber: finalId },
+            };
+            const created = await client.createPurchase(finalPurchase);
+            synchronizedIds.set(operation.purchase.id, created.id);
+            currentRows = await client.rows();
+          }
+        } else {
+          const synchronizedId = synchronizedIds.get(operation.recordId) || operation.recordId;
+          const target = currentRows.find((row) => row.id === synchronizedId)
+            || currentRows.find((row) => row.tableIndex === operation.rowIndex);
+          if (!target) throw new Error(`No se encuentra el expediente ${operation.recordId} para sincronizarlo.`);
+          if (operation.purchase) {
+            const synchronizedPurchase = operation.purchase.id === synchronizedId ? operation.purchase : {
+              ...operation.purchase,
+              id: synchronizedId,
+              contractDetails: { ...operation.purchase.contractDetails, contractNumber: synchronizedId },
+            };
+            await client.savePurchase(target, synchronizedPurchase);
+          }
+          if (operation.review) await client.saveReview(target, operation.review);
+          if (operation.harvest) await client.saveHarvest(target, operation.harvest);
+          currentRows = await client.rows();
+        }
+        await removeOfflineOperation(operation.id);
+        await updateOfflineCount();
+      }
+      const [user, nextRows] = await Promise.all([client.profile(), client.rows()]);
+      setProfile(user);
+      await storeRowsLocally(nextRows);
+      setOfflineSession(false);
+      setLastSyncedAt(new Date());
+      setSelectedIndex((current) => nextRows.some((row) => row.tableIndex === current) ? current : nextRows[0]?.tableIndex ?? null);
+      setToast("Cambios sin conexión sincronizados");
+    } catch (reason) {
+      if (isNetworkUnavailable(reason)) {
+        setIsOnline(false);
+        setOfflineSession(true);
+        setToast("La conexión se ha interrumpido; los cambios siguen guardados en el dispositivo");
+      } else {
+        setError(reason instanceof Error ? reason.message : "No se han podido sincronizar los cambios sin conexión.");
+      }
+    } finally {
+      setSyncingOffline(false);
+    }
+  }
+
+  useEffect(() => {
+    if (isOnline && signedIn && client && !demoMode) void synchronizeOfflineChanges();
+  }, [isOnline, signedIn, client, demoMode]);
+
   async function refresh(silent = false) {
     if (demoMode) {
       if (!silent) setToast("Datos ficticios actualizados");
@@ -402,12 +598,20 @@ export default function App() {
     setError("");
     try {
       const nextRows = await client.rows();
-      setRows(nextRows);
+      await storeRowsLocally(nextRows);
+      if (profile) await cacheOfflineSession(profile, nextRows);
+      setOfflineSession(false);
       setLastSyncedAt(new Date());
       setSelectedIndex((current) => nextRows.some((row) => row.tableIndex === current) ? current : nextRows[0]?.tableIndex ?? null);
       if (!silent) setToast("Google Sheets sincronizado");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se ha podido sincronizar Google Sheets.");
+      if (isNetworkUnavailable(reason)) {
+        setIsOnline(false);
+        setOfflineSession(true);
+        if (!silent) setToast("Sin conexión: se mantiene la última copia guardada");
+      } else {
+        setError(reason instanceof Error ? reason.message : "No se ha podido sincronizar Google Sheets.");
+      }
     } finally {
       if (!silent) setLoading(false);
     }
@@ -422,7 +626,10 @@ export default function App() {
       const [user, workbookRows] = await Promise.all([client.profile(), client.rows()]);
       setSignedIn(true);
       setProfile(user);
-      setRows(workbookRows);
+      await storeRowsLocally(workbookRows);
+      await cacheOfflineSession(user, workbookRows);
+      void client.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES).catch(() => undefined);
+      setOfflineSession(false);
       setSelectedIndex(workbookRows[0]?.tableIndex ?? null);
       setLastSyncedAt(new Date());
       setView("records");
@@ -434,11 +641,18 @@ export default function App() {
     }
   }
 
-  function logout() {
+  async function logout() {
+    if (pendingOfflineCount > 0) {
+      setError(`Hay ${pendingOfflineCount} cambio${pendingOfflineCount === 1 ? "" : "s"} pendiente${pendingOfflineCount === 1 ? "" : "s"} de sincronizar. Recupera la conexión antes de cerrar sesión para no perderlo${pendingOfflineCount === 1 ? "" : "s"}.`);
+      return;
+    }
     client?.signOut();
+    await clearOfflineSession().catch(() => undefined);
     setSignedIn(false);
     setProfile(null);
     setRows([]);
+    setOfflineSession(false);
+    setPendingOfflineCount(0);
     setSelectedIndex(null);
     setView("records");
     setError("");
@@ -497,23 +711,45 @@ export default function App() {
               : row,
           ),
         );
+      } else if (!isOnline) {
+        const merged = mergeReview(mergePurchase(selected, purchase), completedReview, false, [...predictedIssues, "Cambios pendientes de sincronizar"]);
+        await queueOfflineUpdate(selected, { purchase, review: completedReview });
+        await storeRowsLocally(rows.map((row) => row.tableIndex === selected.tableIndex ? merged : row));
+        await updateOfflineCount();
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
         await client.savePurchase(selected, purchase);
         await client.saveReview(selected, completedReview);
         const nextRows = await client.rows();
-        setRows(nextRows);
+        await storeRowsLocally(nextRows);
       }
       setReview(completedReview);
       reviewFingerprint.current = JSON.stringify(completedReview);
       purchaseFingerprint.current = JSON.stringify(purchase);
-      setLastSyncedAt(new Date());
+      if (isOnline) setLastSyncedAt(new Date());
       setAutoSaveStatus("saved");
-      setToast(predictedAuthorized ? "Revisión finalizada: puede recolectarse" : "Datos obligatorios guardados: sigue bloqueado");
+      setToast(!isOnline
+        ? "Revisión guardada en el dispositivo; se sincronizará al recuperar conexión"
+        : predictedAuthorized ? "Revisión finalizada: puede recolectarse" : "Datos obligatorios guardados: sigue bloqueado");
       setView("records");
     } catch (reason) {
-      setAutoSaveStatus("error");
-      setError(reason instanceof Error ? reason.message : "No se ha podido finalizar la revisión.");
+      if (!demoMode && isNetworkUnavailable(reason)) {
+        const merged = mergeReview(mergePurchase(selected, purchase), completedReview, false, [...predictedIssues, "Cambios pendientes de sincronizar"]);
+        await queueOfflineUpdate(selected, { purchase, review: completedReview });
+        await storeRowsLocally(rows.map((row) => row.tableIndex === selected.tableIndex ? merged : row));
+        await updateOfflineCount();
+        setIsOnline(false);
+        setOfflineSession(true);
+        setReview(completedReview);
+        reviewFingerprint.current = JSON.stringify(completedReview);
+        purchaseFingerprint.current = JSON.stringify(purchase);
+        setAutoSaveStatus("saved");
+        setToast("La conexión se interrumpió: revisión guardada en el dispositivo");
+        setView("records");
+      } else {
+        setAutoSaveStatus("error");
+        setError(reason instanceof Error ? reason.message : "No se ha podido finalizar la revisión.");
+      }
     } finally {
       setSaving(false);
     }
@@ -521,8 +757,13 @@ export default function App() {
 
   async function createPurchase(nextPurchase: PurchaseForm, contractSubmission: ContractSubmission) {
     if (!canEdit) return;
+    if (!isOnline && (contractSubmission.mode === "existing" || contractSubmission.previousContract.mode !== "none")) {
+      setError("Sin conexión puedes preparar una compra nueva y descargar su contrato, pero los contratos adjuntos se archivarán únicamente cuando haya internet.");
+      return;
+    }
     setSaving(true);
     setError("");
+    let offlineCandidate: PurchaseForm | null = null;
     try {
       const assignedId = nextPurchase.id || nextPurchaseId(rows, nextPurchase.contractDetails.buyerCompany);
       let identifiedPurchase: PurchaseForm = {
@@ -533,6 +774,7 @@ export default function App() {
           contractNumber: nextPurchase.contractDetails.contractNumber || assignedId,
         },
       };
+      let preparedPurchase = identifiedPurchase;
       const previousReference = contractSubmission.previousContract;
       if (previousReference.mode !== "none") {
         let storedPrevious: {
@@ -545,6 +787,12 @@ export default function App() {
             previousContractArchiveId: crypto.randomUUID(),
             previousContractFilename: previousReference.mode === "uploaded" ? previousReference.file.name : previousReference.filename,
             previousContractStoredAt: new Date().toISOString(),
+          };
+        } else if (!isOnline) {
+          storedPrevious = {
+            previousContractArchiveId: "",
+            previousContractFilename: previousReference.mode === "uploaded" ? previousReference.file.name : previousReference.filename,
+            previousContractStoredAt: "",
           };
         } else {
           if (!client) throw new Error("No hay conexión con Google Sheets.");
@@ -566,6 +814,29 @@ export default function App() {
             previousContractStoredAt: storedPrevious.previousContractStoredAt,
           },
         };
+      } else if (!isOnline) {
+        if (contractSubmission.mode === "existing") throw new Error("El contrato firmado necesita conexión para quedar archivado.");
+        const signatures = contractSubmission.mode === "generated" ? contractSubmission.signatures : undefined;
+        const artifact = await generateContractPackage(
+          identifiedPurchase,
+          (name) => client?.contractTemplate(name) || Promise.reject(new Error(`El modelo ${name} no está disponible sin conexión. Abre esta especie una vez con internet para descargarlo.`)),
+          signatures,
+          contractSubmission.format,
+        );
+        triggerDownload(artifact.blob, artifact.filename);
+        preparedPurchase = {
+          ...identifiedPurchase,
+          documentPath: contractSubmission.mode === "unsigned"
+            ? "Contrato descargado sin conexión. Pendiente de firma, devolución y archivo central"
+            : "Contrato descargado sin conexión. Pendiente de firma digital y archivo central",
+          contractDetails: {
+            ...identifiedPurchase.contractDetails,
+            archiveId: "",
+            archiveFilename: artifact.filename,
+            archivedAt: "",
+            emailStatus: "pending_configuration",
+          },
+        };
       } else {
         identifiedPurchase = {
           ...identifiedPurchase,
@@ -580,7 +851,6 @@ export default function App() {
           },
         };
       }
-      let preparedPurchase = identifiedPurchase;
       if (demoMode) {
         preparedPurchase = {
           ...identifiedPurchase,
@@ -597,7 +867,7 @@ export default function App() {
             emailStatus: "pending_configuration",
           },
         };
-      } else {
+      } else if (isOnline) {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
         if (contractSubmission.mode !== "existing") {
           const signatures = contractSubmission.mode === "generated" ? contractSubmission.signatures : undefined;
@@ -663,12 +933,23 @@ export default function App() {
         setSelectedIndex(createdIndex);
         setPurchase(purchaseFromRow(created));
         setReview(reviewFromRow(created));
+      } else if (!isOnline) {
+        createdIndex = Math.min(-1, ...rows.map((row) => row.tableIndex)) - 1;
+        const offlineRow = rowFromOfflinePurchase(preparedPurchase, createdIndex);
+        await queueOfflineCreate(preparedPurchase, createdIndex);
+        const nextRows = [...rows, offlineRow];
+        await storeRowsLocally(nextRows);
+        await updateOfflineCount();
+        setSelectedIndex(createdIndex);
+        setPurchase(purchaseFromRow(offlineRow));
+        setReview(reviewFromRow(offlineRow));
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
+        offlineCandidate = preparedPurchase;
         const created = await client.createPurchase(preparedPurchase);
         createdIndex = created.row;
         const nextRows = await client.rows();
-        setRows(nextRows);
+        await storeRowsLocally(nextRows);
         const createdRow = nextRows.find((row) => row.tableIndex === createdIndex);
         if (createdRow) {
           setPurchase(purchaseFromRow(createdRow));
@@ -676,9 +957,11 @@ export default function App() {
         }
         setSelectedIndex(createdIndex);
       }
-      setLastSyncedAt(new Date());
+      if (isOnline) setLastSyncedAt(new Date());
       const generatedFormat = contractSubmission.mode === "existing" ? "" : contractSubmission.format === "pdf" ? "PDF" : "Word";
-      setToast(contractSubmission.mode === "generated"
+      setToast(!isOnline
+        ? "Compra guardada en el dispositivo. Se sincronizará automáticamente cuando vuelva internet."
+        : contractSubmission.mode === "generated"
         ? `Compra creada y ${generatedFormat} descargado. Pendiente de firma digital del comprador, archivo y AICA.`
         : contractSubmission.mode === "unsigned"
         ? `Compra creada y ${generatedFormat} descargado. Pendiente de firma del agricultor, devolución, archivo y AICA.`
@@ -689,7 +972,22 @@ export default function App() {
           : "Compra creada. Contrato descargado y pendiente de archivo central.");
       setView("review");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se ha podido crear la compra.");
+      if (!demoMode && offlineCandidate && isNetworkUnavailable(reason)) {
+        const createdIndex = Math.min(-1, ...rows.map((row) => row.tableIndex)) - 1;
+        const offlineRow = rowFromOfflinePurchase(offlineCandidate, createdIndex);
+        await queueOfflineCreate(offlineCandidate, createdIndex);
+        await storeRowsLocally([...rows, offlineRow]);
+        await updateOfflineCount();
+        setIsOnline(false);
+        setOfflineSession(true);
+        setSelectedIndex(createdIndex);
+        setPurchase(purchaseFromRow(offlineRow));
+        setReview(reviewFromRow(offlineRow));
+        setToast("La conexión se interrumpió: compra guardada en el dispositivo");
+        setView("review");
+      } else {
+        setError(reason instanceof Error ? reason.message : "No se ha podido crear la compra.");
+      }
     } finally {
       setSaving(false);
     }
@@ -702,15 +1000,28 @@ export default function App() {
     try {
       if (demoMode) {
         setRows((current) => current.map((item) => item.tableIndex === row.tableIndex ? { ...item, ...harvest } : item));
+      } else if (!isOnline) {
+        await queueOfflineUpdate(row, { harvest });
+        await storeRowsLocally(rows.map((item) => item.tableIndex === row.tableIndex ? { ...item, ...harvest } : item));
+        await updateOfflineCount();
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
         await client.saveHarvest(row, harvest);
-        setRows(await client.rows());
+        await storeRowsLocally(await client.rows());
       }
-      setLastSyncedAt(new Date());
-      setToast(harvest.archived === "Sí" ? "Compra archivada" : "Estado del corte guardado");
+      if (isOnline) setLastSyncedAt(new Date());
+      setToast(!isOnline ? "Corte guardado en el dispositivo; sincronización pendiente" : harvest.archived === "Sí" ? "Compra archivada" : "Estado del corte guardado");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se ha podido guardar el corte.");
+      if (!demoMode && isNetworkUnavailable(reason)) {
+        await queueOfflineUpdate(row, { harvest });
+        await storeRowsLocally(rows.map((item) => item.tableIndex === row.tableIndex ? { ...item, ...harvest } : item));
+        await updateOfflineCount();
+        setIsOnline(false);
+        setOfflineSession(true);
+        setToast("La conexión se interrumpió: corte guardado en el dispositivo");
+      } else {
+        setError(reason instanceof Error ? reason.message : "No se ha podido guardar el corte.");
+      }
     } finally {
       setSaving(false);
     }
@@ -740,22 +1051,29 @@ export default function App() {
 
   async function downloadLibraryDocument(id: string) {
     if (!client || demoMode) throw new Error("Inicia sesión con el usuario real para descargar documentos.");
+    if (!isOnline) throw new Error("Este documento no está guardado en el dispositivo. Conéctate a internet para descargarlo.");
     const document = await client.libraryDocument(id);
     triggerDownload(document.blob, document.filename);
   }
 
   async function uploadLibraryDocument(file: File, id: string) {
     if (!client || demoMode || !canEdit) throw new Error("Inicia sesión como administrador para importar contratos.");
+    if (!isOnline) throw new Error("La importación de documentos necesita conexión a internet.");
     await client.uploadLibraryDocument(file, id);
   }
 
   const loadControlCatalog = useCallback(async () => {
     if (!client || demoMode) throw new Error("El control documental privado solo está disponible con una sesión real.");
+    if (!isOnline) throw new Error("El catálogo documental necesita conexión. Los expedientes ya descargados siguen disponibles.");
     return client.controlCatalog();
-  }, [client, demoMode]);
+  }, [client, demoMode, isOnline]);
 
   async function attachSignedContract(file: File) {
     if (!purchase || !selected) return;
+    if (!demoMode && !isOnline) {
+      setError("El contrato firmado no puede archivarse sin conexión. Los demás cambios pueden seguir guardándose en el dispositivo.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -825,6 +1143,10 @@ export default function App() {
 
   async function changeRecordStatus(status: "Activo" | "Anulado", reason: string) {
     if (!selected || !canEdit) return false;
+    if (!demoMode && !isOnline) {
+      setError("Anular o restaurar un expediente requiere conexión para evitar cambios contradictorios.");
+      return false;
+    }
     setSaving(true);
     setError("");
     try {
@@ -858,6 +1180,10 @@ export default function App() {
 
   async function replaceSignedContract(file: File, reason: string) {
     if (!selected || !purchase || !canEdit) return false;
+    if (!demoMode && !isOnline) {
+      setError("Sustituir un contrato firmado requiere conexión con el archivo central.");
+      return false;
+    }
     setSaving(true);
     setError("");
     try {
@@ -890,7 +1216,7 @@ export default function App() {
         await client.replaceContract(selected, file, reason, purchase);
         const nextRows = await client.rows();
         loadedRowIndex.current = null;
-        setRows(nextRows);
+        await storeRowsLocally(nextRows);
       }
       setLastSyncedAt(new Date());
       setToast("Contrato sustituido; la versión anterior permanece en el historial");
@@ -908,6 +1234,7 @@ export default function App() {
     setError("");
     try {
       if (!client || demoMode) throw new Error("La descarga de versiones anteriores solo está disponible con la sesión real.");
+      if (!isOnline) throw new Error("La versión archivada necesita conexión para descargarse.");
       const archived = await client.archivedContract(archiveId);
       triggerDownload(archived.blob, archived.filename);
       setToast("Versión anterior descargada");
@@ -920,6 +1247,10 @@ export default function App() {
 
   async function deleteRecord(reason: string, confirmation: string, acknowledgement: string) {
     if (!selected || !canEdit) return false;
+    if (!demoMode && !isOnline) {
+      setError("El borrado definitivo requiere conexión con el registro central.");
+      return false;
+    }
     setSaving(true);
     setError("");
     try {
@@ -952,16 +1283,36 @@ export default function App() {
     setInstallPrompt(null);
   }
 
+  async function prepareOfflineMode() {
+    if (!client || !signedIn || demoMode || preparingOffline) return;
+    setPreparingOffline(true);
+    setError("");
+    try {
+      if (profile) await cacheOfflineSession(profile, rows);
+      await client.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES);
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        registration.active?.postMessage({ type: "CACHE_APP_SHELL" });
+      }
+      setToast("Modo sin conexión preparado: expedientes, formularios y modelos guardados en este dispositivo");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se ha podido preparar el modo sin conexión.");
+    } finally {
+      setPreparingOffline(false);
+    }
+  }
+
   if (!config) return <LoadingScreen />;
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-logo" aria-label="Toñifruit">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-            <strong>toñifruit</strong>
-          </span>
+          <img
+            className="brand-logo"
+            src={`${import.meta.env.BASE_URL}tonifruit-logo.png`}
+            alt="Toñifruit"
+          />
           <span className="brand-divider" aria-hidden="true" />
           <div className="brand-app-name">
             <span>Departamento de compras</span>
@@ -991,6 +1342,11 @@ export default function App() {
               <RefreshCw className={loading ? "spinning" : ""} size={20} />
             </button>
           )}
+          {signedIn && !demoMode && isOnline && (
+            <button className="icon-button" onClick={() => void prepareOfflineMode()} disabled={preparingOffline} title="Preparar modo sin conexión" aria-label="Preparar modo sin conexión">
+              <CloudOff className={preparingOffline ? "spinning" : ""} size={20} />
+            </button>
+          )}
           {(signedIn || demoMode) && (
             <button
               className="icon-button"
@@ -1004,7 +1360,17 @@ export default function App() {
         </div>
       </header>
 
-      {!isOnline && <div className="offline-banner"><CloudOff size={16} /> Sin conexión: consulta disponible; guarda cuando recuperes internet.</div>}
+      {(!isOnline || offlineSession || pendingOfflineCount > 0) && <div className="offline-banner">
+        <CloudOff size={16} />
+        <span>{!isOnline
+          ? `Modo sin conexión: puedes consultar y seguir trabajando.${pendingOfflineCount ? ` ${pendingOfflineCount} cambio${pendingOfflineCount === 1 ? "" : "s"} pendiente${pendingOfflineCount === 1 ? "" : "s"}.` : ""}`
+          : syncingOffline
+            ? `Sincronizando ${pendingOfflineCount} cambio${pendingOfflineCount === 1 ? "" : "s"} pendiente${pendingOfflineCount === 1 ? "" : "s"}…`
+            : pendingOfflineCount
+              ? `${pendingOfflineCount} cambio${pendingOfflineCount === 1 ? "" : "s"} pendiente${pendingOfflineCount === 1 ? "" : "s"} de sincronizar.`
+              : "Conexión recuperada."}</span>
+        {isOnline && pendingOfflineCount > 0 && <button type="button" onClick={() => void synchronizeOfflineChanges()} disabled={syncingOffline}><RefreshCw className={syncingOffline ? "spinning" : ""} size={15} /> Sincronizar ahora</button>}
+      </div>}
       {demoMode && <div className="demo-banner"><AlertTriangle size={16} /> Demostración activa · Los datos son ficticios y no llegan a Google Sheets.</div>}
 
       <main className="main-content">
@@ -1038,7 +1404,7 @@ export default function App() {
             <section className={`records-pane ${view !== "records" ? "mobile-hidden" : ""}`}>
               <div className="dashboard-hero">
                 <img
-                  src={`${import.meta.env.BASE_URL}og.png`}
+                  src={`${import.meta.env.BASE_URL}dashboard-hero.webp`}
                   alt="Compras de campo: control documental, materia prima y cortes"
                   fetchPriority="high"
                   onError={(event) => { event.currentTarget.src = `${import.meta.env.BASE_URL}app-icon-512.png`; }}
@@ -1065,7 +1431,7 @@ export default function App() {
               <div className="summary-grid">
                 <article className="summary-card summary-total">
                   <ListChecks size={21} />
-                  <span>Total</span>
+                  <span>Expedientes activos</span>
                   <strong>{counts.total}</strong>
                 </article>
                 <article className="summary-card summary-ok">
@@ -1080,7 +1446,7 @@ export default function App() {
                 </article>
                 <article className="summary-card summary-documented">
                   <FileCheck2 size={21} />
-                  <span>Documentados</span>
+                  <span>Con documentación</span>
                   <strong>{counts.documented}</strong>
                 </article>
                 <article className="summary-card summary-expired">
@@ -1094,6 +1460,10 @@ export default function App() {
                   <strong>{counts.cancelled}</strong>
                 </article>
               </div>
+
+              <p className="summary-scope-note">
+                <FileText size={16} /> Estas cifras corresponden a expedientes. La biblioteca completa está en Certificados y OPFH → Contratos.
+              </p>
 
               <div className="search-box">
                 <Search size={20} />
@@ -1259,7 +1629,7 @@ function ConnectPanel({
       <div className="login-showcase">
         <div className="login-visual">
           <img
-            src={`${import.meta.env.BASE_URL}og.png`}
+            src={`${import.meta.env.BASE_URL}dashboard-hero.webp`}
             alt="Compras de campo de Toñifruit"
             fetchPriority="high"
             onError={(event) => { event.currentTarget.src = `${import.meta.env.BASE_URL}app-icon-512.png`; }}
@@ -1277,10 +1647,7 @@ function ConnectPanel({
       </div>
       <div className="connect-card">
         <div className="connect-brand">
-          <span className="brand-logo" aria-label="Toñifruit">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-            <strong>toñifruit</strong>
-          </span>
+          <img src={`${import.meta.env.BASE_URL}tonifruit-logo.png`} alt="Toñifruit" />
           <span>Herramienta interna</span>
         </div>
         <div className="connect-icon"><ShieldCheck size={30} /></div>
@@ -1728,7 +2095,7 @@ function ReviewPanel({
       {!readOnly && (
         <div className="form-actions">
           <button className="secondary-button" type="button" onClick={onReset} disabled={saving}><RotateCcw size={18} /> Deshacer cambios</button>
-          <button className="primary-button" type="submit" disabled={saving || autoSaveStatus === "saving" || autoSaveStatus === "pending" || !navigator.onLine}><ShieldCheck size={19} /> {saving ? "Finalizando…" : "Finalizar revisión"}</button>
+          <button className="primary-button" type="submit" disabled={saving || autoSaveStatus === "saving" || autoSaveStatus === "pending"}><ShieldCheck size={19} /> {saving ? "Finalizando…" : navigator.onLine ? "Finalizar revisión" : "Guardar revisión sin conexión"}</button>
         </div>
       )}
     </form>

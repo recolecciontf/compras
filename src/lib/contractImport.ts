@@ -72,6 +72,7 @@ const SPECIES_ALIASES: Array<[string, string[]]> = [
   ["Limón", ["limon", "limones"]],
   ["Lima", ["lima", "limas"]],
   ["Naranja", ["naranja", "naranjas"]],
+  ["Clementina", ["clementina", "clementinas"]],
   ["Mandarina", ["mandarina", "mandarinas"]],
   ["Pomelo", ["pomelo", "pomelos"]],
   ["Granada", ["granada", "granadas"]],

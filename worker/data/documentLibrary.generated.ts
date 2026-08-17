@@ -25,7 +25,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRÍCOLA JARAZUL, S.L",
     "filename": "CONTRATO MRO_AGRÍCOLA JARAZUL, S.L._MANDARINA NADORCOTT_100.000 Kgs._Fdo. 03-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Mandarina"
     ],
@@ -42,7 +42,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRÍCOLA JARAZUL, S.L",
     "filename": "120250801_MODELO_DE_CUADERNO_DE_EXPLOTACION_v8.2_0.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Cuaderno de explotación",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -226,7 +226,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (8).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -239,7 +239,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (7).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -252,7 +252,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (6).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -265,7 +265,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (5).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -278,7 +278,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (4).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -291,7 +291,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (3).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -304,7 +304,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (2).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -317,7 +317,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data (1).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -330,7 +330,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "data.xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -445,7 +445,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "CONTRATO AGRICULTURA ECOLOGICA CAMPOTEJAR CB NECTARINA 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Certificado ecológico",
     "species": [
       "Nectarina"
     ],
@@ -460,7 +460,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "CONTRATO AGRICULTURA ECOLOGICA CAMPOTEJAR CB NECTARINA 2026.docx",
     "campaign": "2025/2026",
-    "documentType": "Contrato editable",
+    "documentType": "Certificado ecológico",
     "species": [
       "Nectarina"
     ],
@@ -501,7 +501,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLOGICA CAMPOTEJAR, C.B",
     "filename": "AGRICULTURA ECOLOGICA CAMPOTEJAR LIMON  26_27.pdf",
     "campaign": "2026/2027",
-    "documentType": "Documento contractual",
+    "documentType": "Certificado ecológico",
     "species": [
       "Limón"
     ],
@@ -578,7 +578,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGRICULTURA ECOLÓGICA CAMPOTEJAR, S.L",
     "filename": "L300 P2025 AGRICULTURA ECOLOGICA CAMPOTEJAR.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Certificado ecológico",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -672,7 +672,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGROFRUIT ALCOREÑA",
     "filename": "CONTRATO MRO_AGROFRUIT ALCOREÑA, S.L._LIMÓN FINO_20.000 Kgs._Fdo. 02-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -704,7 +704,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGROFRUIT ALCOREÑA",
     "filename": "AGROFRUIT ALCOREÑA.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -777,7 +777,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGROGANADERA EL PILAR, S.A",
     "filename": "CONTRATO MRO_AGROGANADERA EL PILAR, S.A._LIMÓN FINO_Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -828,7 +828,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ARANDA CARRASCO, SALVADOR",
     "filename": "CONTRATO MRO_ARANDA CARRASCO, SALVADOR_LIMÓN RODREJO_5.000 Kgs_Fdo. 27-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -975,7 +975,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ARJAIMA SL",
     "filename": "26191000404J00001.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Documento escaneado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -988,7 +988,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ARJAIMA SL",
     "filename": "Contrato firmado Gabriel sanchez serrano.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -1001,7 +1001,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ARJAIMA SL",
     "filename": "RODREJOS ARJAIMA  25-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -1061,7 +1061,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ARRETURAS PIÑERA CB",
     "filename": "ARRETURAS PIÑERA ALBARICOQUE 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Albaricoque"
     ],
@@ -1108,7 +1108,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BALLESTER CARRASCO CB",
     "filename": "CONTRATO MRO_BALLESTER CARRASCO, C.B._LIMÓN FINO_8.000 Kgs._ Fdo.16-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1125,7 +1125,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BALLESTER CARRASCO CB",
     "filename": "FINO BALLESTER CARRASCO CB 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Fino"
@@ -1189,7 +1189,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BELCHI GARCIA LORENZO",
     "filename": "RODREJOS LORENZO BELCHI.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -1251,7 +1251,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BERLANGA ROJAS, AGUSTINA",
     "filename": "CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_NARANJA VALENCIA_4.000 Kgs._Fdo. 21-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -1266,7 +1266,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BERLANGA ROJAS, AGUSTINA",
     "filename": "CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_LIMÓN VERNA_20.000 Kgs._Fdo. 21-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1332,7 +1332,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BERLANGA ROJAS, AGUSTINA",
     "filename": "CONTRATO MRO_BERLANGA ROJAS, AGUSTINA_LIMÓN FINO_20.000 Kgs._Fdo. 16-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1447,7 +1447,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "BONACHE MARIA DOLORES",
     "filename": "MARIA DOLORES BONACHE VERNAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -1477,7 +1477,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CARRILLO CECILIA",
     "filename": "CONTRATO MRO_CARRILLO YEPES, CECILIA_LIMÓN FINO_7.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1592,7 +1592,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CASES APARICIO EVELINA",
     "filename": "CONTRATO MRO_CASES APARICIO, EVELINA_LIMÓN FINO_130.000 Kgs._Fdo. 24-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1609,7 +1609,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CASES APARICIO EVELINA",
     "filename": "EVELINA CASES APARICIO FINOS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Fino"
@@ -1669,7 +1669,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS BIOLOGICOS CB",
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._NARANJA NAVEL POWELL_Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -1684,7 +1684,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS BIOLOGICOS CB",
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._LIMÓN EUREKA_Fdo.16-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1729,7 +1729,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS BIOLOGICOS CB",
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._NARANJA LANE LATE_Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -1744,7 +1744,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS BIOLOGICOS CB",
     "filename": "CONTRATO MRO_CITRICOS BIOLÓGICOS, C.B._POMELO_Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Pomelo"
     ],
@@ -1838,7 +1838,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS MALAGA",
     "filename": "CONTRATO MRO_CÍTRICOS MÁLAGA SAT Nº 8243_LIMÓN RODREJO_22.000 kgs._Fdo. 30-06-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1936,7 +1936,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS MALAGA",
     "filename": "CONTRATO MRO_CÍTRICOS MÁLAGA SAT Nº 8243_LIMÓN VERNA_120.000 kgs._Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -1970,7 +1970,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRICOS MALAGA",
     "filename": "0757_260415104613_001.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -2034,7 +2034,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRUS SUNSET",
     "filename": "MR. ORGANICA - CITRUS SUNSET - FONTES ECO RODREJOS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -2049,7 +2049,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRUS SUNSET",
     "filename": "RODREJOS CITRUS SUNSET 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -2111,7 +2111,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CONEJO ANTÚNEZ JOSÉ ANTONIO",
     "filename": "CONTRATO MRO_CONEJO ANTUNEZ, JOSÉ ANTONIO_LIMÓN VERNA_8.000 Kgs._Fdo. 14-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -2128,7 +2128,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CORDERO VAZQUEZ, FRANCISCO",
     "filename": "Contrato Francisco cordero Vazquez firmado.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -2154,7 +2154,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CORDERO VAZQUEZ, FRANCISCO",
     "filename": "WhatsApp Image 2026-07-31 at 12.00.0.4.jpeg",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Imagen adjunta",
     "species": [],
     "varieties": [],
     "extension": "JPEG",
@@ -2167,7 +2167,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CORDERO VAZQUEZ, FRANCISCO",
     "filename": "WhatsApp Image 2026-07-31. at 12.00.04.jpeg",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Imagen adjunta",
     "species": [],
     "varieties": [],
     "extension": "JPEG",
@@ -2180,7 +2180,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CORDERO VAZQUEZ, FRANCISCO",
     "filename": "WhatsApp Image 2026-07-31 at 12.00.04..jpeg",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Imagen adjunta",
     "species": [],
     "varieties": [],
     "extension": "JPEG",
@@ -2193,7 +2193,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CORDERO VAZQUEZ, FRANCISCO",
     "filename": "WhatsApp Image 2026-07-31 at 12.00.04.jpeg",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Imagen adjunta",
     "species": [],
     "varieties": [],
     "extension": "JPEG",
@@ -2376,7 +2376,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "COTTA PEREZ MANUEL",
     "filename": "CONTRATO MRO_COTTA PÉREZ, MANUEL_LIMÓN FINO_5.000 Kgs._Fdo. 12-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -2438,7 +2438,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "DEHESA DE PINOHERMOSO, S.L",
     "filename": "CONTRATO MRO_DEHESA DE PINOHERMOSO, S.L._POMELO ROJO_20.000 Kgs._Fdo. 31-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Pomelo"
     ],
@@ -2468,7 +2468,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "DEHESA DE PINOHERMOSO, S.L",
     "filename": "CONTRATO MRO_DEHESA DE PINOHERMOSO, S.L._NARANJA SANGUINELLI Y MIDKNIGHT_104.000 Kgs._Fdo. 04-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -2500,7 +2500,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "DOMINGUEZ RUBIO, ANTONIO",
     "filename": "CONTRATO MRO_DOMÍNGUEZ RUBIO, ANTONIO_LIMÓN FINO_50.000 Kgs._Fdo. 18-11-25.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -2534,7 +2534,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "DOMINGUEZ RUBIO, JUAN",
     "filename": "CONTRATO MRO_DOMINGUEZ RUBIO, JUAN_LIMÓN FINO_50.000 Kgs._Fdo. 18-11-25.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -2585,7 +2585,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ECOLOGICOS COMALA SL",
     "filename": "RODREJOS ECOLOGICOS COMALA 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -2632,7 +2632,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ESPARZA MOLINA JUAN",
     "filename": "CONTRATO MRO_ESPARZA MOLINA, JUAN_LIMÓN RODREJO_2.500 Kgs._Fdo. 22-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -2696,7 +2696,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "EXALGA, S.L",
     "filename": "CONTRATO MRO_EXALGA, S.L._NARANJA NAVELINA_50.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -2981,7 +2981,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FINCA JOVEN ARNEVA SL",
     "filename": "SEGUNDOS FINCA JOVEN ARNEVA SL 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -3024,7 +3024,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FINCA LOS BERMEJALES, C.B",
     "filename": "CONTRATO MRO_FINCA LOS BERMEJALES, C.B._LIMÓN FINO_50.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3041,7 +3041,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FINCA LOS BERMEJALES, C.B",
     "filename": "RODREJOS MORIEL FINOS 25-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Fino",
@@ -3120,7 +3120,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FRANCISCO Y MANUEL RUIZ PINA, C.B",
     "filename": "CONTRATO MRO_FCO. Y MANUEL RUIZ PINA, C.B._LIMÓN RODREJO_20.000 Kgs._Fdo. 27-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3167,7 +3167,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FRANCISCO Y MANUEL RUIZ PINA, C.B",
     "filename": "Contrato_MR_Organica_Francisco_y_Manuel_Ruiz_Pina_Rodrejo_2026_signed.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -3212,7 +3212,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FRUTOS FRANCO, MARIANA ALICIA",
     "filename": "NECTARINA ATANAIS ALICIA FRUTOS.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Nectarina"
     ],
@@ -3259,7 +3259,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GALIAN RUIZ, MANUEL ANTONIO",
     "filename": "CONTRATO MRO_GALIÁN RUÍZ, MANUEL ANTONIO_LIMÓN FINO_12.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3276,7 +3276,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GALIAN RUIZ, MANUEL ANTONIO",
     "filename": "MANUEL ANTONIO GALIAN.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -3415,7 +3415,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GARCÍA LORENTE, ANGEL",
     "filename": "CONTRATO MRO_GARCÍA LORENTE, ANGEL_LIMÓN FINO_150.000 Kgs._Fdo. 13-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3547,7 +3547,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GARCIA MARTIN, SALVADOR",
     "filename": "CONTRATO MRO_GARCÍA MARTÍN, SALVADOR_LIMÓN VERNA_8.000 Kgs._Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3658,7 +3658,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GESTION HORTOFRUTICOLA DE LEVANTE",
     "filename": "CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN VERNA_400.000 Kgs._Fdo. 20-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3707,7 +3707,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GESTION HORTOFRUTICOLA DE LEVANTE",
     "filename": "MODIFICACION CONTRATO GESTION HORTOFRUTICOLA DEL LEVANTE_LIMÓN_400.000 Kgs._Fdo. 10-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3737,7 +3737,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GESTION HORTOFRUTICOLA DE LEVANTE",
     "filename": "CONTRATO MRO_GESTIÓN HORTOFRUTÍCOLA DE LEVANTE, S.L._LIMÓN_400.000 Kgs._Fdo. 30-12-25.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -3851,7 +3851,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GRUPO FARA 2009, S.L",
     "filename": "GRUPO FARA LIMON FINO 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Limón"
     ],
@@ -3885,7 +3885,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GRUPO FARA 2009, S.L",
     "filename": "04-25 TANGO BIO GRUPO FARA -ASOMADA MR ORGANICA (Toñy Fruit) 26.01.26 signed Declaracion_GrupoFara.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Declaración",
     "species": [],
     "varieties": [
       "Tango"
@@ -3900,7 +3900,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GRUPO FARA 2009, S.L",
     "filename": "04-25 TANGO BIO GRUPO FARA -ASOMADA MR ORGANICA (Toñy Fruit) 26.01.26 signed Grupo_Fara_C5466.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [
       "Tango"
@@ -3932,7 +3932,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GRUPO FARA 2009, S.L",
     "filename": "CONTRATO MRO_GRUPO FARA 2009, S.L._MANDARINA TANGO_100.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Mandarina"
     ],
@@ -3949,7 +3949,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GRUPO FARA 2009, S.L",
     "filename": "TANGO GRUPO FARA 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Tango"
@@ -3979,7 +3979,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GRUPO FARA 2009, S.L",
     "filename": "TANGO GRUPO FARA 2026 v2.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Tango"
@@ -4009,7 +4009,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GUERRERO LUCAS, JOSÉ MATEO",
     "filename": "CONTRATO MRO_GUERRERO LUCAS, JOSÉ MATEO_NARANJA LANELATE_7.000 Kgs._Fdo. 13-04-16.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -4076,7 +4076,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "HERMANOS ORTEGA PIÑERO, S.L",
     "filename": "CONTRATO MRO_FRUTA DE HUESO MRO_HNOS. ORTEGA PIÑERO, S.L_Fdo. 25-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -4217,7 +4217,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "HORTOFRUTICOLA POLI SL",
     "filename": "CONTRATO MRO_HORTOFRUTÍCOLA POLI, S.L._MANDARINA TANGO_120.000 Kgs._Fdo. 27-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Mandarina"
     ],
@@ -4281,7 +4281,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "HUERCANO CARNERO ANTONIO",
     "filename": "CONTRATO MRO_antonio HUERCANO ROMERO S.L. FIRMADO.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -4369,7 +4369,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "JIMENEZ LARA, ENRIQUE",
     "filename": "CONTRATO MRO_JIMÉNEZ LARA, ENRIQUE_NARANJA SALUSTIANA_180.000 Kgs._Fdo. 09-01-26-comprimido (1).pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -4384,7 +4384,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "JIMENEZ LARA, ENRIQUE",
     "filename": "CONTRATO MRO_JIMÉNEZ LARA, ENRIQUE_NARANJA SALUSTIANA_180.000 Kgs._Fdo. 09-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -4416,7 +4416,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "JIMENEZ RICO",
     "filename": "CONTRATO MRO_JIMÉNEZ RICO, JUAN JOSE_LIMÓN FINO_20.000 Kgs._Fdo. 19-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -4512,7 +4512,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LA TURBINA CB",
     "filename": "ALBARICOQUE LA TURBINA CB 2026 FIRMADO.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Albaricoque"
     ],
@@ -4527,7 +4527,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LA TURBINA CB",
     "filename": "ALBARICOQUE LA TURBINA CB 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Albaricoque"
     ],
@@ -4604,7 +4604,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LARROSA RIQUELME, JOSÉ RAMÓN",
     "filename": "ES-ECO-024-MU.724-0024686.2025.001.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Certificado ecológico",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -4664,7 +4664,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LAS LENTISCOSAS",
     "filename": "RODREJOS LAS LENTISCOSAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -4728,7 +4728,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LAS LENTISCOSAS",
     "filename": "LAS LENTISCOSAS finos segundos 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Fino"
@@ -4775,7 +4775,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LAS LENTISCOSAS",
     "filename": "CONTRATO MRO_LAS LENTICOSAS, S.L._LIMÓN VERNA_100.000 Kgs._Fdo. 14-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -4807,7 +4807,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LAS LENTISCOSAS",
     "filename": "LAS LENTISCOSAS VERNAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -4995,7 +4995,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LÓPEZ MARTÍNEZ, MARIA DOLORES",
     "filename": "CONTRATO MRO_LÓPEZ MARTÍNEZ, Mª DOLORES_LIMÓN FINO_4.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -5012,7 +5012,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LÓPEZ MARTÍNEZ, MARIA DOLORES",
     "filename": "MARIA DOLORES LOPEZ FINOS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Fino"
@@ -5060,7 +5060,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "LOS INFANTES, C.B",
     "filename": "CONTRATO MRO_LOS INFANTES, C.B._LIMÓN VERNA Y RODREJO_100.000 Kgs._Fdo. 16-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -5179,7 +5179,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MAYOR CORTIJOS, JOSEFA",
     "filename": "VERNAS JOSEFA MAYOR CORTIJOS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -5194,7 +5194,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MEMORANDUM FINANZAS",
     "filename": "260227 FICHA CONEJO JUAN A. MTNEZ RUBIO EL LLANO I_26-05-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Ficha documental",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -5252,7 +5252,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MEMORANDUM FINANZAS",
     "filename": "NARANJA MIDNIGHT MEMORANDUM 2026 firmado.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -5267,7 +5267,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MEMORANDUM FINANZAS",
     "filename": "NARANJA MIDNIGHT MEMORANDUM 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Naranja"
     ],
@@ -5297,7 +5297,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MEMORANDUM FINANZAS",
     "filename": "CONTRATO MRO_MEMORANDUM FINANZAS, S.L._NARANJA LANELATE_100.000 Kgs._Fdo. 15-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -5389,7 +5389,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MENDEZ, ALFONSO",
     "filename": "CONTRATO MRO_MENDEZ OTALORA, ALFONSO_LIMÓN FINO_4.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -5421,7 +5421,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MENGUAL MARTINEZ, ANTONIO",
     "filename": "CONTRATO MRO_MENGUAL MEZ. ANTONIO_NARANJA LANELATE_80.000 Kgs._Fdo. 17-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -5436,7 +5436,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MENGUAL MARTINEZ, ANTONIO",
     "filename": "ANTONIO MENGUAL LANE.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -5785,7 +5785,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MOLINA FERNÁNDEZ, SERGIO",
     "filename": "CONTRATO MRO_MOLINA FDEZ. SERGIO_LIMÓN VERNA_12.000 Kgs._Fdo. 20-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -5834,7 +5834,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (20).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5847,7 +5847,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (19).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5860,7 +5860,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (18).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5873,7 +5873,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (17).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5886,7 +5886,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (16).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5899,7 +5899,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (15).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5912,7 +5912,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (14).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5925,7 +5925,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (13).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5938,7 +5938,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (12).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5951,7 +5951,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (11).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5964,7 +5964,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (10).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5977,7 +5977,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (9).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -5990,7 +5990,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (8).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6003,7 +6003,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (7).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6016,7 +6016,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (6).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6029,7 +6029,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (5).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6042,7 +6042,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (4).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6055,7 +6055,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (3).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6068,7 +6068,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (2).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6081,7 +6081,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data (1).xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6094,7 +6094,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MONTERO BRENES, JUAN",
     "filename": "data.xlsx",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Datos del contrato",
     "species": [],
     "varieties": [],
     "extension": "XLSX",
@@ -6362,7 +6362,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "NATURESA (CITRICOS LOS ALCORES)",
     "filename": "Nº 7_CONTRATO MRO_CITRICOS LOS ALCORES_NARANJA BARBERINA_22.000 Kgs_ Fdo. 18-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -6392,7 +6392,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "NATURESA (CITRICOS LOS ALCORES)",
     "filename": "Nº 6_CONTRATO MRO_CITRICOS LOS ALCORES_NARANJA BARBERINA_22.000 Kgs_Fdo. 16-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -6424,7 +6424,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "NAVARRO DIAZ JUAN ANDRES",
     "filename": "CONTRATO MRO_NAVARRO DÍAZ, JUAN ANDRÉS_ LIMÓN VERNA_6.000 Kgs_Fdo. 21-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -6475,7 +6475,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "NUÑEZ LOPEZ, ANTONIO",
     "filename": "CONTRATO MRO_NÚÑEZ LÓPEZ, ANTONIO_LIMÓN VERNA_6.000 Kgs._Fdo. 15-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -6620,7 +6620,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PATATAS ALCADE, S.A",
     "filename": "SKM_C257i26041609370.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Documento escaneado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -6650,7 +6650,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PATATAS ALCADE, S.A",
     "filename": "CONTRATO MRO_PATATAS ALCALDE_NARANJA VALENCIA LATE_25.000 Kgs._Fdo. 16-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -6684,7 +6684,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PATATAS ALCADE, S.A",
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO_150.000 Kgs._Fdo. 06-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -6718,7 +6718,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PATATAS ALCADE, S.A",
     "filename": "CONTRATO MRO_PATATAS ALCALDE_LIMÓN FINO_250.000 Kgs._Fdo. 07-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -6788,7 +6788,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PÉREZ GARCÍA, FRANCISCA",
     "filename": "CONTRATO MRO_PÉREZ GARCÍA, FRANCISCA_LIMÓN VERNA_30.000 Kgs._Fdo. 20-04-26",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -7350,7 +7350,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PROCEBA EXTERIOR, S.A",
     "filename": "CONTRATO MRO_PROCEBA EXTERIOR, S.A._LIMÓN FINO Y EUREKA_300.000 Kgs._Fdo. 24-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -7367,7 +7367,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PROMOCIONES TORRE EDAR SL",
     "filename": "DECLARACIÓN ALIMENTARIA_15-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Declaración",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -7414,7 +7414,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PROMOCIONES TORRE EDAR SL",
     "filename": "declaración de exclusión LIMÓN.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Declaración",
     "species": [
       "Limón"
     ],
@@ -7429,7 +7429,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PROMOCIONES TORRE EDAR SL",
     "filename": "declaración de exclusión LIMÓN.docx",
     "campaign": "2025/2026",
-    "documentType": "Contrato editable",
+    "documentType": "Declaración",
     "species": [
       "Limón"
     ],
@@ -7444,7 +7444,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "PROMOCIONES TORRE EDAR SL",
     "filename": "RODREJOS PROMOCIONES TORRE EDAR.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -7489,7 +7489,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "QUIRANTE FRUITS, S.L",
     "filename": "CONTRATO MRO_QUIRANTE FRUITS, S.L._NARANJA_100.000 Kgs._Fdo. 25-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -7504,7 +7504,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "QUIRANTE FRUITS, S.L",
     "filename": "CONTRATO MRO_QUIRANTE FRUITS, S.L._NARANJA_100.000 Kgs._Fdo. 12-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -7740,7 +7740,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "REYES GARCIA, CATALINA",
     "filename": "CATALINA REYES GARCIA VERNAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -7857,7 +7857,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "REYES GARCIA, MARIA DOLORES",
     "filename": "MARIA DOLORES REYES GARCIA VERNAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -7906,7 +7906,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ROMERO MONTALBÁN, ANDRÉS RAÚL",
     "filename": "ANDRES RAUL ROMERO VERNAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -7951,7 +7951,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ROYUELA AMOROS, CARMEN",
     "filename": "CONTRATO MRO_ROYUELA AMORÓS, CARMEN_MANDARINA GOLD NUGGET_50.000 Kgs._Fdo. 02-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Mandarina"
     ],
@@ -8052,7 +8052,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "RUBIO PAZ, S.L",
     "filename": "CONTRATO MRO_RUBIO PAZ, S.L._LIMÓN RODREJO_4.500 Kgs._Fdo. 22-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8171,7 +8171,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "RUIPEREZ SÁNCHEZ, ANTONIA",
     "filename": "CONTRATO MRO_RUIPEREZ SÁNCHEZ, ANTONIA_LIMÓN FINO_6.000 Kgs._Fdo. 03-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8231,7 +8231,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "RUIZ GRAO, JOSEFA",
     "filename": "Contrato Josefa Ruiz Grao-Mr Organica naranja Lanelate firmado.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -8246,7 +8246,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "RUIZ GRAO, JOSEFA",
     "filename": "LANELATE JOSEFA RUIZ GRAO 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -8315,7 +8315,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "S.A.T. RAMBLA AMARGA",
     "filename": "26184000962J00001.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Documento escaneado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -8362,7 +8362,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SANCHEZ GARCIA, IVAN PEDRO",
     "filename": "VERNAS IVAN PEDRO SANCHEZ 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -8424,7 +8424,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SÁNCHEZ LUCENA, JUAN PEDRO",
     "filename": "CONTRATO MRO_SÁNCHEZ LUCENA, JUAN PEDRO_LIMÓN RODREJO_4.500 Kgs._Fdo. 22-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8520,7 +8520,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SÁNCHEZ SÁNCHEZ, JUAN",
     "filename": "Contrato Juan Sanchez Sanchez firmado.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -8550,7 +8550,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SÁNCHEZ SÁNCHEZ, JUAN",
     "filename": "CONTRATO MRO_SÁNCHEZ SÁNCHEZ, JUAN_LIMÓN VERNA_65.000 KGS._Fdo. 06-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8652,7 +8652,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SANTIAGO MUÑOZ, MANUEL",
     "filename": "DNI_2.jpeg",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Identificación",
     "species": [],
     "varieties": [],
     "extension": "JPEG",
@@ -8665,7 +8665,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SANTIAGO MUÑOZ, MANUEL",
     "filename": "DNI_1.jpeg",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Identificación",
     "species": [],
     "varieties": [],
     "extension": "JPEG",
@@ -8746,7 +8746,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SANTOS GUZMAN ANTONIO MIGUEL",
     "filename": "CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN RODREJO_30.000 Kgs._Fdo. 29-06-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8797,7 +8797,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SANTOS GUZMAN ANTONIO MIGUEL",
     "filename": "CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN VERNA_150.000 Kgs._Fdo. 30-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8814,7 +8814,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SANTOS GUZMAN ANTONIO MIGUEL",
     "filename": "CONTRATO MRO_SANTOS GUZMÁN, ANTONIO MIGUEL_LIMÓN VERNA_150.000 Kgs._Fdo. 03-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8859,7 +8859,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAURA, ANDRES",
     "filename": "CONTRATO MRO_SAURA LACAL, ANDRÉS_LIMÓN RODREJO_5.000 Kgs._Fdo. 23-07-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8893,7 +8893,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAURA, ANDRES",
     "filename": "ANDRES SAURA LACAL RODREJO 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -8940,7 +8940,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAURA, ANDRES",
     "filename": "CONTRATO MRO_SAURA LACAL, ANDRÉS_LIMÓN VERNA_20.000 Kgs._Fdo. 17-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -8957,7 +8957,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAURA, ANDRES",
     "filename": "ANDRES SAURA LACAL VERNAS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Verna"
@@ -9021,7 +9021,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SINGULAR FRUIT COMPANY SL",
     "filename": "MR. ORGANICA - SINGULAR FRUIT - ANTAS ECO RODREJOS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -9051,7 +9051,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SINGULAR FRUIT COMPANY SL",
     "filename": "SINGULAR FRUIT RODREJOS 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [
       "Rodrejo"
@@ -9079,7 +9079,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "TERUEL OLTRA, JESUS",
     "filename": "Contrato Jesus Teruel Oltra-Mr Organica naranja Lanelate FIRMADO.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -9107,7 +9107,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "TERUEL OLTRA, JESUS",
     "filename": "LANELATE JESUS TERUEL OLTRA 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -9284,7 +9284,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "URANIO",
     "filename": "LIMON RODREJO URANIO 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Limón"
     ],
@@ -9354,7 +9354,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "URANIO",
     "filename": "LIMON SEGUNDO URANIO 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Limón"
     ],
@@ -9401,7 +9401,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "VILA BLANCO, JOSE ANTONIO",
     "filename": "CONTRATO MRO_VILA BLANCO, JOSÉ ANTONIO_LIMÓN VERNA_4.000 Kgs._Fdo. 14-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -9466,7 +9466,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "AGROMIN DEL SUR SL (Naturesa)",
     "filename": "4- CONTRATO TOÑIFRUIT_AGROMÍN DEL SUR_MANDARINA NADORCOTT Y TANGO_325.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Mandarina"
     ],
@@ -9514,7 +9514,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRISOL S COOP (Doña Ana)",
     "filename": "10-2026 Limon Fino Citrisol_FDA-Toñifruit.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Ficha documental",
     "species": [
       "Limón"
     ],
@@ -9531,7 +9531,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "CITRISOL S COOP (Doña Ana)",
     "filename": "CONTRATO TOÑIFRUIT_CITRISOL (FINCA D. ANA)_LIMÓN FINO_400.000 Kgs._Fdo. 09-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Limón"
     ],
@@ -9561,7 +9561,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "ESPAFRUIT (Tumejami)",
     "filename": "Contrato Espafruit-Toñifruit naranja Lanelate FIRMADO.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -9591,7 +9591,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FOMENTO AGRÍCOLA ANDALUZ SAT",
     "filename": "CONTRATO TOÑIFRUIT_FOASAT_NARANJA LANE LATE_200.000 Kgs._Fdo. 12-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -9621,7 +9621,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FOMENTO AGRÍCOLA ANDALUZ SAT",
     "filename": "CONTRATO TOÑIFRUIT_FOASAT_NARANJA SALUSTIANA_80.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -9666,7 +9666,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "FRUTALES SANTIAGO APOSTOL DE ISSO COOP",
     "filename": "FRUTALES SANTIAGO APOSTOL DE ISSO MELOCOTON ROMEA.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Melocotón"
     ],
@@ -9726,7 +9726,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "GARCIA CHUECOS PEDRO",
     "filename": "PEDRO GARCIA CHUECOS FRUTA HUESO 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -9904,7 +9904,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MANCERA (Almazarron, Cangrejeras)",
     "filename": "CONTRATO TOÑIFRUIT, S.L._FINCA LA GITANA_NARANJA LANE LATE Y POWELL_80.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -9936,7 +9936,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MANCERA (Almazarron, Cangrejeras)",
     "filename": "CONTRATO MRO_MANCERA (ALMAZARRON)_MANDARINA TANGO_200.000 Kgs._Fdo..pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Mandarina"
     ],
@@ -9968,7 +9968,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "MANCERA (Almazarron, Cangrejeras)",
     "filename": "CONTRATO TOÑIFRUIT_MANCERA (LA CANGREJERA, S.C.)_NARANJA LANE LATE_60.000 Kgs._Fdo. 30-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -10187,7 +10187,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT H0005 FRESCITRUS OP N668",
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NAVEL POWELL_50.000 Kgs._Fdo. 31-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -10213,7 +10213,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT H0005 FRESCITRUS OP N668",
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NAVEL LANE LATE_21.000 Kgs._Fdo. 10-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [],
     "extension": "PDF",
@@ -10241,7 +10241,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT H0005 FRESCITRUS OP N668",
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NADORCOTT_150.000 Kgs._Fdo. 10-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [
       "Nadorcott"
@@ -10271,7 +10271,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT H0005 FRESCITRUS OP N668",
     "filename": "CONTRATO TOÑIFRUIT, S.L._SAT H-0005 FRESCITRUS, O.P. 668_NADORCOTT_150.000 Kgs._Fdo. 26-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [],
     "varieties": [
       "Nadorcott"
@@ -10571,7 +10571,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9843-MU-CAMPOTEJAR DEL SEGURA",
     "filename": "CONTRATO TOÑIFRUIT_S.A.T. Nº9843 CAMPOTEJAR DEL SEGURA_ALBARICOQUE BORSALINO_Fdo.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Albaricoque"
     ],
@@ -10661,7 +10661,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9867 MU MILCO",
     "filename": "SAT MILCO ALBARICOQUE (FILIBERTO) 04-06-262026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Albaricoque"
     ],
@@ -10721,7 +10721,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9867 MU MILCO",
     "filename": "SAT MILCO ALBARICOQUE (FILIBERTO) 2026.pdf",
     "campaign": "2025/2026",
-    "documentType": "Documento contractual",
+    "documentType": "Contrato",
     "species": [
       "Albaricoque"
     ],
@@ -10766,7 +10766,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_21.000 Kgs.Fdo.01-04-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Anexo",
+    "documentType": "Anexo / adenda",
     "species": [
       "Pomelo"
     ],
@@ -10781,7 +10781,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "ADENDA 06747 Venta POMELO ECO TOÑIFRUIT.pdf",
     "campaign": "2025/2026",
-    "documentType": "Anexo",
+    "documentType": "Anexo / adenda",
     "species": [
       "Pomelo"
     ],
@@ -10811,7 +10811,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_21.000 Kgs.Fdo.23-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Pomelo"
     ],
@@ -10841,7 +10841,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LAVALLE_50.000 Kgs._Fdo. 09-03-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
@@ -10871,7 +10871,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_POMELO STAR RUBY_40.000 Kgs._Fdo. 27-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Anexo",
+    "documentType": "Anexo / adenda",
     "species": [
       "Pomelo"
     ],
@@ -10931,7 +10931,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "ANEXO CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LANE LATE_90.000 Kgs._Fdo. 20-02-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Anexo",
+    "documentType": "Anexo / adenda",
     "species": [
       "Naranja"
     ],
@@ -10961,7 +10961,7 @@ export const CONTRACT_DOCUMENTS = [
     "farmer": "SAT Nº 9996 CITRUS NOSTRUM",
     "filename": "CONTRATO TOÑIFRUIT_SAT CITRUS NOSTRUM_NARANJA LANE LATE_90.000 Kgs._Fdo. 16-01-26.pdf",
     "campaign": "2025/2026",
-    "documentType": "Contrato",
+    "documentType": "Contrato firmado",
     "species": [
       "Naranja"
     ],
