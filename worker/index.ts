@@ -50,6 +50,7 @@ type Session = {
   sub: string;
   role: UserRole;
   exp: number;
+  v: 2;
 };
 
 type ReviewPayload = {
@@ -274,7 +275,7 @@ async function sessionKey(secret: string) {
 }
 
 async function issueSession(env: Env, sub: string, role: UserRole) {
-  const payload = base64Url(encoder.encode(JSON.stringify({ sub, role, exp: Date.now() + 8 * 60 * 60 * 1000 })));
+  const payload = base64Url(encoder.encode(JSON.stringify({ sub, role, exp: Date.now() + 8 * 60 * 60 * 1000, v: 2 })));
   const signature = new Uint8Array(await crypto.subtle.sign("HMAC", await sessionKey(env.SESSION_SECRET), encoder.encode(payload)));
   return `${payload}.${base64Url(signature)}`;
 }
@@ -295,7 +296,8 @@ async function verifySession(token: string, env: Env) {
       typeof parsed.sub !== "string" ||
       (parsed.role !== "admin" && parsed.role !== "viewer") ||
       typeof parsed.exp !== "number" ||
-      parsed.exp <= Date.now()
+      parsed.exp <= Date.now() ||
+      parsed.v !== 2
     ) return null;
     return parsed as Session;
   } catch {
@@ -699,6 +701,103 @@ async function loadRows(env: Env) {
   return (result.values || [])
     .map((values, offset) => ({ index: start + offset, values }))
     .filter((row) => String(row.values[1] || "").trim());
+}
+
+async function listContractFileKeys(bucket: ContractBucket | undefined) {
+  if (!bucket) return [] as string[];
+  const keys: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await bucket.list({ cursor, limit: 1000 });
+    keys.push(...page.objects.map((object) => object.key));
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return keys.sort((left, right) => left.localeCompare(right, "es"));
+}
+
+async function resetInventory(env: Env) {
+  const [rows, contractFileKeys] = await Promise.all([
+    loadRows(env),
+    listContractFileKeys(env.CONTRACT_FILES),
+  ]);
+  return {
+    rows,
+    contractFileKeys,
+    counts: {
+      rows: rows.length,
+      contractFiles: contractFileKeys.filter((key) => !key.startsWith("backups/")).length,
+      certificates: CERTIFICATE_RECORDS.length,
+      farms: FARM_RECORDS.length,
+      opfhMembers: OPFH_MEMBERS.length,
+      documents: CONTRACT_DOCUMENTS.length,
+      supportSummaries: SUPPORT_SUMMARIES.length,
+    },
+  };
+}
+
+async function startFreshDatabase(env: Env, value: unknown, session: Session) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo privado de restauración no está configurado.");
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  if (String(source.confirmation || "").trim() !== "EMPEZAR DE CERO") {
+    throw new InputError("Falta la confirmación reforzada para iniciar la base limpia.");
+  }
+
+  const inventory = await resetInventory(env);
+  const createdAt = new Date().toISOString();
+  const stamp = createdAt.replace(/[:.]/g, "-");
+  const backupKey = `backups/pre-reset-2026-08-18/${stamp}/snapshot.json`;
+  const snapshot = {
+    format: "compras-de-campo-backup-v1",
+    createdAt,
+    createdBy: session.sub,
+    effectiveDate: "2026-08-18",
+    worksheet: env.GOOGLE_WORKSHEET_NAME || "Control documental",
+    dataBounds: dataBounds(env),
+    rows: inventory.rows,
+    contractFileKeys: inventory.contractFileKeys,
+    catalogs: {
+      certificates: CERTIFICATE_RECORDS,
+      farms: FARM_RECORDS,
+      opfhMembers: OPFH_MEMBERS,
+      documents: CONTRACT_DOCUMENTS,
+      supportSummaries: SUPPORT_SUMMARIES,
+    },
+  };
+  const snapshotBytes = encoder.encode(JSON.stringify(snapshot));
+  const snapshotHash = await sha256Hex(new TextDecoder().decode(snapshotBytes));
+  await env.CONTRACT_FILES.put(backupKey, snapshotBytes.buffer, {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: {
+      kind: "external_restore_snapshot",
+      createdAt,
+      createdBy: session.sub,
+      effectiveDate: "2026-08-18",
+      sha256: snapshotHash,
+    },
+  });
+
+  const { start, end } = dataBounds(env);
+  const range = `'${sheetName(env)}'!A${start}:AN${end}`;
+  const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}:clear`;
+  await sheetsRequest(env, clearUrl, { method: "POST", body: "{}" });
+  const remainingRows = await loadRows(env);
+  if (remainingRows.length) throw new Error("La copia se ha guardado, pero la base activa no ha quedado completamente vacía.");
+
+  const marker = encoder.encode(JSON.stringify({
+    format: "compras-de-campo-reset-marker-v1",
+    createdAt,
+    createdBy: session.sub,
+    effectiveDate: "2026-08-18",
+    backupKey,
+    sha256: snapshotHash,
+    counts: inventory.counts,
+  }));
+  await env.CONTRACT_FILES.put("backups/pre-reset-2026-08-18/latest.json", marker.buffer, {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: { kind: "external_restore_pointer", createdAt, backupKey },
+  });
+
+  return { backupKey, sha256: snapshotHash, counts: inventory.counts, remainingRows: 0 };
 }
 
 async function loadRowValues(env: Env, row: number) {
@@ -1173,6 +1272,18 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
+  }
+
+  if (url.pathname === "/api/admin/start-fresh/preview" && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "Solo el administrador puede preparar el reinicio." }, 403);
+    const inventory = await resetInventory(env);
+    return json(request, env, { counts: inventory.counts });
+  }
+
+  if (url.pathname === "/api/admin/start-fresh" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Solo el administrador puede iniciar una base limpia." }, 403);
+    const body = await request.json().catch(() => ({}));
+    return json(request, env, { ok: true, ...await startFreshDatabase(env, body, session) });
   }
 
   if (url.pathname === "/api/control-catalog" && request.method === "GET") {
