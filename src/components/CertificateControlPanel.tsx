@@ -21,7 +21,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CertificateCatalogRecord, ControlCatalogData } from "../types";
 import { PRODUCT_CATALOG } from "../lib/catalog";
 
-type CatalogTab = "certificates" | "farms" | "members" | "contracts";
+type CatalogTab = "certificates" | "farms" | "members" | "documents";
 type CompanyFilter = "all" | "MR. ORGÁNICA" | "TOÑIFRUIT";
 type MemberFilter = "all" | "yes" | "no";
 type FarmTypeFilter = "all" | "Propia" | "De terceros";
@@ -42,6 +42,10 @@ function normalize(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("es")
     .trim();
+}
+
+function hasCompanyTaxId(value: string) {
+  return /^[ABCDEFGHJNPQRSUVW]/i.test(value.trim());
 }
 
 function certificateStatus(expiry: string) {
@@ -186,14 +190,53 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
     });
   }, [farms, farmType, query]);
 
+  const farmGroups = useMemo(() => {
+    const groups = new Map<string, { holder: string; taxId: string; farmType: string; farmName: string; crop: string; records: typeof filteredFarms; surface: number }>();
+    for (const farm of filteredFarms) {
+      const farmName = farm.farmName || "Finca sin nombre";
+      const crop = farm.crop || "Cultivo sin indicar";
+      const key = [farm.holder, farmName, crop].map(normalize).join("|");
+      const current = groups.get(key) ?? {
+        holder: farm.holder,
+        taxId: farm.taxId,
+        farmType: farm.farmType,
+        farmName,
+        crop,
+        records: [],
+        surface: 0,
+      };
+      current.records.push(farm);
+      current.surface += farm.surface;
+      groups.set(key, current);
+    }
+    return [...groups.values()].sort((left, right) => (
+      left.holder.localeCompare(right.holder, "es")
+      || left.farmName.localeCompare(right.farmName, "es")
+      || left.crop.localeCompare(right.crop, "es")
+    ));
+  }, [filteredFarms]);
+
   const filteredMembers = useMemo(() => {
     const search = normalize(query);
     return opfhMembers.filter((member) => {
-      if (farmType !== "all" && member.farmType !== farmType) return false;
       if (!search) return true;
-      return normalize([member.name, member.taxId, member.note, ...member.controlNames].join(" ")).includes(search);
+      const companyTaxId = hasCompanyTaxId(member.taxId) ? member.taxId : "";
+      return normalize([member.name, companyTaxId, member.note, ...member.controlNames].join(" ")).includes(search);
     });
-  }, [farmType, opfhMembers, query]);
+  }, [opfhMembers, query]);
+
+  const sortedMembers = useMemo(() => {
+    const groupOrder = ["TOÑIFRUIT", "GOODNATURE", "BIBIO", "MR. ORGÁNICA"];
+    return [...filteredMembers].sort((left, right) => {
+      if (left.groupCompany !== right.groupCompany) return left.groupCompany ? -1 : 1;
+      if (left.groupCompany && right.groupCompany) {
+        const leftOrder = groupOrder.findIndex((name) => normalize(left.name).includes(normalize(name)));
+        const rightOrder = groupOrder.findIndex((name) => normalize(right.name).includes(normalize(name)));
+        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      }
+      return left.name.localeCompare(right.name, "es");
+    });
+  }, [filteredMembers]);
 
   const filteredDocuments = useMemo(() => {
     const search = normalize(query);
@@ -309,20 +352,20 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
         <article className="catalog-alert"><AlertTriangle size={20} /><span>Certificados vencidos</span><strong>{summary.expired}</strong></article>
         <article><CalendarDays size={20} /><span>Próximos 15 días</span><strong>{summary.soon}</strong></article>
         <article><MapPin size={20} /><span>Fincas / recintos</span><strong>{summary.farms}</strong></article>
-        <article><FileText size={20} /><span>Contratos cargados</span><strong>{summary.storedDocuments}/{summary.documents}</strong></article>
+        <article><FileText size={20} /><span>Documentos cargados</span><strong>{summary.storedDocuments}/{summary.documents}</strong></article>
       </div>
 
       <div className="catalog-tabs" role="tablist" aria-label="Secciones del control">
         <button type="button" className={tab === "certificates" ? "active" : ""} onClick={() => changeTab("certificates")}><FileCheck2 size={17} /> Certificados</button>
         <button type="button" className={tab === "members" ? "active" : ""} onClick={() => changeTab("members")}><Users size={17} /> Socios OPFH</button>
         <button type="button" className={tab === "farms" ? "active" : ""} onClick={() => changeTab("farms")}><Sprout size={17} /> Fincas</button>
-        <button type="button" className={tab === "contracts" ? "active" : ""} onClick={() => changeTab("contracts")}><FileText size={17} /> Contratos</button>
+        <button type="button" className={tab === "documents" ? "active" : ""} onClick={() => changeTab("documents")}><FileText size={17} /> Documentos</button>
       </div>
 
       <div className="catalog-toolbar">
         <label className="catalog-search">
           <Search size={18} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "farms" ? "Buscar titular, finca, parcela o cultivo" : tab === "contracts" ? "Buscar agricultor, contrato o archivo" : "Buscar agricultor, NIF o certificación"} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "farms" ? "Buscar titular, finca, parcela o cultivo" : tab === "documents" ? "Buscar agricultor, documento o archivo" : tab === "members" ? "Buscar socio o empresa" : "Buscar agricultor, NIF o certificación"} />
           {query && <button type="button" onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={17} /></button>}
         </label>
         {tab === "certificates" && <>
@@ -330,8 +373,8 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
           <label><span>OPFH</span><select value={memberFilter} onChange={(event) => setMemberFilter(event.target.value as MemberFilter)}><option value="all">Todos</option><option value="yes">Solo socios</option><option value="no">No socios</option></select></label>
           <label><span>Vigencia</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as CertificateStatusFilter)}><option value="all">Todas</option><option value="expired">Vencidos</option><option value="soon">Próximos 15 días</option><option value="valid">Vigentes</option><option value="missing">Sin fecha</option></select></label>
         </>}
-        {tab !== "contracts" && <label><span>Tipo de finca</span><select value={farmType} onChange={(event) => setFarmType(event.target.value as FarmTypeFilter)}><option value="all">Todas</option><option>Propia</option><option>De terceros</option></select></label>}
-        {tab === "contracts" && <>
+        {(tab === "certificates" || tab === "farms") && <label><span>Tipo de finca</span><select value={farmType} onChange={(event) => setFarmType(event.target.value as FarmTypeFilter)}><option value="all">Todas</option><option>Propia</option><option>De terceros</option></select></label>}
+        {tab === "documents" && <>
           <label><span>Empresa</span><select value={company} onChange={(event) => setCompany(event.target.value as CompanyFilter)}><option value="all">Todas</option><option>TOÑIFRUIT</option><option>MR. ORGÁNICA</option></select></label>
           <label><span>Campaña</span><select value={campaign} onChange={(event) => setCampaign(event.target.value)}><option value="all">Todas</option>{documentCampaigns.map((value) => <option key={value}>{value}</option>)}</select></label>
           <label><span>Tipo</span><select value={documentType} onChange={(event) => setDocumentType(event.target.value)}><option value="all">Todos</option>{documentTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
@@ -384,18 +427,18 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
 
       {tab === "members" && (
         <div className="catalog-results">
-          <div className="catalog-result-count">{filteredMembers.length} socios localizados · 3 empresas del grupo</div>
+          <div className="catalog-result-count">{filteredMembers.filter((member) => !member.groupCompany).length} socios · {filteredMembers.filter((member) => member.groupCompany).length} empresas del grupo</div>
           <div className="opfh-member-grid">
-            {filteredMembers.map((member) => (
+            {sortedMembers.map((member) => (
               <article className={member.groupCompany ? "group-company" : ""} key={member.taxId}>
                 <div className="member-heading">
-                  <OpfhMark selected />
-                  <span className={`farm-type ${member.farmType === "Propia" ? "own" : "third"}`}>{member.farmType}</span>
+                  {member.groupCompany
+                    ? <span className="group-company-mark"><Building2 size={14} /> Empresa del grupo</span>
+                    : <OpfhMark selected />}
                 </div>
                 <strong>{member.name}</strong>
-                <span className="member-tax-id">{member.taxId}</span>
+                {hasCompanyTaxId(member.taxId) && <span className="member-tax-id">CIF {member.taxId}</span>}
                 <small>{member.controlNames.join(" · ") || "Sin nombre equivalente en el control"}</small>
-                {member.note && <p><AlertTriangle size={15} /> {member.note}</p>}
               </article>
             ))}
           </div>
@@ -404,39 +447,55 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
 
       {tab === "farms" && (
         <div className="catalog-results">
-          <div className="catalog-result-count">{filteredFarms.length} fincas / recintos</div>
-          <div className="farm-table-wrap">
-            <table className="farm-table">
-              <thead><tr><th>Titular</th><th>Tipo</th><th>Finca</th><th>Municipio</th><th>Polígono</th><th>Parcela</th><th>Recinto</th><th>Cultivo</th><th>Variedad</th><th>Superficie</th></tr></thead>
-              <tbody>
-                {filteredFarms.map((farm) => (
-                  <tr key={farm.id}>
-                    <td><strong>{farm.holder}</strong><small>{farm.taxId}</small></td>
-                    <td><span className={`farm-type ${farm.farmType === "Propia" ? "own" : "third"}`}>{farm.farmType}</span></td>
-                    <td>{farm.farmName || "—"}</td>
-                    <td>{farm.municipality}</td>
-                    <td>{farm.polygon || "—"}</td>
-                    <td>{farm.parcel || "—"}</td>
-                    <td>{farm.enclosure || "—"}</td>
-                    <td>{farm.crop || "—"}</td>
-                    <td>{farm.variety || "—"}</td>
-                    <td className="surface-cell">{formatSurface(farm.surface)} ha</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="catalog-result-count">{filteredFarms.length} recintos · {farmGroups.length} grupos de finca y cultivo</div>
+          <div className="farm-groups">
+            {farmGroups.map((group) => {
+              const varieties = [...new Set(group.records.map((farm) => farm.variety).filter(Boolean))];
+              return (
+                <details className="farm-group" key={`${group.holder}-${group.farmName}-${group.crop}`}>
+                  <summary>
+                    <div className="farm-group-holder">
+                      <strong>{group.holder}</strong>
+                      <small>{group.taxId}</small>
+                    </div>
+                    <div className="farm-group-name"><small>Finca</small><strong>{group.farmName}</strong></div>
+                    <div className="farm-group-crop"><small>Cultivo</small><strong>{group.crop}</strong><span>{varieties.join(", ") || "Variedad sin indicar"}</span></div>
+                    <div className="farm-group-total"><span>{group.records.length} recinto{group.records.length === 1 ? "" : "s"}</span><strong>{formatSurface(group.surface)} ha</strong></div>
+                    <ChevronDown className="farm-group-chevron" size={19} />
+                  </summary>
+                  <div className="farm-detail-wrap">
+                    <table className="farm-detail-table">
+                      <thead><tr><th>Tipo</th><th>Municipio</th><th>Polígono</th><th>Parcela</th><th>Recinto</th><th>Variedad</th><th>Superficie</th></tr></thead>
+                      <tbody>
+                        {group.records.map((farm) => (
+                          <tr key={farm.id}>
+                            <td><span className={`farm-type ${farm.farmType === "Propia" ? "own" : "third"}`}>{farm.farmType}</span></td>
+                            <td>{farm.municipality || "—"}</td>
+                            <td>{farm.polygon || "—"}</td>
+                            <td>{farm.parcel || "—"}</td>
+                            <td>{farm.enclosure || "—"}</td>
+                            <td>{farm.variety || "—"}</td>
+                            <td className="surface-cell">{formatSurface(farm.surface)} ha</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {tab === "contracts" && (
+      {tab === "documents" && (
         <div className="catalog-results">
           <div className="document-library-heading">
-            <div className="catalog-result-count">{filteredDocuments.length} documentos contractuales</div>
+            <div className="catalog-result-count">{filteredDocuments.length} documentos</div>
             {canEdit && (
               <label className={`secondary-button bulk-upload-button ${uploadProgress ? "disabled" : ""}`}>
                 {uploadProgress ? <LoaderCircle className="spinning" size={17} /> : <Upload size={17} />}
-                {uploadProgress ? `Subiendo ${uploadProgress.current} de ${uploadProgress.total}` : "Importar contratos"}
+                {uploadProgress ? `Subiendo ${uploadProgress.current} de ${uploadProgress.total}` : "Importar documentos"}
                 <input
                   data-testid="bulk-contract-upload"
                   type="file"
@@ -471,11 +530,11 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
         </div>
       )}
 
-      {((tab === "certificates" && !farmerGroups.length) || (tab === "members" && !filteredMembers.length) || (tab === "farms" && !filteredFarms.length) || (tab === "contracts" && !filteredDocuments.length)) && (
+      {((tab === "certificates" && !farmerGroups.length) || (tab === "members" && !filteredMembers.length) || (tab === "farms" && !filteredFarms.length) || (tab === "documents" && !filteredDocuments.length)) && (
         <div className="empty-state"><Search size={32} /><h3>No hay resultados</h3><p>Cambia los filtros o prueba con otro término.</p></div>
       )}
 
-      <div className="catalog-source-note"><Building2 size={17} /> Actualizado desde contratos, certificados, análisis y Efectivos_productivos.xlsx.</div>
+      <div className="catalog-source-note"><Building2 size={17} /> Actualizado desde documentos, certificados, análisis y Efectivos_productivos.xlsx.</div>
     </section>
   );
 }

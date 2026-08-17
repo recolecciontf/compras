@@ -167,7 +167,8 @@ function libraryDocumentScore(document: (typeof CONTRACT_DOCUMENTS)[number], val
   if (document.species.some((value) => crop && normalizedCatalogText(value).includes(crop))) score += 5;
   if (document.varieties.some((value) => variety && (variety.includes(normalizedCatalogText(value)) || normalizedCatalogText(value).includes(variety)))) score += 3;
   if (buyer && company && (buyer.includes(company) || company.includes(buyer))) score += 8;
-  if (document.documentType === "Contrato") score += 4;
+  if (document.documentType === "Contrato firmado") score += 8;
+  else if (document.documentType === "Contrato") score += 4;
   if (document.extension === "PDF") score += 2;
   if (/FDO\.?|FIRMAD|JUSTIFICANTE.*INSCRIPCI/i.test(document.filename)) score += 5;
   return score;
@@ -182,7 +183,8 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
     const documents = CONTRACT_DOCUMENTS
       .filter((document) => catalogNamesMatch(provider, document.farmer))
       .sort((left, right) => libraryDocumentScore(right, values) - libraryDocumentScore(left, values) || right.modified.localeCompare(left.modified));
-    const signedDocument = documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
+    const signedDocument = documents.find((document) => document.documentType === "Contrato firmado" && document.extension === "PDF")
+      || documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
       || documents.find((document) => document.extension === "PDF");
     const selectedCompany = signedDocument?.company;
     const certificates = CERTIFICATE_RECORDS
@@ -212,7 +214,7 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
     }
     if (documents.some((document) => document.documentType === "Justificante / registro")) values[32] = "Sí";
     if (certificates[0]) {
-      values[17] = certificates[0].certification;
+      values[17] = [...new Set(certificates.map((record) => record.certification).filter(Boolean))].join("; ");
       values[18] = certificates[0].expiry;
     }
     if (farms.length) {
@@ -521,11 +523,14 @@ async function copyPreviousContract(value: unknown, env: Env) {
   if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
   const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const archiveId = String(source.archiveId || "").trim();
-  if (!/^[0-9a-f-]{36}$/i.test(archiveId)) throw new InputError("Selecciona un contrato anterior válido.");
-  const original = await env.CONTRACT_FILES.get(archiveId);
+  const isArchivedContract = /^[0-9a-f-]{36}$/i.test(archiveId);
+  const libraryDocument = /^[0-9a-f]{24}$/i.test(archiveId) ? libraryDocumentsById.get(archiveId) : undefined;
+  if (!isArchivedContract && !libraryDocument) throw new InputError("Selecciona un contrato anterior válido.");
+  const sourceKey = libraryDocument ? `document-library/${archiveId}` : archiveId;
+  const original = await env.CONTRACT_FILES.get(sourceKey);
   if (!original) throw new InputError("El contrato anterior seleccionado ya no está disponible.");
   const previousContractArchiveId = crypto.randomUUID();
-  const previousContractFilename = safeContractFilename(original.customMetadata?.filename || "contrato-anterior.pdf");
+  const previousContractFilename = safeContractFilename(original.customMetadata?.filename || libraryDocument?.filename || "contrato-anterior.pdf");
   const previousContractStoredAt = new Date().toISOString();
   const bytes = await new Response(original.body).arrayBuffer();
   await env.CONTRACT_FILES.put(previousContractArchiveId, bytes, {
