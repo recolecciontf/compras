@@ -634,7 +634,7 @@ export default function App() {
       setProfile(user);
       await storeRowsLocally(workbookRows);
       await cacheOfflineSession(user, workbookRows);
-      await cacheOfflineCredentials(username, password, client.sessionToken());
+      await cacheOfflineCredentials(username, password, client.sessionToken(), user);
       void client.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES).catch(() => undefined);
       setOfflineSession(false);
       setSelectedIndex(workbookRows[0]?.tableIndex ?? null);
@@ -643,20 +643,20 @@ export default function App() {
       window.scrollTo({ top: 0, behavior: "auto" });
     } catch (reason) {
       if (!navigator.onLine || isNetworkUnavailable(reason)) {
-        const [cached, token] = await Promise.all([
+        const [cached, access] = await Promise.all([
           loadOfflineSession(),
           unlockOfflineSession(username, password),
         ]);
         if (!cached) {
           setError("Este dispositivo todavía no tiene una copia offline. Conéctate una vez a internet e inicia sesión.");
-        } else if (!token) {
+        } else if (!access) {
           setError("El usuario o la contraseña no coinciden con el último acceso online guardado en este dispositivo.");
         } else {
-          client.restoreSessionToken(token);
+          client.restoreSessionToken(access.token);
           setIsOnline(false);
           setSignedIn(true);
           setOfflineSession(true);
-          setProfile(cached.profile);
+          setProfile(access.profile);
           setRows(cached.rows);
           setLastSyncedAt(new Date(cached.savedAt));
           setSelectedIndex(cached.rows[0]?.tableIndex ?? null);

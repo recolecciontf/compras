@@ -7,7 +7,7 @@ const QUEUE_STORE = "queue";
 
 const ROWS_KEY = "rows";
 const PROFILE_KEY = "profile";
-const CREDENTIALS_KEY = "credentials";
+const CREDENTIALS_KEY_PREFIX = "credentials";
 const OFFLINE_KEY_ITERATIONS = 150_000;
 
 type OfflineCredentials = {
@@ -16,6 +16,7 @@ type OfflineCredentials = {
   iv: string;
   encryptedToken: string;
   iterations: number;
+  profile: UserProfile;
 };
 
 export type OfflineOperation =
@@ -124,7 +125,7 @@ export async function cacheOfflineRows(rows: ControlRow[]) {
   await putState(ROWS_KEY, rows);
 }
 
-export async function cacheOfflineCredentials(username: string, password: string, sessionToken: string) {
+export async function cacheOfflineCredentials(username: string, password: string, sessionToken: string, profile: UserProfile) {
   if (!sessionToken) throw new Error("No se ha podido preparar el acceso sin conexión.");
   const normalized = normalizedUsername(username);
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -141,14 +142,15 @@ export async function cacheOfflineCredentials(username: string, password: string
     iv: bytesToBase64(iv),
     encryptedToken: bytesToBase64(new Uint8Array(encrypted)),
     iterations: OFFLINE_KEY_ITERATIONS,
+    profile,
   };
-  await putState(CREDENTIALS_KEY, credentials);
+  await putState(`${CREDENTIALS_KEY_PREFIX}:${normalized}`, credentials);
 }
 
 export async function unlockOfflineSession(username: string, password: string) {
-  const stored = await getState<OfflineCredentials>(CREDENTIALS_KEY);
-  const credentials = stored?.value;
   const normalized = normalizedUsername(username);
+  const stored = await getState<OfflineCredentials>(`${CREDENTIALS_KEY_PREFIX}:${normalized}`);
+  const credentials = stored?.value;
   if (!credentials || credentials.username !== normalized) return null;
   try {
     const iv = base64ToBytes(credentials.iv);
@@ -158,7 +160,8 @@ export async function unlockOfflineSession(username: string, password: string) {
       key,
       base64ToBytes(credentials.encryptedToken),
     );
-    return new TextDecoder().decode(decrypted) || null;
+    const token = new TextDecoder().decode(decrypted);
+    return token ? { token, profile: credentials.profile } : null;
   } catch {
     return null;
   }
