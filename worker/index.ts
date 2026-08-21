@@ -826,8 +826,6 @@ export function validatePurchase(purchase: PurchasePayload, requireComplete = tr
       && purchase.contractDetails.signatureMethod !== "external_pending";
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,
-      ["sellerRepresentative", "representante del vendedor"], ["sellerDni", "DNI del representante"],
-      ["sellerAddress", "domicilio del vendedor"], ["organicOperatorCode", "código de operador ecológico"],
       ["modality", "modalidad de compraventa"], ["collectionBy", "responsable de recolección"],
       ["transportBy", "responsable de transporte"], ["paymentDays", "plazo de pago"],
     ];
