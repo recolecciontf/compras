@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker, enrichRowsFromPrivateCatalog } = await import(workerUrl.href);
+const { default: worker, enrichRowsFromPrivateCatalog, validatePurchase } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -109,6 +109,50 @@ test("un contrato nuevo no hereda el PDF histórico del agricultor", () => {
   assert.equal(result.values[7], "Pendiente de firma");
   assert.equal(details.contractOrigin, "generated");
   assert.equal(details.archiveId, "");
+});
+
+test("permite crear una compra cuyo nuevo contrato se firmará más tarde", () => {
+  const purchase = {
+    id: "MRO-032",
+    provider: "ISIDRO MIÑANO RUIZ",
+    taxId: "27433413W",
+    farm: "LIBRILLA",
+    municipality: "LIBRILLA",
+    crop: "Limón",
+    variety: "Rodrejo",
+    expectedKg: "5000",
+    campaign: "2026",
+    registeredIca: "Pendiente",
+    contractSigned: "Pendiente de firma del vendedor",
+    contractStart: "2026-08-21",
+    contractEnd: "2026-09-30",
+    documentPath: "Pendiente de devolución y archivo central",
+    otherAgreements: "",
+    materials: [{ id: "parcela-1", crop: "Limón", variety: "Rodrejo", expectedKg: "5000", situation: "", municipality: "LIBRILLA", paraje: "", polygon: "3", plot: "810", hectares: "" }],
+    contractDetails: {
+      contractOrigin: "generated",
+      buyerCompany: "MR. ORGÁNICA, S.L.",
+      signatureDate: "2026-08-21",
+      contractNumber: "MRO-032",
+      sellerRepresentative: "ISIDRO MIÑANO RUIZ",
+      sellerDni: "27433413W",
+      sellerAddress: "C/ FATIMA, 14",
+      organicOperatorCode: "Pendiente",
+      modality: "A KILOS",
+      collectionBy: "Comprador",
+      transportBy: "Comprador",
+      pricePerKg: "0.1",
+      totalPrice: "",
+      paymentDays: "30",
+      applyDestrio: "Sí",
+      destrioLocation: "Almacén",
+      destrioDefects: "SE REALIZARÁ DESTRÍO EN ALMACÉN",
+      destrioPrice: "0",
+      signatureMethod: "external_pending",
+      sellerSignedAt: "",
+    },
+  };
+  assert.doesNotThrow(() => validatePurchase(purchase));
 });
 
 test("el usuario de consulta no puede guardar cambios", async () => {
