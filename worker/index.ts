@@ -2,12 +2,12 @@ import { STATIC_ASSETS } from "./static-assets.generated";
 import { CONTRACT_ASSETS } from "./contract-assets.generated";
 import {
   CERTIFICATE_RECORDS,
-  CONTRACT_DOCUMENTS,
   CONTROL_DATA_UPDATED_AT,
   FARM_RECORDS,
   OPFH_MEMBERS,
-  SUPPORT_SUMMARIES,
-} from "./data/cleanCatalog";
+} from "./data/controlCatalog.generated";
+import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
+import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
 import { certificationSelection } from "../src/lib/catalog";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
@@ -50,7 +50,6 @@ type Session = {
   sub: string;
   role: UserRole;
   exp: number;
-  v: 2;
 };
 
 type ReviewPayload = {
@@ -275,7 +274,7 @@ async function sessionKey(secret: string) {
 }
 
 async function issueSession(env: Env, sub: string, role: UserRole) {
-  const payload = base64Url(encoder.encode(JSON.stringify({ sub, role, exp: Date.now() + 8 * 60 * 60 * 1000, v: 2 })));
+  const payload = base64Url(encoder.encode(JSON.stringify({ sub, role, exp: Date.now() + 8 * 60 * 60 * 1000 })));
   const signature = new Uint8Array(await crypto.subtle.sign("HMAC", await sessionKey(env.SESSION_SECRET), encoder.encode(payload)));
   return `${payload}.${base64Url(signature)}`;
 }
@@ -296,8 +295,7 @@ async function verifySession(token: string, env: Env) {
       typeof parsed.sub !== "string" ||
       (parsed.role !== "admin" && parsed.role !== "viewer") ||
       typeof parsed.exp !== "number" ||
-      parsed.exp <= Date.now() ||
-      parsed.v !== 2
+      parsed.exp <= Date.now()
     ) return null;
     return parsed as Session;
   } catch {
@@ -703,108 +701,6 @@ async function loadRows(env: Env) {
     .filter((row) => String(row.values[1] || "").trim());
 }
 
-const PRE_RESET_SNAPSHOT_KEY = "backups/pre-reset-2026-08-18/2026-08-17T12-36-28-099Z/snapshot.json";
-
-type RestorableRow = { index: number; values: unknown[] };
-
-async function preResetSnapshot(env: Env) {
-  if (!env.CONTRACT_FILES) throw new Error("El archivo privado de restauración no está configurado.");
-  const stored = await env.CONTRACT_FILES.get(PRE_RESET_SNAPSHOT_KEY);
-  if (!stored) throw new Error("No se encuentra la copia anterior al reinicio.");
-  const parsed = JSON.parse(await new Response(stored.body).text()) as {
-    format?: string;
-    createdAt?: string;
-    rows?: RestorableRow[];
-  };
-  if (parsed.format !== "compras-de-campo-backup-v1" || !Array.isArray(parsed.rows)) {
-    throw new Error("La copia anterior al reinicio no tiene un formato válido.");
-  }
-  const { start, end } = dataBounds(env);
-  const rows = parsed.rows.map((row) => ({
-    index: Number(row.index),
-    values: Array.isArray(row.values) ? row.values.slice(0, 40) : [],
-  }));
-  const invalid = rows.find((row) => (
-    !Number.isInteger(row.index)
-    || row.index < start
-    || row.index > end
-    || !String(row.values[0] || "").trim()
-    || !String(row.values[1] || "").trim()
-  ));
-  if (invalid) throw new Error("La copia contiene una fila que no puede restaurarse con seguridad.");
-  const ids = rows.map((row) => String(row.values[0] || "").trim());
-  if (new Set(ids.map((id) => id.toLocaleUpperCase("es"))).size !== ids.length) {
-    throw new Error("La copia contiene identificadores duplicados.");
-  }
-  return { createdAt: String(parsed.createdAt || ""), rows };
-}
-
-async function replaceActiveRows(env: Env, rows: RestorableRow[]) {
-  const { start, end } = dataBounds(env);
-  const sheet = sheetName(env);
-  const range = `'${sheet}'!A${start}:AN${end}`;
-  const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SPREADSHEET_ID)}/values/${encodeURIComponent(range)}:clear`;
-  await sheetsRequest(env, clearUrl, { method: "POST", body: "{}" });
-  const updates = rows.map((row) => ({
-    range: `'${sheet}'!A${row.index}:AN${row.index}`,
-    values: [row.values],
-  }));
-  for (let offset = 0; offset < updates.length; offset += 100) {
-    await batchSave(env, updates.slice(offset, offset + 100));
-  }
-}
-
-async function restorePreResetSnapshot(env: Env, value: unknown, session: Session) {
-  if (!env.CONTRACT_FILES) throw new Error("El archivo privado de restauración no está configurado.");
-  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
-  if (String(source.confirmation || "").trim() !== "RESTAURAR COPIA 17-08-2026") {
-    throw new InputError("Falta la confirmación reforzada para restaurar la copia.");
-  }
-  const snapshot = await preResetSnapshot(env);
-  const currentRows = await loadRows(env);
-  const restoredAt = new Date().toISOString();
-  const stamp = restoredAt.replace(/[:.]/g, "-");
-  const safetyKey = `backups/pre-restore-2026-08-21/${stamp}/snapshot.json`;
-  const safetyBytes = encoder.encode(JSON.stringify({
-    format: "compras-de-campo-pre-restore-v1",
-    createdAt: restoredAt,
-    createdBy: session.sub,
-    rows: currentRows,
-    restoringFrom: PRE_RESET_SNAPSHOT_KEY,
-  }));
-  await env.CONTRACT_FILES.put(safetyKey, safetyBytes.buffer, {
-    httpMetadata: { contentType: "application/json" },
-    customMetadata: { kind: "pre_restore_snapshot", createdAt: restoredAt, createdBy: session.sub },
-  });
-
-  try {
-    await replaceActiveRows(env, snapshot.rows);
-    const restoredRows = await loadRows(env);
-    const expectedIds = snapshot.rows.map((row) => String(row.values[0] || "").trim()).sort();
-    const actualIds = restoredRows.map((row) => String(row.values[0] || "").trim()).sort();
-    if (JSON.stringify(expectedIds) !== JSON.stringify(actualIds)) {
-      throw new Error("La verificación posterior no coincide con la copia.");
-    }
-  } catch (error) {
-    await replaceActiveRows(env, currentRows).catch(() => undefined);
-    throw new Error(`No se ha completado la restauración y se ha intentado recuperar el estado anterior. ${error instanceof Error ? error.message : ""}`.trim());
-  }
-
-  const marker = encoder.encode(JSON.stringify({
-    format: "compras-de-campo-restore-marker-v1",
-    restoredAt,
-    restoredBy: session.sub,
-    restoredFrom: PRE_RESET_SNAPSHOT_KEY,
-    safetyKey,
-    restoredRows: snapshot.rows.length,
-  }));
-  await env.CONTRACT_FILES.put("backups/restorations/latest.json", marker.buffer, {
-    httpMetadata: { contentType: "application/json" },
-    customMetadata: { kind: "restore_pointer", restoredAt, restoredBy: session.sub },
-  });
-  return { restoredRows: snapshot.rows.length, previousRows: currentRows.length, safetyKey };
-}
-
 async function loadRowValues(env: Env, row: number) {
   const { start, end } = dataBounds(env);
   if (!Number.isInteger(row) || row < start || row > end) throw new InputError("La fila seleccionada no es válida.");
@@ -875,7 +771,7 @@ function purchaseValues(value: unknown): PurchasePayload {
   return { ...base, materials, contractDetails } as PurchasePayload;
 }
 
-export function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
+function validatePurchase(purchase: PurchasePayload, requireComplete = true) {
   const required: Array<[keyof PurchasePayload, string]> = [
     ["provider", "agricultor o proveedor"],
     ["taxId", "NIF o CIF"],
@@ -910,6 +806,8 @@ export function validatePurchase(purchase: PurchasePayload, requireComplete = tr
     ];
     const requiredContractFields = purchase.contractDetails.contractOrigin === "existing" ? commonContractFields : [
       ...commonContractFields,
+      ["sellerRepresentative", "representante del vendedor"], ["sellerDni", "DNI del representante"],
+      ["sellerAddress", "domicilio del vendedor"], ["organicOperatorCode", "código de operador ecológico"],
       ["modality", "modalidad de compraventa"], ["collectionBy", "responsable de recolección"],
       ["transportBy", "responsable de transporte"], ["paymentDays", "plazo de pago"],
       ["sellerSignedAt", "firma del vendedor"],
@@ -1275,18 +1173,6 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
-  }
-
-  if (url.pathname === "/api/admin/restore-pre-reset/preview" && request.method === "GET") {
-    if (session.role !== "admin") return json(request, env, { error: "Solo el administrador puede preparar la restauración." }, 403);
-    const [snapshot, currentRows] = await Promise.all([preResetSnapshot(env), loadRows(env)]);
-    return json(request, env, { backupCreatedAt: snapshot.createdAt, backupRows: snapshot.rows.length, currentRows: currentRows.length });
-  }
-
-  if (url.pathname === "/api/admin/restore-pre-reset" && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Solo el administrador puede restaurar la copia." }, 403);
-    const body = await request.json().catch(() => ({}));
-    return json(request, env, { ok: true, ...await restorePreResetSnapshot(env, body, session) });
   }
 
   if (url.pathname === "/api/control-catalog" && request.method === "GET") {

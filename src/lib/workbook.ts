@@ -16,13 +16,8 @@ import type {
 type ApiSheetRow = { index: number; values: unknown[] };
 type ApiError = { error?: string };
 
-const TOKEN_KEY = "compras-de-campo-session-v2-clean-2026-08-18";
+const TOKEN_KEY = "compras-de-campo-session-v1";
 const CONTRACT_TEMPLATE_CACHE = "compras-de-campo-contract-templates-v1";
-const LEGACY_TOKEN_KEYS = ["compras-de-campo-session-v1"];
-
-if (typeof localStorage !== "undefined") {
-  for (const key of LEGACY_TOKEN_KEYS) localStorage.removeItem(key);
-}
 
 export class NetworkUnavailableError extends Error {
   constructor() {
@@ -424,16 +419,6 @@ export class WorkbookClient {
 
   hasStoredSession() {
     return Boolean(this.token);
-  }
-
-  sessionToken() {
-    return this.token;
-  }
-
-  restoreSessionToken(token: string) {
-    this.token = token;
-    this.cachedProfile = null;
-    localStorage.setItem(TOKEN_KEY, token);
   }
 
   async signIn(username: string, password: string) {

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker, validatePurchase } = await import(workerUrl.href);
+const { default: worker } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -71,7 +71,7 @@ test("crea una sesión temporal y permite consultar el perfil", async () => {
   });
 });
 
-test("inicia los catálogos operativos sin datos históricos", async () => {
+test("incluye Naturland para los titulares confirmados", async () => {
   const login = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -80,12 +80,15 @@ test("inicia los catálogos operativos sin datos históricos", async () => {
   const { token } = await login.json();
   const response = await api("/api/control-catalog", { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(response.status, 200);
-  const catalog = await response.json();
-  assert.equal(catalog.updatedAt, "2026-08-18");
-  assert.deepEqual(catalog.certificates, []);
-  assert.deepEqual(catalog.opfhMembers, []);
-  assert.deepEqual(catalog.farms, []);
-  assert.deepEqual(catalog.documents, []);
+  const { certificates } = await response.json();
+  const normalize = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
+  const holders = ["Toñifruit", "Martínez Romero Bibio", "MR Orgánica", "Agrollans", "Patatas Alcalde"];
+  for (const holder of holders) {
+    assert.ok(certificates.some((record) => (
+      normalize(record.farmer).includes(normalize(holder))
+      && normalize(record.certification) === "naturland"
+    )), `Falta Naturland para ${holder}`);
+  }
 });
 
 test("el usuario de consulta no puede guardar cambios", async () => {
@@ -249,7 +252,7 @@ test("guarda o copia un contrato anterior como referencia independiente", async 
   assert.equal(await download.text(), "contrato anterior");
 });
 
-test("no permite recuperar referencias de la biblioteca histórica vaciada", async () => {
+test("copia como referencia un contrato importado de la biblioteca privada", async () => {
   const login = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -257,70 +260,30 @@ test("no permite recuperar referencias de la biblioteca histórica vaciada", asy
   });
   const { token } = await login.json();
   const libraryId = "0cf23a7a450748bce19a3abd";
+  await env.CONTRACT_FILES.put(
+    `document-library/${libraryId}`,
+    new TextEncoder().encode("contrato de biblioteca").buffer,
+    {
+      httpMetadata: { contentType: "application/pdf" },
+      customMetadata: { filename: "contrato-firmado-biblioteca.pdf", kind: "document_library" },
+    },
+  );
+
   const copied = await api("/api/previous-contract-files/copy", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ archiveId: libraryId, purchaseId: "MRO-001", provider: "Agricultor de prueba" }),
   });
-  assert.equal(copied.status, 400);
-  assert.match((await copied.json()).error, /contrato anterior válido/i);
-});
+  assert.equal(copied.status, 201);
+  const cloned = await copied.json();
+  assert.notEqual(cloned.previousContractArchiveId, libraryId);
+  assert.equal(cloned.previousContractFilename, "contrato-firmado-biblioteca.pdf");
 
-test("acepta contratos sin representante ni datos opcionales del vendedor", () => {
-  assert.doesNotThrow(() => validatePurchase({
-    id: "TON-001",
-    provider: "Proveedor de prueba",
-    taxId: "B00000000",
-    farm: "Finca de prueba",
-    municipality: "Municipio de prueba",
-    crop: "Uva roja",
-    variety: "Arra 19",
-    expectedKg: "5000",
-    campaign: "2026/2027",
-    contractSigned: "Pendiente de firma del comprador",
-    contractStart: "2026-08-17",
-    contractEnd: "2026-08-31",
-    documentPath: "Pendiente de archivo central",
-    otherAgreements: "",
-    registeredIca: "Pendiente",
-    materials: [{
-      id: "material-1",
-      crop: "Uva roja",
-      variety: "Arra 19",
-      expectedKg: "5000",
-      situation: "",
-      municipality: "Municipio de prueba",
-      paraje: "",
-      polygon: "",
-      plot: "",
-      hectares: "",
-    }],
-    contractDetails: {
-      contractOrigin: "generated",
-      buyerCompany: "TOÑIFRUIT, S.L.",
-      signatureDate: "2026-08-17",
-      modality: "A KILOS",
-      collectionBy: "Comprador",
-      transportBy: "Comprador",
-      paymentDays: "30",
-      sellerSignedAt: "2026-08-17T12:00:00.000Z",
-      pricePerKg: "1.05",
-      applyDestrio: "No",
-    },
-  }));
-});
-
-test("la operación temporal de reinicio no queda expuesta", async () => {
-  const login = await api("/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
-  });
-  const { token } = await login.json();
-  const response = await api("/api/admin/start-fresh/preview", {
+  const download = await api(`/api/contract-files/${cloned.previousContractArchiveId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  assert.equal(response.status, 404);
+  assert.equal(download.status, 200);
+  assert.equal(await download.text(), "contrato de biblioteca");
 });
 
 test("rechaza el contrato si el archivo central no está configurado", async () => {
