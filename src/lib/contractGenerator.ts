@@ -105,9 +105,10 @@ export function batchesFor(purchase: PurchaseForm) {
   }
   const batches: ContractBatch[] = [];
   for (const [kind, materials] of grouped) {
-    for (let index = 0; index < materials.length; index += 2) {
-      batches.push({ kind, materials: materials.slice(index, index + 2), part: Math.floor(index / 2) + 1 });
-    }
+    // Una especie corresponde a un único contrato. Las distintas parcelas y
+    // variedades se incorporan como filas de la tabla del mismo documento;
+    // nunca se divide el contrato por el número de parcelas.
+    batches.push({ kind, materials, part: 1 });
   }
   return batches;
 }
@@ -526,6 +527,20 @@ function cells(row: Element) {
   return childElements(row, "tc");
 }
 
+function farmTableRows(table: Element, materialCount: number) {
+  let tableRows = rows(table);
+  const minimumDataRows = Math.max(2, materialCount);
+  const sourceRow = tableRows.at(-1);
+  if (!sourceRow || tableRows.length < 2) {
+    throw new Error("El modelo contractual no contiene la tabla de parcelas esperada.");
+  }
+  while (tableRows.length - 1 < minimumDataRows) {
+    table.append(sourceRow.cloneNode(true));
+    tableRows = rows(table);
+  }
+  return tableRows;
+}
+
 function isoDate(value: string) {
   if (!value) return "";
   const [year, month, day] = value.split("-");
@@ -617,8 +632,8 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     replaceNextBlank(fieldOption, String(totalKg(batch.materials)));
   }
 
-  const farmRows = rows(tables[0]);
-  for (let index = 0; index < 2; index += 1) {
+  const farmRows = farmTableRows(tables[0], batch.materials.length);
+  for (let index = 0; index < farmRows.length - 1; index += 1) {
     const material = batch.materials[index];
     const rowCells = farmRows[index + 1] ? cells(farmRows[index + 1]) : [];
     const values = material

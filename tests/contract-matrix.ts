@@ -102,6 +102,19 @@ for (const company of companies) {
   }
 }
 
+for (const company of companies) {
+  const multiParcel = purchase(company, "Limón", "Rodrejo");
+  multiParcel.materials = [
+    material("Limón", "Rodrejo", "parcela-1"),
+    material("Limón", "Rodrejo", "parcela-2"),
+    material("Limón", "Rodrejo", "parcela-3"),
+    material("Limón", "Rodrejo", "parcela-4"),
+  ];
+  multiParcel.expectedKg = "50000";
+  const batches = batchesFor(multiParcel);
+  record(`Agrupación de cuatro parcelas · ${company}`, batches.length === 1 && batches[0].materials.length === 4, `${batches.length} contrato, ${batches[0]?.materials.length || 0} parcelas`);
+}
+
 const signature: ContractSignatures = {
   sellerDataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
   sellerName: "Representante de demostración",

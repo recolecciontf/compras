@@ -175,19 +175,38 @@ function libraryDocumentScore(document: (typeof CONTRACT_DOCUMENTS)[number], val
   return score;
 }
 
-function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unknown[] }>) {
+export function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unknown[] }>) {
   const today = new Date().toISOString().slice(0, 10);
   return rows.map((row) => {
     const values = [...row.values];
     if (isArra19Record(values)) return { ...row, values };
     const provider = String(values[1] || "").trim();
+    const existingDetails = parseJsonRecord(values[34]);
+    const hasManagedContract = [
+      existingDetails.contractOrigin,
+      existingDetails.archiveId,
+      existingDetails.signatureMethod,
+      existingDetails.sellerSignedAt,
+      existingDetails.buyerSignedAt,
+    ].some((value) => String(value || "").trim());
     const documents = CONTRACT_DOCUMENTS
       .filter((document) => catalogNamesMatch(provider, document.farmer))
       .sort((left, right) => libraryDocumentScore(right, values) - libraryDocumentScore(left, values) || right.modified.localeCompare(left.modified));
-    const signedDocument = documents.find((document) => document.documentType === "Contrato firmado" && document.extension === "PDF")
-      || documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
-      || documents.find((document) => document.extension === "PDF");
-    const selectedCompany = signedDocument?.company;
+    // La biblioteca histórica sirve para completar expedientes antiguos que
+    // todavía no tienen gestión contractual propia. Un contrato recién creado
+    // nunca debe heredar como firmado el PDF de una campaña anterior del mismo
+    // agricultor.
+    const signedDocument = hasManagedContract
+      ? undefined
+      : documents.find((document) => document.documentType === "Contrato firmado" && document.extension === "PDF")
+        || documents.find((document) => document.documentType === "Contrato" && document.extension === "PDF")
+        || documents.find((document) => document.extension === "PDF");
+    const managedBuyer = normalizedCatalogText(existingDetails.buyerCompany);
+    const selectedCompany = managedBuyer.includes("TONIFRUIT")
+      ? "TOÑIFRUIT"
+      : managedBuyer.includes("ORGANICA")
+        ? "MR. ORGÁNICA"
+        : signedDocument?.company;
     // La certificación pertenece al agricultor/titular, no a la carpeta de la
     // empresa compradora. Cruzar por selectedCompany hacía desaparecer, entre
     // otras, Naturland cuando el contrato estaba archivado en la otra empresa.
@@ -204,7 +223,6 @@ function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unkno
     if (signedDocument) {
       values[7] = "Sí";
       values[24] = `Biblioteca contractual privada · ${documents.length} documento${documents.length === 1 ? "" : "s"}`;
-      const existingDetails = parseJsonRecord(values[34]);
       values[34] = JSON.stringify({
         ...existingDetails,
         contractOrigin: "existing",

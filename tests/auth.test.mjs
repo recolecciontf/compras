@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker } = await import(workerUrl.href);
+const { default: worker, enrichRowsFromPrivateCatalog } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -89,6 +89,26 @@ test("incluye Naturland para los titulares confirmados", async () => {
       && normalize(record.certification) === "naturland"
     )), `Falta Naturland para ${holder}`);
   }
+});
+
+test("un contrato nuevo no hereda el PDF histórico del agricultor", () => {
+  const values = Array.from({ length: 35 }, () => "");
+  values[0] = "MRO-032";
+  values[1] = "ISIDRO MIÑANO RUIZ";
+  values[5] = "Limón";
+  values[7] = "Pendiente de firma";
+  values[34] = JSON.stringify({
+    contractOrigin: "generated",
+    contractNumber: "MRO-032",
+    buyerCompany: "MR. ORGÁNICA, S.L.",
+    signatureMethod: "external_pending",
+    archiveId: "",
+  });
+  const [result] = enrichRowsFromPrivateCatalog([{ index: 41, values }]);
+  const details = JSON.parse(result.values[34]);
+  assert.equal(result.values[7], "Pendiente de firma");
+  assert.equal(details.contractOrigin, "generated");
+  assert.equal(details.archiveId, "");
 });
 
 test("el usuario de consulta no puede guardar cambios", async () => {
