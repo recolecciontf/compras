@@ -104,12 +104,69 @@ type HarvestPayload = {
 };
 
 class InputError extends Error {}
+class ConflictError extends Error {}
 
 const encoder = new TextEncoder();
 let cachedGoogleToken = "";
 let cachedGoogleTokenExpiresAt = 0;
 let sheetSchemaReady = false;
 const libraryDocumentsById = new Map(CONTRACT_DOCUMENTS.map((document) => [document.id, document]));
+const LIVE_CATALOG_KEY = "catalog/control-documental.json";
+
+async function controlCatalogData(env: Env) {
+  const storedDocuments = await storedLibraryDocumentCount(env.CONTRACT_FILES).catch(() => 0);
+  const fallback = {
+    updatedAt: CONTROL_DATA_UPDATED_AT,
+    certificates: CERTIFICATE_RECORDS,
+    opfhMembers: OPFH_MEMBERS,
+    farms: FARM_RECORDS,
+    documents: CONTRACT_DOCUMENTS,
+    storedDocuments,
+  };
+  if (!env.CONTRACT_FILES) return fallback;
+  const object = await env.CONTRACT_FILES.get(LIVE_CATALOG_KEY).catch(() => null);
+  if (!object) return fallback;
+  const snapshot = await new Response(object.body).json().catch(() => null) as Record<string, unknown> | null;
+  if (!snapshot) return fallback;
+  return {
+    updatedAt: String(snapshot.updatedAt || fallback.updatedAt),
+    certificates: Array.isArray(snapshot.certificates) ? snapshot.certificates : fallback.certificates,
+    opfhMembers: Array.isArray(snapshot.opfhMembers) ? snapshot.opfhMembers : fallback.opfhMembers,
+    farms: Array.isArray(snapshot.farms) ? snapshot.farms : fallback.farms,
+    documents: Array.isArray(snapshot.documents) ? snapshot.documents : fallback.documents,
+    storedDocuments,
+  };
+}
+
+async function libraryDocumentById(id: string, env: Env) {
+  const generated = libraryDocumentsById.get(id);
+  if (generated) return generated;
+  const catalog = await controlCatalogData(env);
+  return (catalog.documents as Array<Record<string, unknown>>).find((document) => String(document.id || "") === id) as (typeof CONTRACT_DOCUMENTS)[number] | undefined;
+}
+
+async function storeControlCatalog(request: Request, env: Env, session: Session) {
+  if (!env.CONTRACT_FILES) throw new Error("El almacenamiento del cat�logo no est� configurado.");
+  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  if (!body || ![body.certificates, body.opfhMembers, body.farms, body.documents].every(Array.isArray)) {
+    throw new InputError("El cat�logo debe incluir certificados, socios OPFH, fincas y documentos.");
+  }
+  const snapshot = {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    updatedBy: session.sub,
+    certificates: body.certificates,
+    opfhMembers: body.opfhMembers,
+    farms: body.farms,
+    documents: body.documents,
+  };
+  const bytes = encoder.encode(JSON.stringify(snapshot));
+  await env.CONTRACT_FILES.put(LIVE_CATALOG_KEY, bytes.buffer as ArrayBuffer, {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: { updatedAt: snapshot.updatedAt, updatedBy: session.sub, kind: "control_catalog" },
+  });
+  return snapshot;
+}
 
 async function storedLibraryDocumentCount(bucket?: ContractBucket) {
   if (!bucket) return 0;
@@ -175,7 +232,7 @@ function libraryDocumentScore(document: (typeof CONTRACT_DOCUMENTS)[number], val
   return score;
 }
 
-export function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unknown[] }>) {
+export function enrichRowsFromPrivateCatalog(rows: Array<{ index: number; values: unknown[]; revision?: string }>) {
   const today = new Date().toISOString().slice(0, 10);
   return rows.map((row) => {
     const values = [...row.values];
@@ -491,7 +548,7 @@ async function storeLibraryDocument(request: Request, env: Env) {
   if (!env.CONTRACT_FILES) throw new Error("La biblioteca documental no está configurada.");
   const form = await request.formData();
   const id = String(form.get("id") || "").trim();
-  const document = libraryDocumentsById.get(id);
+  const document = await libraryDocumentById(id, env);
   if (!document) throw new InputError("El documento no pertenece a la biblioteca preparada.");
   const file = form.get("file");
   if (!(file instanceof File)) throw new InputError("Selecciona el documento contractual.");
@@ -545,7 +602,7 @@ async function copyPreviousContract(value: unknown, env: Env) {
   const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const archiveId = String(source.archiveId || "").trim();
   const isArchivedContract = /^[0-9a-f-]{36}$/i.test(archiveId);
-  const libraryDocument = /^[0-9a-f]{24}$/i.test(archiveId) ? libraryDocumentsById.get(archiveId) : undefined;
+  const libraryDocument = /^[0-9a-f]{24}$/i.test(archiveId) ? await libraryDocumentById(archiveId, env) : undefined;
   if (!isArchivedContract && !libraryDocument) throw new InputError("Selecciona un contrato anterior válido.");
   const sourceKey = libraryDocument ? `document-library/${archiveId}` : archiveId;
   const original = await env.CONTRACT_FILES.get(sourceKey);
@@ -757,6 +814,127 @@ function verifyExpectedId(values: unknown[], expectedId: string) {
     throw new InputError("El expediente ha cambiado. Sincroniza los datos antes de continuar.");
   }
   return actualId;
+}
+
+export async function rowRevision(values: unknown[]) {
+  const normalized = Array.from({ length: 40 }, (_, index) => values[index] ?? "");
+  return sha256Hex(JSON.stringify(normalized));
+}
+
+export async function verifyExpectedRevision(values: unknown[], expectedRevision: string) {
+  if (!expectedRevision) return;
+  const currentRevision = await rowRevision(values);
+  if (currentRevision !== expectedRevision) {
+    throw new ConflictError("Este expediente ha cambiado en otro dispositivo. Actualiza los datos y revisa tus cambios antes de volver a guardar.");
+  }
+}
+
+function backupPrefix(row: number, recordId: string) {
+  const safeId = recordId.replace(/[^a-z0-9-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "sin-id";
+  return `backups/rows/${row}/${safeId}/`;
+}
+
+async function pruneRowBackups(bucket: ContractBucket, prefix: string) {
+  const page = await bucket.list({ prefix, limit: 1000 });
+  const keys = page.objects.map((object) => object.key).sort().reverse();
+  const minimumBucket = Math.floor((Date.now() - 365 * 86_400_000) / 300_000);
+  const expired = keys.filter((key, index) => {
+    if (index >= 50) return true;
+    const name = key.slice(prefix.length);
+    const bucketNumber = Number(name.match(/^(\d+)/)?.[1] || "0");
+    return bucketNumber > 0 && bucketNumber < minimumBucket;
+  });
+  if (expired.length) await bucket.delete(expired);
+}
+
+async function backupRow(
+  env: Env,
+  row: number,
+  values: unknown[],
+  session: Session,
+  reason: string,
+  force = false,
+) {
+  if (!env.CONTRACT_FILES) return;
+  const recordId = String(values[0] || "").trim();
+  if (!recordId) return;
+  const prefix = backupPrefix(row, recordId);
+  const bucket = Math.floor(Date.now() / 300_000);
+  const key = `${prefix}${bucket}${force ? `-${crypto.randomUUID()}` : ""}.json`;
+  if (!force && await env.CONTRACT_FILES.get(key)) return;
+  const payload = encoder.encode(JSON.stringify({
+    version: 1,
+    row,
+    recordId,
+    savedAt: new Date().toISOString(),
+    savedBy: session.sub,
+    reason,
+    values: Array.from({ length: 40 }, (_, index) => values[index] ?? ""),
+  }));
+  await env.CONTRACT_FILES.put(key, payload.buffer as ArrayBuffer, {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: { recordId, savedBy: session.sub, reason: reason.slice(0, 180) },
+  });
+  await pruneRowBackups(env.CONTRACT_FILES, prefix).catch(() => undefined);
+}
+
+async function prepareRowMutation(
+  env: Env,
+  row: number,
+  source: Record<string, unknown>,
+  session: Session,
+  reason: string,
+) {
+  const values = await loadRowValues(env, row);
+  verifyExpectedId(values, String(source.expectedId || ""));
+  await verifyExpectedRevision(values, String(source.expectedRevision || ""));
+  await backupRow(env, row, values, session, reason);
+  return values;
+}
+
+async function mutationRevision(env: Env, row: number) {
+  return rowRevision(await loadRowValues(env, row));
+}
+
+async function listRowBackups(env: Env, row: number, expectedId: string) {
+  if (!env.CONTRACT_FILES) return [];
+  const values = await loadRowValues(env, row);
+  const recordId = verifyExpectedId(values, expectedId);
+  const prefix = backupPrefix(row, recordId);
+  const page = await env.CONTRACT_FILES.list({ prefix, limit: 1000 });
+  const keys = page.objects.map((object) => object.key).sort().reverse().slice(0, 20);
+  const backups = await Promise.all(keys.map(async (key) => {
+    const object = await env.CONTRACT_FILES!.get(key);
+    if (!object) return null;
+    const payload = await new Response(object.body).json().catch(() => ({})) as Record<string, unknown>;
+    return {
+      key,
+      savedAt: String(payload.savedAt || ""),
+      savedBy: String(payload.savedBy || ""),
+      reason: String(payload.reason || "Copia autom�tica"),
+    };
+  }));
+  return backups.filter(Boolean);
+}
+
+async function restoreRowBackup(env: Env, row: number, value: unknown, session: Session) {
+  if (!env.CONTRACT_FILES) throw new Error("Las copias recuperables no est�n configuradas.");
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const current = await prepareRowMutation(env, row, source, session, "Antes de restaurar una copia");
+  const recordId = String(current[0] || "").trim();
+  const prefix = backupPrefix(row, recordId);
+  const key = String(source.key || "");
+  if (!key.startsWith(prefix) || !key.endsWith(".json")) throw new InputError("La copia seleccionada no pertenece a este expediente.");
+  const object = await env.CONTRACT_FILES.get(key);
+  if (!object) throw new InputError("La copia seleccionada ya no est� disponible.");
+  const payload = await new Response(object.body).json().catch(() => ({})) as { recordId?: string; values?: unknown[] };
+  if (payload.recordId !== recordId || !Array.isArray(payload.values)) throw new InputError("La copia seleccionada no es v�lida.");
+  await backupRow(env, row, current, session, "Estado anterior a la restauraci�n", true);
+  await batchSave(env, [{
+    range: `'${sheetName(env)}'!A${row}:AN${row}`,
+    values: [Array.from({ length: 40 }, (_, index) => payload.values?.[index] ?? "")],
+  }]);
+  return { revision: await mutationRevision(env, row) };
 }
 
 function managementReason(value: unknown) {
@@ -1027,8 +1205,7 @@ async function updateRecordStatus(env: Env, row: number, value: unknown, session
   const status = String(source.status || "").trim();
   if (status !== "Activo" && status !== "Anulado") throw new InputError("El estado del expediente no es válido.");
   const reason = managementReason(source.reason);
-  const values = await loadRowValues(env, row);
-  verifyExpectedId(values, String(source.expectedId || ""));
+  const values = await prepareRowMutation(env, row, source, session, `Cambio de estado a ${status}`);
   const currentStatus = String(values[35] || "Activo").trim() || "Activo";
   if (currentStatus === status) throw new InputError(`El expediente ya está ${status.toLocaleLowerCase("es")}.`);
   const changedAt = new Date().toISOString();
@@ -1040,14 +1217,16 @@ async function updateRecordStatus(env: Env, row: number, value: unknown, session
     range: `'${sheetName(env)}'!AJ${row}:AN${row}`,
     values: [[status, reason, changedAt, changedBy, statusHistoryJson]],
   }]);
-  return { recordStatus: status, statusReason: reason, statusUpdatedAt: changedAt, statusUpdatedBy: changedBy, statusHistoryJson };
+  return { recordStatus: status, statusReason: reason, statusUpdatedAt: changedAt, statusUpdatedBy: changedBy, statusHistoryJson, revision: await mutationRevision(env, row) };
 }
 
 async function replaceArchivedContract(env: Env, row: number, request: Request, session: Session) {
   const form = await request.formData();
   const reason = managementReason(form.get("reason"));
-  const values = await loadRowValues(env, row);
-  verifyExpectedId(values, String(form.get("expectedId") || ""));
+  const values = await prepareRowMutation(env, row, {
+    expectedId: form.get("expectedId"),
+    expectedRevision: form.get("expectedRevision"),
+  }, session, "Sustituci�n del contrato firmado");
   const contract = parseJsonRecord(values[34]);
   const previousArchiveId = String(contract.archiveId || "").trim();
   if (!previousArchiveId) throw new InputError("Este expediente todavía no tiene un contrato archivado que sustituir.");
@@ -1089,7 +1268,7 @@ async function replaceArchivedContract(env: Env, row: number, request: Request, 
     throw error;
   }
 
-  return { ...archived, historyCount: history.length };
+  return { ...archived, historyCount: history.length, revision: await mutationRevision(env, row) };
 }
 
 async function deleteRecordPermanently(env: Env, row: number, value: unknown, session: Session) {
@@ -1103,7 +1282,7 @@ async function deleteRecordPermanently(env: Env, row: number, value: unknown, se
     throw new InputError("Confirma expresamente el borrado definitivo.");
   }
 
-  const values = await loadRowValues(env, row);
+  const values = await prepareRowMutation(env, row, source, session, "Antes del borrado definitivo");
   const deletedId = verifyExpectedId(values, expectedId);
   if (String(values[35] || "Activo").trim() !== "Anulado") {
     throw new InputError("Antes del borrado definitivo debes anular el expediente.");
@@ -1194,15 +1373,25 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/control-catalog" && request.method === "GET") {
-    const storedDocuments = await storedLibraryDocumentCount(env.CONTRACT_FILES).catch(() => 0);
-    return json(request, env, {
-      updatedAt: CONTROL_DATA_UPDATED_AT,
-      certificates: CERTIFICATE_RECORDS,
-      opfhMembers: OPFH_MEMBERS,
-      farms: FARM_RECORDS,
-      documents: CONTRACT_DOCUMENTS,
-      storedDocuments,
+    const catalog = await controlCatalogData(env);
+    return json(request, env, session.role === "admin" ? catalog : {
+      updatedAt: catalog.updatedAt,
+      certificates: catalog.certificates.map((certificate) => ({
+        ...certificate,
+        taxId: "",
+        opfhMember: false,
+        farmType: "",
+      })),
+      opfhMembers: [],
+      farms: [],
+      documents: [],
+      storedDocuments: 0,
     });
+  }
+
+  if (url.pathname === "/api/control-catalog" && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede actualizar el cat�logo." }, 403);
+    return json(request, env, { ok: true, ...await storeControlCatalog(request, env, session) });
   }
 
   if (url.pathname === "/api/document-library" && request.method === "POST") {
@@ -1212,8 +1401,9 @@ async function handleApi(request: Request, env: Env) {
 
   const libraryDocumentMatch = url.pathname.match(/^\/api\/document-library\/([0-9a-f]{24})$/i);
   if (libraryDocumentMatch && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "La biblioteca contractual es confidencial y su descarga est� restringida al Administrador." }, 403);
     if (!env.CONTRACT_FILES) return json(request, env, { error: "La biblioteca documental no está configurada." }, 503);
-    const document = libraryDocumentsById.get(libraryDocumentMatch[1]);
+    const document = await libraryDocumentById(libraryDocumentMatch[1], env);
     if (!document) return json(request, env, { error: "El documento no pertenece al catálogo." }, 404);
     const object = await env.CONTRACT_FILES.get(`document-library/${document.id}`);
     if (!object) return json(request, env, { error: "Este documento todavía no se ha incorporado al archivo privado." }, 404);
@@ -1245,6 +1435,7 @@ async function handleApi(request: Request, env: Env) {
 
   const archivedContractMatch = url.pathname.match(/^\/api\/contract-files\/([0-9a-f-]{36})$/i);
   if (archivedContractMatch && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "Los contratos son confidenciales y su descarga est� restringida al Administrador." }, 403);
     if (!env.CONTRACT_FILES) return json(request, env, { error: "El archivo central de contratos no está configurado." }, 503);
     const object = await env.CONTRACT_FILES.get(archivedContractMatch[1]);
     if (!object) return json(request, env, { error: "No se ha encontrado la copia firmada del contrato." }, 404);
@@ -1261,6 +1452,7 @@ async function handleApi(request: Request, env: Env) {
 
   const templateMatch = url.pathname.match(/^\/api\/contract-templates\/([a-z0-9-]+\.docx)$/);
   if (templateMatch && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "Los modelos contractuales est�n restringidos al Administrador." }, 403);
     const body = await contractTemplate(templateMatch[1], env);
     if (!body) return json(request, env, { error: "Modelo contractual no encontrado." }, 404);
     return new Response(body, {
@@ -1274,7 +1466,9 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/rows" && request.method === "GET") {
-    return json(request, env, { rows: enrichRowsFromPrivateCatalog(await loadRows(env)) });
+    const rows = await loadRows(env);
+    const versionedRows = await Promise.all(rows.map(async (row) => ({ ...row, revision: await rowRevision(row.values) })));
+    return json(request, env, { rows: enrichRowsFromPrivateCatalog(versionedRows) });
   }
 
   if (url.pathname === "/api/rows" && request.method === "POST") {
@@ -1292,6 +1486,21 @@ async function handleApi(request: Request, env: Env) {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede cambiar el estado de expedientes." }, 403);
     const body = await request.json().catch(() => ({}));
     return json(request, env, { ok: true, ...await updateRecordStatus(env, Number(statusMatch[1]), body, session) });
+  }
+
+  const backupsMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/backups$/);
+  if (backupsMatch && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede acceder a copias recuperables." }, 403);
+    const row = Number(backupsMatch[1]);
+    const expectedId = url.searchParams.get("expectedId") || "";
+    return json(request, env, { backups: await listRowBackups(env, row, expectedId) });
+  }
+
+  const restoreBackupMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/backups\/restore$/);
+  if (restoreBackupMatch && request.method === "POST") {
+    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede restaurar copias." }, 403);
+    const body = await request.json().catch(() => ({}));
+    return json(request, env, { ok: true, ...await restoreRowBackup(env, Number(restoreBackupMatch[1]), body, session) });
   }
 
   const replacementMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/contract$/);
@@ -1312,25 +1521,31 @@ async function handleApi(request: Request, env: Env) {
     if (session.role !== "admin") {
       return json(request, env, { error: "Este usuario es de consulta y no puede modificar los datos." }, 403);
     }
-    const body = (await request.json().catch(() => ({}))) as { review?: unknown };
+    const body = (await request.json().catch(() => ({}))) as { review?: unknown; expectedId?: unknown; expectedRevision?: unknown };
+    await prepareRowMutation(env, Number(reviewMatch[1]), body as Record<string, unknown>, session, "Edici�n de la revisi�n documental");
     await saveReview(env, Number(reviewMatch[1]), reviewValues(body.review));
-    return json(request, env, { ok: true });
+    return json(request, env, { ok: true, revision: await mutationRevision(env, Number(reviewMatch[1])) });
   }
 
   const purchaseMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/purchase$/);
   if (purchaseMatch && request.method === "PATCH") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede modificar compras." }, 403);
-    const body = (await request.json().catch(() => ({}))) as { purchase?: unknown };
-    await savePurchase(env, Number(purchaseMatch[1]), purchaseValues(body.purchase));
-    return json(request, env, { ok: true });
+    const body = (await request.json().catch(() => ({}))) as { purchase?: unknown; expectedId?: unknown; expectedRevision?: unknown };
+    const purchase = purchaseValues(body.purchase);
+    validatePurchase(purchase, false);
+    await prepareRowMutation(env, Number(purchaseMatch[1]), body as Record<string, unknown>, session, "Edici�n de la compra");
+    await savePurchase(env, Number(purchaseMatch[1]), purchase);
+    return json(request, env, { ok: true, revision: await mutationRevision(env, Number(purchaseMatch[1])) });
   }
 
   const harvestMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/harvest$/);
   if (harvestMatch && request.method === "PATCH") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede modificar cortes." }, 403);
-    const body = (await request.json().catch(() => ({}))) as { harvest?: unknown };
-    await saveHarvest(env, Number(harvestMatch[1]), body.harvest);
-    return json(request, env, { ok: true });
+    const body = (await request.json().catch(() => ({}))) as { harvest?: unknown; expectedId?: unknown; expectedRevision?: unknown };
+    const harvest = harvestValues(body.harvest);
+    await prepareRowMutation(env, Number(harvestMatch[1]), body as Record<string, unknown>, session, "Edici�n de cortes y kilos");
+    await saveHarvest(env, Number(harvestMatch[1]), harvest);
+    return json(request, env, { ok: true, revision: await mutationRevision(env, Number(harvestMatch[1])) });
   }
 
   return json(request, env, { error: "Operación no encontrada." }, 404);
@@ -1347,7 +1562,7 @@ export default {
       return serveEmbeddedAsset(request);
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se ha podido completar la operación.";
-      return json(request, env, { error: message }, error instanceof InputError ? 400 : 500);
+      return json(request, env, { error: message }, error instanceof ConflictError ? 409 : error instanceof InputError ? 400 : 500);
     }
   },
 };

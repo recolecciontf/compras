@@ -316,6 +316,24 @@ p {
   border-radius: 16px;
   background: var(--surface);
   box-shadow: 0 5px 18px rgba(24, 49, 42, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.summary-card:hover,
+.summary-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--green-500);
+  box-shadow: 0 8px 22px rgba(24, 49, 42, 0.1);
+  outline: none;
+}
+
+.summary-card.summary-selected {
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 2px rgba(82, 145, 48, 0.14);
 }
 
 .summary-card svg {
@@ -2652,6 +2670,20 @@ p {
 .document-main > small {
   color: var(--muted);
   font-size: 0.64rem;
+}
+
+.confidential-document {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f6f8f4;
+  font-size: 0.67rem;
+  font-weight: 750;
+  white-space: nowrap;
 }
 
 .catalog-source-note {

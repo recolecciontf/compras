@@ -10,10 +10,11 @@ import type {
   PurchaseForm,
   RecordStatusHistoryEntry,
   ReviewForm,
+  RowBackupSummary,
   UserProfile,
 } from "../types";
 
-type ApiSheetRow = { index: number; values: unknown[] };
+type ApiSheetRow = { index: number; values: unknown[]; revision: string };
 type ApiError = { error?: string };
 
 const TOKEN_KEY = "compras-de-campo-session-v1";
@@ -23,6 +24,13 @@ export class NetworkUnavailableError extends Error {
   constructor() {
     super("No hay conexión con el registro central.");
     this.name = "NetworkUnavailableError";
+  }
+}
+
+export class RevisionConflictError extends Error {
+  constructor(message = "Este expediente ha cambiado en otro dispositivo. Actualiza los datos y revisa tus cambios antes de volver a guardar.") {
+    super(message);
+    this.name = "RevisionConflictError";
   }
 }
 
@@ -68,6 +76,7 @@ export function rowFromValues(row: ApiSheetRow): ControlRow {
   const legacyMaterial = canonicalMaterial(text(v[5]), text(v[29]));
   return {
     tableIndex: row.index,
+    revision: row.revision || "",
     id: text(v[0]),
     provider: text(v[1]),
     taxId: text(v[2]),
@@ -310,8 +319,6 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
   if (!archivedExistingContract) {
     if (!contract.buyerCompany) issues.push("Falta la empresa compradora");
     if (!contract.signatureDate) issues.push("Falta la fecha de firma del contrato");
-    if (!contract.sellerEmail) issues.push("Falta el correo del agricultor");
-    if (!contract.companyEmail) issues.push("Falta el correo de la empresa");
   }
   if (contract.contractOrigin !== "existing") {
     if (!contract.modality) issues.push("Falta la modalidad de compraventa");
@@ -401,6 +408,7 @@ export class WorkbookClient {
       if (response.status === 405) {
         throw new Error("La aplicación conserva una configuración antigua. Ciérrala por completo, vuelve a abrirla y reintenta el acceso.");
       }
+      if (response.status === 409) throw new RevisionConflictError(detail.error);
       throw new Error(detail.error || `El servicio ha respondido con el error ${response.status}.`);
     }
     return response.json() as Promise<T>;
@@ -454,9 +462,9 @@ export class WorkbookClient {
   }
 
   async saveReview(row: ControlRow, review: ReviewForm) {
-    await this.request<{ ok: true }>(`/api/rows/${row.tableIndex}/review`, {
+    return this.request<{ ok: true; revision: string }>(`/api/rows/${row.tableIndex}/review`, {
       method: "PATCH",
-      body: JSON.stringify({ review }),
+      body: JSON.stringify({ review, expectedId: row.id, expectedRevision: row.revision }),
     });
   }
 
@@ -469,16 +477,16 @@ export class WorkbookClient {
   }
 
   async savePurchase(row: ControlRow, purchase: PurchaseForm) {
-    await this.request<{ ok: true }>(`/api/rows/${row.tableIndex}/purchase`, {
+    return this.request<{ ok: true; revision: string }>(`/api/rows/${row.tableIndex}/purchase`, {
       method: "PATCH",
-      body: JSON.stringify({ purchase }),
+      body: JSON.stringify({ purchase, expectedId: row.id, expectedRevision: row.revision }),
     });
   }
 
   async saveHarvest(row: ControlRow, harvest: HarvestForm) {
-    await this.request<{ ok: true }>(`/api/rows/${row.tableIndex}/harvest`, {
+    return this.request<{ ok: true; revision: string }>(`/api/rows/${row.tableIndex}/harvest`, {
       method: "PATCH",
-      body: JSON.stringify({ harvest }),
+      body: JSON.stringify({ harvest, expectedId: row.id, expectedRevision: row.revision }),
     });
   }
 
@@ -490,9 +498,10 @@ export class WorkbookClient {
       statusUpdatedAt: string;
       statusUpdatedBy: string;
       statusHistoryJson: string;
+      revision: string;
     }>(`/api/rows/${row.tableIndex}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status, reason, expectedId: row.id }),
+      body: JSON.stringify({ status, reason, expectedId: row.id, expectedRevision: row.revision }),
     });
   }
 
@@ -501,6 +510,7 @@ export class WorkbookClient {
     form.set("file", file, file.name);
     form.set("reason", reason);
     form.set("expectedId", row.id);
+    form.set("expectedRevision", row.revision);
     form.set("provider", purchase.provider);
     form.set("sellerEmail", purchase.contractDetails.sellerEmail);
     form.set("companyEmail", purchase.contractDetails.companyEmail);
@@ -513,9 +523,10 @@ export class WorkbookClient {
     });
     if (!response.ok) {
       const detail = (await response.json().catch(() => ({}))) as ApiError;
+      if (response.status === 409) throw new RevisionConflictError(detail.error);
       throw new Error(detail.error || "No se ha podido sustituir el contrato firmado.");
     }
-    return response.json() as Promise<{ ok: true; archiveFilename: string }>;
+    return response.json() as Promise<{ ok: true; archiveFilename: string; revision: string }>;
   }
 
   async deleteRecord(row: ControlRow, reason: string, confirmation: string, acknowledgement: string) {
@@ -523,9 +534,21 @@ export class WorkbookClient {
       `/api/rows/${row.tableIndex}`,
       {
         method: "DELETE",
-        body: JSON.stringify({ expectedId: row.id, confirmation, acknowledgement, reason }),
+        body: JSON.stringify({ expectedId: row.id, expectedRevision: row.revision, confirmation, acknowledgement, reason }),
       },
     );
+  }
+
+  async rowBackups(row: ControlRow) {
+    const result = await this.request<{ backups: RowBackupSummary[] }>(`/api/rows/${row.tableIndex}/backups?expectedId=${encodeURIComponent(row.id)}`);
+    return result.backups;
+  }
+
+  async restoreRowBackup(row: ControlRow, key: string) {
+    return this.request<{ ok: true; revision: string }>(`/api/rows/${row.tableIndex}/backups/restore`, {
+      method: "POST",
+      body: JSON.stringify({ key, expectedId: row.id, expectedRevision: row.revision }),
+    });
   }
 
   async contractTemplate(name: string) {
@@ -624,8 +647,8 @@ export class WorkbookClient {
         ...purchase,
         contractDetails: {
           ...purchase.contractDetails,
-          sellerEmail: "archivo@referencia.invalid",
-          companyEmail: "archivo@referencia.invalid",
+          sellerEmail: "",
+          companyEmail: "",
           contractNumber: `REF-${purchase.id || "ANTERIOR"}`,
         },
       };

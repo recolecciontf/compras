@@ -14,6 +14,7 @@ export type OfflineOperation =
       kind: "update";
       rowIndex: number;
       recordId: string;
+      recordRevision: string;
       purchase?: PurchaseForm;
       review?: ReviewForm;
       harvest?: HarvestForm;
@@ -133,6 +134,7 @@ export async function queueOfflineUpdate(
     kind: "update",
     rowIndex: row.tableIndex,
     recordId: row.id,
+    recordRevision: existing?.kind === "update" ? existing.recordRevision : row.revision,
     purchase: change.purchase || (existing?.kind === "update" ? existing.purchase : undefined),
     review: change.review || (existing?.kind === "update" ? existing.review : undefined),
     harvest: change.harvest || (existing?.kind === "update" ? existing.harvest : undefined),

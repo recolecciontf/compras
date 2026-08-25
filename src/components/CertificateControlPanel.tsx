@@ -123,6 +123,30 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
     };
   }, [catalogRevision, onLoadCatalog]);
 
+  useEffect(() => {
+    let active = true;
+    const refreshCatalog = () => {
+      onLoadCatalog()
+        .then((data) => {
+          if (active) {
+            setCatalog(data);
+            setCatalogError("");
+          }
+        })
+        .catch(() => undefined);
+    };
+    const interval = window.setInterval(refreshCatalog, 5 * 60_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refreshCatalog();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [onLoadCatalog]);
+
   const summary = useMemo(() => {
     const uniqueFarmers = new Set(certificates.map((record) => `${record.company}|${record.farmer}`)).size;
     const expired = certificates.filter((record) => certificateStatus(record.expiry).key === "expired").length;
@@ -338,25 +362,25 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
       <div className="review-header catalog-header">
         <button className="back-button mobile-back" type="button" onClick={onBack}><ArrowLeft size={20} /> Expedientes</button>
         <div className="page-kicker"><ShieldCheck size={18} /> Control documental actualizado</div>
-        <h1 className="page-title">Certificados y OPFH</h1>
-        <p className="page-subtitle">Consulta vigencias, socios y parcelas desde un único control. ARRA 19 se conserva sin cambios.</p>
+        <h1 className="page-title">{canEdit ? "Certificados y OPFH" : "Certificados"}</h1>
+        <p className="page-subtitle">{canEdit ? "Consulta vigencias, socios y parcelas desde un único control. ARRA 19 se conserva sin cambios." : "Consulta las certificaciones y su vigencia. La información contractual y de fincas está restringida."}</p>
         <span className="catalog-updated"><CalendarDays size={15} /> Datos cruzados a {formatDate(catalog.updatedAt)}</span>
       </div>
 
       <div className="catalog-summary">
         <article><Users size={20} /><span>Agricultores</span><strong>{summary.farmers}</strong></article>
-        <article><ShieldCheck size={20} /><span>Socios OPFH</span><strong>{summary.opfh}</strong></article>
+        {canEdit && <article><ShieldCheck size={20} /><span>Socios OPFH</span><strong>{summary.opfh}</strong></article>}
         <article className="catalog-alert"><AlertTriangle size={20} /><span>Certificados vencidos</span><strong>{summary.expired}</strong></article>
         <article><CalendarDays size={20} /><span>Próximos 15 días</span><strong>{summary.soon}</strong></article>
-        <article><MapPin size={20} /><span>Fincas / recintos</span><strong>{summary.farms}</strong></article>
-        <article><FileText size={20} /><span>Documentos cargados</span><strong>{summary.storedDocuments}/{summary.documents}</strong></article>
+        {canEdit && <article><MapPin size={20} /><span>Fincas / recintos</span><strong>{summary.farms}</strong></article>}
+        {canEdit && <article><FileText size={20} /><span>Documentos cargados</span><strong>{summary.storedDocuments}/{summary.documents}</strong></article>}
       </div>
 
       <div className="catalog-tabs" role="tablist" aria-label="Secciones del control">
         <button type="button" className={tab === "certificates" ? "active" : ""} onClick={() => changeTab("certificates")}><FileCheck2 size={17} /> Certificados</button>
-        <button type="button" className={tab === "members" ? "active" : ""} onClick={() => changeTab("members")}><Users size={17} /> Socios OPFH</button>
-        <button type="button" className={tab === "farms" ? "active" : ""} onClick={() => changeTab("farms")}><Sprout size={17} /> Fincas</button>
-        <button type="button" className={tab === "documents" ? "active" : ""} onClick={() => changeTab("documents")}><FileText size={17} /> Documentos</button>
+        {canEdit && <button type="button" className={tab === "members" ? "active" : ""} onClick={() => changeTab("members")}><Users size={17} /> Socios OPFH</button>}
+        {canEdit && <button type="button" className={tab === "farms" ? "active" : ""} onClick={() => changeTab("farms")}><Sprout size={17} /> Fincas</button>}
+        {canEdit && <button type="button" className={tab === "documents" ? "active" : ""} onClick={() => changeTab("documents")}><FileText size={17} /> Documentos</button>}
       </div>
 
       <div className="catalog-toolbar">
@@ -367,10 +391,10 @@ export function CertificateControlPanel({ canEdit, onBack, onLoadCatalog, onDown
         </label>
         {tab === "certificates" && <>
           <label><span>Empresa</span><select value={company} onChange={(event) => setCompany(event.target.value as CompanyFilter)}><option value="all">Todas</option><option>TOÑIFRUIT</option><option>MR. ORGÁNICA</option></select></label>
-          <label><span>OPFH</span><select value={memberFilter} onChange={(event) => setMemberFilter(event.target.value as MemberFilter)}><option value="all">Todos</option><option value="yes">Solo socios</option><option value="no">No socios</option></select></label>
+          {canEdit && <label><span>OPFH</span><select value={memberFilter} onChange={(event) => setMemberFilter(event.target.value as MemberFilter)}><option value="all">Todos</option><option value="yes">Solo socios</option><option value="no">No socios</option></select></label>}
           <label><span>Vigencia</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as CertificateStatusFilter)}><option value="all">Todas</option><option value="expired">Vencidos</option><option value="soon">Próximos 15 días</option><option value="valid">Vigentes</option><option value="missing">Sin fecha</option></select></label>
         </>}
-        {(tab === "certificates" || tab === "farms") && <label><span>Tipo de finca</span><select value={farmType} onChange={(event) => setFarmType(event.target.value as FarmTypeFilter)}><option value="all">Todas</option><option>Propia</option><option>De terceros</option></select></label>}
+        {canEdit && (tab === "certificates" || tab === "farms") && <label><span>Tipo de finca</span><select value={farmType} onChange={(event) => setFarmType(event.target.value as FarmTypeFilter)}><option value="all">Todas</option><option>Propia</option><option>De terceros</option></select></label>}
         {tab === "documents" && <>
           <label><span>Empresa</span><select value={company} onChange={(event) => setCompany(event.target.value as CompanyFilter)}><option value="all">Todas</option><option>TOÑIFRUIT</option><option>MR. ORGÁNICA</option></select></label>
           <label><span>Campaña</span><select value={campaign} onChange={(event) => setCampaign(event.target.value)}><option value="all">Todas</option>{documentCampaigns.map((value) => <option key={value}>{value}</option>)}</select></label>
