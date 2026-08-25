@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker, enrichRowsFromPrivateCatalog, validatePurchase } = await import(workerUrl.href);
+const { default: worker, enrichRowsFromPrivateCatalog, rowRevision, validatePurchase, verifyExpectedRevision } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -111,7 +111,7 @@ test("un contrato nuevo no hereda el PDF histórico del agricultor", () => {
   assert.equal(details.archiveId, "");
 });
 
-test("permite crear una compra cuyo nuevo contrato se firmará más tarde", () => {
+test("permite crear una compra sin correos cuyo nuevo contrato se firmará más tarde", () => {
   const purchase = {
     id: "MRO-032",
     provider: "ISIDRO MIÑANO RUIZ",
@@ -150,9 +150,21 @@ test("permite crear una compra cuyo nuevo contrato se firmará más tarde", () =
       destrioPrice: "0",
       signatureMethod: "external_pending",
       sellerSignedAt: "",
+      sellerEmail: "",
+      companyEmail: "",
     },
   };
   assert.doesNotThrow(() => validatePurchase(purchase));
+});
+
+test("detecta una edición concurrente antes de sobrescribir el expediente", async () => {
+  const original = ["MRO-032", "AGRICULTOR", "12345678A"];
+  const revision = await rowRevision(original);
+  await assert.doesNotReject(() => verifyExpectedRevision(original, revision));
+  await assert.rejects(
+    () => verifyExpectedRevision(["MRO-032", "AGRICULTOR MODIFICADO", "12345678A"], revision),
+    /otro dispositivo/,
+  );
 });
 
 test("el usuario de consulta no puede guardar cambios", async () => {
@@ -164,6 +176,15 @@ test("el usuario de consulta no puede guardar cambios", async () => {
   const { token, profile } = await login.json();
   assert.equal(profile.role, "viewer");
   assert.equal(profile.canEdit, false);
+
+  const consultationCatalog = await api("/api/control-catalog", { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal(consultationCatalog.status, 200);
+  const consultationData = await consultationCatalog.json();
+  assert.ok(consultationData.certificates.length > 0);
+  assert.ok(consultationData.certificates.every((certificate) => certificate.taxId === "" && certificate.opfhMember === false && certificate.farmType === ""));
+  assert.deepEqual(consultationData.opfhMembers, []);
+  assert.deepEqual(consultationData.farms, []);
+  assert.deepEqual(consultationData.documents, []);
 
   const save = await api("/api/rows/9/review", {
     method: "PATCH",
@@ -186,6 +207,16 @@ test("el usuario de consulta no puede guardar cambios", async () => {
     body: JSON.stringify({ expectedId: "CMP-TEST", confirmation: "CMP-TEST", acknowledgement: "ELIMINAR DEFINITIVAMENTE", reason: "Creado por error" }),
   });
   assert.equal(remove.status, 403);
+
+  const confidentialDocument = await api("/api/document-library/000000000000000000000000", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(confidentialDocument.status, 403);
+
+  const confidentialContract = await api("/api/contract-files/00000000-0000-0000-0000-000000000000", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(confidentialContract.status, 403);
 });
 
 test("protege las acciones destructivas con validación reforzada", async () => {
