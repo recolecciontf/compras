@@ -395,10 +395,20 @@ function stabilizeContractLayout(document: Document) {
   const margins = childElements(section, "pgMar")[0];
   if (!pageSize || !margins) return;
 
-  // Los márgenes pertenecen al modelo contractual y no deben recalcularse.
-  // Únicamente anulamos sangrías negativas que sacarían texto fuera de la
-  // zona imprimible y reducimos las tablas que excedan su anchura disponible.
-  normalizeParagraphIndents(document, 0, 0);
+  const body = document.getElementsByTagNameNS(WORD_NS, "body")[0];
+  const topLevelParagraphs = childElements(body, "p");
+  const leftCorrection = dominantNegativeIndent(topLevelParagraphs, ["left", "start"]);
+  const rightCorrection = dominantNegativeIndent(topLevelParagraphs, ["right", "end"]);
+
+  // Los modelos oficiales combinan los márgenes de sección con una sangría
+  // negativa común para definir el margen visual real. Ream no conserva bien
+  // esa combinación: elimina anchura útil, provoca más saltos de línea y hace
+  // que las páginas de continuación comiencen fuera de su margen superior.
+  // Trasladamos esa sangría común al margen de página y dejamos las sangrías a
+  // cero. El resultado conserva el ancho visual del Word original.
+  if (leftCorrection) setWordNumber(margins, "left", Math.max(0, wordNumber(margins, "left") - leftCorrection));
+  if (rightCorrection) setWordNumber(margins, "right", Math.max(0, wordNumber(margins, "right") - rightCorrection));
+  normalizeParagraphIndents(document, leftCorrection, rightCorrection);
 
   const contentWidth = wordNumber(pageSize, "w") - wordNumber(margins, "left") - wordNumber(margins, "right");
   if (contentWidth <= 0) return;
@@ -418,6 +428,14 @@ function removeListMarkers(root: Element) {
   }
 }
 
+function removeEmptyNumberedParagraphs(root: Element) {
+  for (const paragraph of Array.from(root.getElementsByTagNameNS(WORD_NS, "p"))) {
+    const properties = childElements(paragraph, "pPr")[0];
+    const numbered = properties && childElements(properties, "numPr").length > 0;
+    if (numbered && !paragraphText(paragraph).trim()) paragraph.remove();
+  }
+}
+
 function preventRowSplit(row: Element | undefined) {
   if (!row) return;
   let properties = childElements(row, "trPr")[0];
@@ -431,13 +449,38 @@ function preventRowSplit(row: Element | undefined) {
 }
 
 function addPageBreakBefore(element: Element) {
-  const parent = element.parentNode;
-  if (!parent) return;
-  const paragraph = element.ownerDocument.createElementNS(WORD_NS, "w:p");
-  const properties = element.ownerDocument.createElementNS(WORD_NS, "w:pPr");
-  properties.append(element.ownerDocument.createElementNS(WORD_NS, "w:pageBreakBefore"));
-  paragraph.append(properties);
-  parent.insertBefore(paragraph, element);
+  const hasExplicitPageBreak = (paragraph: Element) => {
+    const properties = childElements(paragraph, "pPr")[0];
+    if (properties && childElements(properties, "pageBreakBefore").length) return true;
+    return Array.from(paragraph.getElementsByTagNameNS(WORD_NS, "br"))
+      .some((item) => item.getAttributeNS(WORD_NS, "type") === "page");
+  };
+
+  let paragraph = element.localName === "p" ? element : null;
+  if (!paragraph) {
+    let previous = element.previousElementSibling;
+    while (previous?.namespaceURI === WORD_NS && previous.localName === "p" && !paragraphText(previous).trim()) {
+      if (hasExplicitPageBreak(previous)) return;
+      paragraph ||= previous;
+      previous = previous.previousElementSibling;
+    }
+  }
+  if (!paragraph) {
+    const parent = element.parentNode;
+    if (!parent) return;
+    const spacer = element.ownerDocument.createElementNS(WORD_NS, "w:p");
+    parent.insertBefore(spacer, element);
+    addPageBreakBefore(spacer);
+    return;
+  }
+  let properties = childElements(paragraph, "pPr")[0];
+  if (!properties) {
+    properties = element.ownerDocument.createElementNS(WORD_NS, "w:pPr");
+    paragraph.prepend(properties);
+  }
+  if (!hasExplicitPageBreak(paragraph)) {
+    properties.append(element.ownerDocument.createElementNS(WORD_NS, "w:pageBreakBefore"));
+  }
 }
 
 function preserveTemplateSpacerBefore(paragraph: Element | undefined) {
@@ -483,6 +526,14 @@ function repeatDefaultHeaderOnEveryPage(document: Document) {
     const defaultId = defaultReference?.getAttributeNS(OFFICE_REL_NS, "id");
     if (!defaultId) continue;
     references.forEach((reference) => reference.setAttributeNS(OFFICE_REL_NS, "r:id", defaultId));
+    for (const type of ["default", "even", "first"]) {
+      if (references.some((reference) => reference.getAttributeNS(WORD_NS, "type") === type)) continue;
+      const reference = document.createElementNS(WORD_NS, "w:headerReference");
+      reference.setAttributeNS(WORD_NS, "w:type", type);
+      reference.setAttributeNS(OFFICE_REL_NS, "r:id", defaultId);
+      const insertionPoint = childElements(section, "headerReference").at(-1)?.nextSibling || section.firstChild;
+      section.insertBefore(reference, insertionPoint);
+    }
   }
 }
 
@@ -662,15 +713,16 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   const leftCollectionCell = collectionCells[0];
   const rightCollectionCell = collectionCells[2];
 
-  if (batch.kind === "uva") {
+  if (isAilimpo || batch.kind === "uva") {
     // El modelo original oculta los marcadores de la lista fuera de la celda.
     // Algunos conversores los vuelven a mostrar y desplazan el texto. Los
     // quitamos de forma explícita y mantenemos el bloque de recolección unido.
+    removeEmptyNumberedParagraphs(leftCollectionCell);
     removeListMarkers(leftCollectionCell);
     preventRowSplit(collectionRows[1]);
-    // En el modelo original el bloque completo de modalidades comienza en la
-    // segunda página. El salto explícito evita que el conversor divida la
-    // tabla por la mitad y que una página de continuación pierda su cabecera.
+    // En los modelos originales el bloque completo de modalidades comienza en
+    // la segunda página. El salto explícito impide que una tabla partida pierda
+    // el margen superior y la cabecera de la página de continuación.
     addPageBreakBefore(collectionTable);
   }
 
@@ -778,9 +830,24 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
       || /^AL LLEGAR LA MERCANCIA SE HARA CONTROL DE CALIDAD/.test(text),
     );
 
-    repeatDefaultHeaderOnEveryPage(document);
     suppressParagraphBorders(findParagraph(document, (text) => text.startsWith("CONTRATO DE COMPRAVENTA DE UVA")));
   }
+
+  if (isAilimpo) {
+    // El punto 6 pertenece íntegramente a la página 2 del modelo AILIMPO. El
+    // punto 7 inicia la página siguiente, aunque cambie la longitud de los
+    // datos rellenados en las páginas anteriores.
+    const clauseSeven = findParagraph(document, (text) => /^7\.o DURACIÓN/.test(text.trimStart()));
+    if (clauseSeven) addPageBreakBefore(clauseSeven);
+
+    // La declaración laboral anexa constituye la última página del modelo.
+    // Mantener su título unido al contenido evita una página de continuación
+    // sin margen superior y otra página casi vacía solo para las firmas.
+    const laborDeclaration = findParagraph(document, (text) => text.trim() === "OTROS:");
+    if (laborDeclaration) addPageBreakBefore(laborDeclaration);
+  }
+
+  repeatDefaultHeaderOnEveryPage(document);
 
   // Las sangrías negativas del Word original desplazan cruces y bordes al
   // convertirlo en el navegador. Se normalizan para todas las especies y se
