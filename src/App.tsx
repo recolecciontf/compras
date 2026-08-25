@@ -67,9 +67,10 @@ import {
   recordStatusHistory,
   reviewBlockages,
   reviewFromRow,
+  RevisionConflictError,
   WorkbookClient,
 } from "./lib/workbook";
-import type { AppConfig, AppView, ContractOutputFormat, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, UserProfile } from "./types";
+import type { AppConfig, AppView, ContractOutputFormat, ControlRow, HarvestForm, PurchaseForm, RecordFilter, ReviewForm, RowBackupSummary, UserProfile } from "./types";
 
 function formatDate(value: string) {
   if (!value) return "Sin fecha";
@@ -150,6 +151,16 @@ function belongsInExpiredQueue(row: ControlRow) {
   return isExpiredContract(row) || (isPreviousCampaign(row) && hasCompletedCut(row));
 }
 
+function hasDocumentedContract(row: ControlRow) {
+  if (/archivo central|biblioteca contractual privada/i.test(row.documentPath)) return true;
+  try {
+    const details = JSON.parse(row.contractDetailsJson || "{}") as { archiveId?: unknown };
+    return Boolean(String(details.archiveId || "").trim());
+  } catch {
+    return false;
+  }
+}
+
 function matchesRecordFilter(row: ControlRow, filter: RecordFilter) {
   if (filter === "cancelled") return isCancelled(row);
   if (filter === "expired") {
@@ -158,6 +169,7 @@ function matchesRecordFilter(row: ControlRow, filter: RecordFilter) {
   if (isArchived(row) || isCancelled(row) || belongsInExpiredQueue(row)) return false;
   if (filter === "blocked") return !authorized(row);
   if (filter === "authorized") return authorized(row);
+  if (filter === "documented") return hasDocumentedContract(row);
   return true;
 }
 
@@ -173,6 +185,7 @@ function rowFromOfflinePurchase(purchase: PurchaseForm, tableIndex: number): Con
   return {
     ...purchase,
     tableIndex,
+    revision: `offline-${crypto.randomUUID()}`,
     contractAlert: purchase.contractStart && purchase.contractEnd ? "PENDIENTE DE SINCRONIZAR" : "SIN FECHAS",
     plannedCutDate: "",
     farmChecked: "",
@@ -386,8 +399,16 @@ export default function App() {
         if (!demoMode) {
           if (!client) throw new Error("No hay conexión con Google Sheets.");
           try {
-            if (task.purchaseChanged) await client.savePurchase(task.row, task.purchase);
-            if (task.reviewChanged) await client.saveReview(task.row, task.review);
+            let mutationRow = task.row;
+            if (task.purchaseChanged) {
+              const saved = await client.savePurchase(mutationRow, task.purchase);
+              mutationRow = { ...mutationRow, revision: saved.revision };
+            }
+            if (task.reviewChanged) {
+              const saved = await client.saveReview(mutationRow, task.review);
+              mutationRow = { ...mutationRow, revision: saved.revision };
+            }
+            merged.revision = mutationRow.revision;
           } catch (reason) {
             if (!isNetworkUnavailable(reason)) throw reason;
             await queueOfflineUpdate(task.row, {
@@ -415,6 +436,10 @@ export default function App() {
     } catch (reason) {
       pendingAutoSave.current = null;
       setAutoSaveStatus("error");
+      if (reason instanceof RevisionConflictError) {
+        loadedRowIndex.current = null;
+        await refresh(true).catch(() => undefined);
+      }
       setError(reason instanceof Error ? reason.message : "No se ha podido guardar el avance.");
     } finally {
       autoSaveBusy.current = false;
@@ -502,9 +527,16 @@ export default function App() {
     const expired = rows.filter((row) => !isArchived(row) && !isCancelled(row) && belongsInExpiredQueue(row)).length;
     const active = rows.filter((row) => !isArchived(row) && !isCancelled(row) && !belongsInExpiredQueue(row));
     const yes = active.filter(authorized).length;
-    const documented = active.filter((row) => row.documentPath.includes("Biblioteca contractual privada")).length;
+    const documented = active.filter(hasDocumentedContract).length;
     return { total: active.length, authorized: yes, blocked: active.length - yes, documented, expired, cancelled };
   }, [rows]);
+
+  function applySummaryFilter(nextFilter: RecordFilter) {
+    setFilter(nextFilter);
+    setQuery("");
+    setCertificationFilter("all");
+    window.setTimeout(() => document.getElementById("records-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
 
   const predictedRow = selected && purchase ? mergePurchase(selected, purchase) : selected;
   const predictedIssues = predictedRow && review ? reviewBlockages(predictedRow, review) : [];
@@ -517,6 +549,13 @@ export default function App() {
   async function storeRowsLocally(nextRows: ControlRow[]) {
     setRows(nextRows);
     await cacheOfflineRows(nextRows);
+  }
+
+  async function reloadAfterConflict(reason: unknown) {
+    if (!(reason instanceof RevisionConflictError)) return false;
+    loadedRowIndex.current = null;
+    await refresh(true).catch(() => undefined);
+    return true;
   }
 
   async function synchronizeOfflineChanges() {
@@ -554,16 +593,24 @@ export default function App() {
           const target = currentRows.find((row) => row.id === synchronizedId)
             || currentRows.find((row) => row.tableIndex === operation.rowIndex);
           if (!target) throw new Error(`No se encuentra el expediente ${operation.recordId} para sincronizarlo.`);
+          if (operation.recordRevision && operation.recordRevision !== target.revision) {
+            throw new RevisionConflictError(`El expediente ${operation.recordId} cambió mientras el dispositivo estaba sin conexión. Sus cambios locales se conservan pendientes para revisarlos.`);
+          }
+          let mutationRow = target;
           if (operation.purchase) {
             const synchronizedPurchase = operation.purchase.id === synchronizedId ? operation.purchase : {
               ...operation.purchase,
               id: synchronizedId,
               contractDetails: { ...operation.purchase.contractDetails, contractNumber: synchronizedId },
             };
-            await client.savePurchase(target, synchronizedPurchase);
+            const saved = await client.savePurchase(mutationRow, synchronizedPurchase);
+            mutationRow = { ...mutationRow, revision: saved.revision };
           }
-          if (operation.review) await client.saveReview(target, operation.review);
-          if (operation.harvest) await client.saveHarvest(target, operation.harvest);
+          if (operation.review) {
+            const saved = await client.saveReview(mutationRow, operation.review);
+            mutationRow = { ...mutationRow, revision: saved.revision };
+          }
+          if (operation.harvest) await client.saveHarvest(mutationRow, operation.harvest);
           currentRows = await client.rows();
         }
         await removeOfflineOperation(operation.id);
@@ -723,8 +770,8 @@ export default function App() {
         await updateOfflineCount();
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
-        await client.savePurchase(selected, purchase);
-        await client.saveReview(selected, completedReview);
+        const purchaseSaved = await client.savePurchase(selected, purchase);
+        await client.saveReview({ ...selected, revision: purchaseSaved.revision }, completedReview);
         const nextRows = await client.rows();
         await storeRowsLocally(nextRows);
       }
@@ -752,6 +799,7 @@ export default function App() {
         setToast("La conexión se interrumpió: revisión guardada en el dispositivo");
         setView("records");
       } else {
+        await reloadAfterConflict(reason);
         setAutoSaveStatus("error");
         setError(reason instanceof Error ? reason.message : "No se ha podido finalizar la revisión.");
       }
@@ -909,6 +957,7 @@ export default function App() {
           ...preparedPurchase,
           id: preparedPurchase.id,
           tableIndex: createdIndex,
+          revision: `demo-${crypto.randomUUID()}`,
           contractAlert: "VIGENTE",
           plannedCutDate: "",
           farmChecked: "",
@@ -1025,6 +1074,7 @@ export default function App() {
         setOfflineSession(true);
         setToast("La conexión se interrumpió: corte guardado en el dispositivo");
       } else {
+        await reloadAfterConflict(reason);
         setError(reason instanceof Error ? reason.message : "No se ha podido guardar el corte.");
       }
     } finally {
@@ -1113,14 +1163,16 @@ export default function App() {
           ...archived,
         },
       };
-      if (!demoMode) await client!.savePurchase(selected, updated);
+      let updatedRevision = selected.revision;
+      if (!demoMode) updatedRevision = (await client!.savePurchase(selected, updated)).revision;
       purchaseFingerprint.current = JSON.stringify(updated);
       setPurchase(updated);
-      setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? mergePurchase(row, updated) : row));
+      setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? { ...mergePurchase(row, updated), revision: updatedRevision } : row));
       setToast(archived.emailStatus === "sent"
         ? "Contrato firmado archivado y copias enviadas"
         : "Contrato firmado archivado");
     } catch (reason) {
+      await reloadAfterConflict(reason);
       setError(reason instanceof Error ? reason.message : "No se ha podido adjuntar el contrato firmado.");
     } finally {
       setSaving(false);
@@ -1128,7 +1180,7 @@ export default function App() {
   }
 
   async function persistOpenDraft() {
-    if (!selected || !review || !purchase) return;
+    if (!selected || !review || !purchase) return selected;
     if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = null;
     pendingAutoSave.current = null;
@@ -1139,11 +1191,25 @@ export default function App() {
     }
     if (!demoMode) {
       if (!client) throw new Error("No hay conexión con Google Sheets.");
-      if (JSON.stringify(purchase) !== purchaseFingerprint.current) await client.savePurchase(selected, purchase);
-      if (JSON.stringify(review) !== reviewFingerprint.current) await client.saveReview(selected, review);
+      let mutationRow = selected;
+      if (JSON.stringify(purchase) !== purchaseFingerprint.current) {
+        const saved = await client.savePurchase(mutationRow, purchase);
+        mutationRow = { ...mutationRow, revision: saved.revision };
+      }
+      if (JSON.stringify(review) !== reviewFingerprint.current) {
+        const saved = await client.saveReview(mutationRow, review);
+        mutationRow = { ...mutationRow, revision: saved.revision };
+      }
+      if (mutationRow.revision !== selected.revision) {
+        setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? { ...row, revision: mutationRow.revision } : row));
+      }
+      purchaseFingerprint.current = JSON.stringify(purchase);
+      reviewFingerprint.current = JSON.stringify(review);
+      return mutationRow;
     }
     purchaseFingerprint.current = JSON.stringify(purchase);
     reviewFingerprint.current = JSON.stringify(review);
+    return selected;
   }
 
   async function changeRecordStatus(status: "Activo" | "Anulado", reason: string) {
@@ -1155,8 +1221,8 @@ export default function App() {
     setSaving(true);
     setError("");
     try {
-      await persistOpenDraft();
-      let statusUpdate: Pick<ControlRow, "recordStatus" | "statusReason" | "statusUpdatedAt" | "statusUpdatedBy" | "statusHistoryJson">;
+      const mutationRow = await persistOpenDraft() || selected;
+      let statusUpdate: Pick<ControlRow, "recordStatus" | "statusReason" | "statusUpdatedAt" | "statusUpdatedBy" | "statusHistoryJson"> & Partial<Pick<ControlRow, "revision">>;
       if (demoMode) {
         const changedAt = new Date().toISOString();
         const history = [...recordStatusHistory(selected), { status, reason, changedAt, changedBy: "ADMINISTRADOR" }];
@@ -1169,13 +1235,14 @@ export default function App() {
         };
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
-        statusUpdate = await client.updateRecordStatus(selected, status, reason);
+        statusUpdate = await client.updateRecordStatus(mutationRow, status, reason);
       }
       setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? { ...row, ...statusUpdate } : row));
       setLastSyncedAt(new Date());
       setToast(status === "Anulado" ? "Expediente anulado" : "Expediente restaurado");
       return true;
     } catch (reasonValue) {
+      await reloadAfterConflict(reasonValue);
       setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido cambiar el estado del expediente.");
       return false;
     } finally {
@@ -1192,7 +1259,7 @@ export default function App() {
     setSaving(true);
     setError("");
     try {
-      await persistOpenDraft();
+      const mutationRow = await persistOpenDraft() || selected;
       if (demoMode) {
         const previous = {
           archiveId: purchase.contractDetails.archiveId,
@@ -1218,7 +1285,7 @@ export default function App() {
         setRows((current) => current.map((row) => row.tableIndex === selected.tableIndex ? mergePurchase(row, updated) : row));
       } else {
         if (!client) throw new Error("No hay conexión con Google Sheets.");
-        await client.replaceContract(selected, file, reason, purchase);
+        await client.replaceContract(mutationRow, file, reason, purchase);
         const nextRows = await client.rows();
         loadedRowIndex.current = null;
         await storeRowsLocally(nextRows);
@@ -1227,6 +1294,7 @@ export default function App() {
       setToast("Contrato sustituido; la versión anterior permanece en el historial");
       return true;
     } catch (reasonValue) {
+      await reloadAfterConflict(reasonValue);
       setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido sustituir el contrato.");
       return false;
     } finally {
@@ -1275,6 +1343,37 @@ export default function App() {
       return true;
     } catch (reasonValue) {
       setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido eliminar el expediente.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function loadRowBackups(row: ControlRow) {
+    if (!client || demoMode) return [];
+    if (!isOnline) throw new Error("Las copias recuperables necesitan conexión.");
+    return client.rowBackups(row);
+  }
+
+  async function restoreRowBackup(row: ControlRow, key: string) {
+    if (!client || demoMode || !canEdit) return false;
+    if (!isOnline) {
+      setError("Restaurar una copia requiere conexión con el registro central.");
+      return false;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await client.restoreRowBackup(row, key);
+      const nextRows = await client.rows();
+      loadedRowIndex.current = null;
+      await storeRowsLocally(nextRows);
+      setSelectedIndex(row.tableIndex);
+      setLastSyncedAt(new Date());
+      setToast("Copia restaurada; el estado anterior también se ha conservado");
+      return true;
+    } catch (reasonValue) {
+      setError(reasonValue instanceof Error ? reasonValue.message : "No se ha podido restaurar la copia.");
       return false;
     } finally {
       setSaving(false);
@@ -1420,7 +1519,7 @@ export default function App() {
               <div className="welcome-row">
                 <div>
                   <p className="welcome">Hola, {profile?.displayName?.split(" ")[0] || "equipo"}</p>
-                  <h1>{filter === "cancelled" ? "Expedientes anulados" : filter === "expired" ? "Contratos vencidos" : "Expedientes activos"}</h1>
+                  <h1>{filter === "cancelled" ? "Expedientes anulados" : filter === "expired" ? "Contratos vencidos" : filter === "documented" ? "Expedientes con documentación" : filter === "authorized" ? "Expedientes autorizados" : filter === "blocked" ? "Expedientes bloqueados" : "Expedientes activos"}</h1>
                 </div>
                 <span className="sync-caption">
                   {loading ? "Sincronizando…" : lastSyncedAt ? `Actualizado ${lastSyncedAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : `${counts.total} expedientes`}
@@ -1430,47 +1529,47 @@ export default function App() {
               <div className="quick-actions">
                 {canEdit && <button className="action-card action-card-primary" onClick={() => setView("new")}><span className="action-icon"><Plus size={20} /></span><span><strong>Nueva compra</strong><small>Agricultor, fruta y contrato</small></span><ChevronRight size={19} /></button>}
                 <button className="action-card" onClick={() => setView("harvest")}><span className="action-icon"><PackageCheck size={20} /></span><span><strong>Cortes y kilos</strong><small>Seguimiento de recolección</small></span><ChevronRight size={19} /></button>
-                <button className="action-card" onClick={() => setView("certificates")}><span className="action-icon"><FileCheck2 size={20} /></span><span><strong>Certificados y OPFH</strong><small>Vigencias, socios y fincas</small></span><ChevronRight size={19} /></button>
+                <button className="action-card" onClick={() => setView("certificates")}><span className="action-icon"><FileCheck2 size={20} /></span><span><strong>{canEdit ? "Certificados y OPFH" : "Certificados"}</strong><small>{canEdit ? "Vigencias, socios y fincas" : "Vigencias de agricultores"}</small></span><ChevronRight size={19} /></button>
               </div>
 
               <div className="summary-grid">
-                <article className="summary-card summary-total">
+                <button type="button" className={`summary-card summary-total ${filter === "all" ? "summary-selected" : ""}`} onClick={() => applySummaryFilter("all")} aria-label={`Ver ${counts.total} expedientes activos`}>
                   <ListChecks size={21} />
                   <span>Expedientes activos</span>
                   <strong>{counts.total}</strong>
-                </article>
-                <article className="summary-card summary-ok">
+                </button>
+                <button type="button" className={`summary-card summary-ok ${filter === "authorized" ? "summary-selected" : ""}`} onClick={() => applySummaryFilter("authorized")} aria-label={`Ver ${counts.authorized} expedientes autorizados`}>
                   <CheckCircle2 size={21} />
                   <span>Autorizados</span>
                   <strong>{counts.authorized}</strong>
-                </article>
-                <article className="summary-card summary-blocked">
+                </button>
+                <button type="button" className={`summary-card summary-blocked ${filter === "blocked" ? "summary-selected" : ""}`} onClick={() => applySummaryFilter("blocked")} aria-label={`Ver ${counts.blocked} expedientes bloqueados`}>
                   <XCircle size={21} />
                   <span>Bloqueados</span>
                   <strong>{counts.blocked}</strong>
-                </article>
-                <article className="summary-card summary-documented">
+                </button>
+                <button type="button" className={`summary-card summary-documented ${filter === "documented" ? "summary-selected" : ""}`} onClick={() => applySummaryFilter("documented")} aria-label={`Ver ${counts.documented} expedientes con documentación`}>
                   <FileCheck2 size={21} />
                   <span>Con documentación</span>
                   <strong>{counts.documented}</strong>
-                </article>
-                <article className="summary-card summary-expired">
+                </button>
+                <button type="button" className={`summary-card summary-expired ${filter === "expired" ? "summary-selected" : ""}`} onClick={() => applySummaryFilter("expired")} aria-label={`Ver ${counts.expired} expedientes vencidos`}>
                   <History size={21} />
                   <span>Vencidos</span>
                   <strong>{counts.expired}</strong>
-                </article>
-                <article className="summary-card summary-cancelled">
+                </button>
+                <button type="button" className={`summary-card summary-cancelled ${filter === "cancelled" ? "summary-selected" : ""}`} onClick={() => applySummaryFilter("cancelled")} aria-label={`Ver ${counts.cancelled} expedientes anulados`}>
                   <Ban size={21} />
                   <span>Anulados</span>
                   <strong>{counts.cancelled}</strong>
-                </article>
+                </button>
               </div>
 
-              <p className="summary-scope-note">
+              {canEdit && <p className="summary-scope-note">
                 <FileText size={16} /> Estas cifras corresponden a expedientes. La biblioteca completa está en Certificados y OPFH → Documentos.
-              </p>
+              </p>}
 
-              <div className="record-filter-row">
+              <div className="record-filter-row" id="records-detail">
                 <div className="search-box">
                   <Search size={20} />
                   <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar agricultor, finca, cultivo o certificación" />
@@ -1489,6 +1588,7 @@ export default function App() {
                 <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>Todos</button>
                 <button className={filter === "blocked" ? "active" : ""} onClick={() => setFilter("blocked")}>Bloqueados</button>
                 <button className={filter === "authorized" ? "active" : ""} onClick={() => setFilter("authorized")}>Autorizados</button>
+                <button className={filter === "documented" ? "active" : ""} onClick={() => setFilter("documented")}>Con documentación</button>
                 <button className={filter === "expired" ? "active" : ""} onClick={() => setFilter("expired")}>Vencidos · {counts.expired}</button>
                 <button className={filter === "cancelled" ? "active" : ""} onClick={() => setFilter("cancelled")}>Anulados</button>
               </div>
@@ -1579,6 +1679,8 @@ export default function App() {
                   onStatusChange={changeRecordStatus}
                   onContractReplace={replaceSignedContract}
                   onDeleteRecord={deleteRecord}
+                  onLoadBackups={loadRowBackups}
+                  onRestoreBackup={restoreRowBackup}
                   onBack={() => setView("records")}
                 />
               ) : view === "new" && canEdit ? (
@@ -1665,7 +1767,6 @@ function ConnectPanel({
       <div className="connect-card">
         <div className="connect-brand">
           <img src={`${import.meta.env.BASE_URL}tonifruit-logo.png`} alt="Toñifruit" />
-          <span>Herramienta interna</span>
         </div>
         <div className="connect-icon"><ShieldCheck size={30} /></div>
         <span className="eyebrow">Acceso seguro</span>
@@ -1707,6 +1808,8 @@ function RecordManagementPanel({
   onStatusChange,
   onContractReplace,
   onDeleteRecord,
+  onLoadBackups,
+  onRestoreBackup,
 }: {
   row: ControlRow;
   cancelled: boolean;
@@ -1715,12 +1818,17 @@ function RecordManagementPanel({
   onStatusChange: (status: "Activo" | "Anulado", reason: string) => Promise<boolean>;
   onContractReplace: (file: File, reason: string) => Promise<boolean>;
   onDeleteRecord: (reason: string, confirmation: string, acknowledgement: string) => Promise<boolean>;
+  onLoadBackups: (row: ControlRow) => Promise<RowBackupSummary[]>;
+  onRestoreBackup: (row: ControlRow, key: string) => Promise<boolean>;
 }) {
   const [action, setAction] = useState<ManagementAction>(null);
   const [reason, setReason] = useState("");
   const [replacement, setReplacement] = useState<File | null>(null);
   const [confirmation, setConfirmation] = useState("");
   const [acknowledged, setAcknowledged] = useState(false);
+  const [backups, setBackups] = useState<RowBackupSummary[] | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupError, setBackupError] = useState("");
   const statusHistory = recordStatusHistory(row);
 
   function resetAction() {
@@ -1732,6 +1840,27 @@ function RecordManagementPanel({
   }
 
   useEffect(() => resetAction(), [row.tableIndex]);
+
+  async function toggleBackups() {
+    if (backups !== null) {
+      setBackups(null);
+      return;
+    }
+    setBackupLoading(true);
+    setBackupError("");
+    try {
+      setBackups(await onLoadBackups(row));
+    } catch (reasonValue) {
+      setBackupError(reasonValue instanceof Error ? reasonValue.message : "No se han podido cargar las copias.");
+    } finally {
+      setBackupLoading(false);
+    }
+  }
+
+  async function restoreBackup(backup: RowBackupSummary) {
+    if (!window.confirm(`Se restaurará la copia del ${new Date(backup.savedAt).toLocaleString("es-ES")}. El estado actual también se conservará. ¿Continuar?`)) return;
+    if (await onRestoreBackup(row, backup.key)) setBackups(null);
+  }
 
   function choose(next: Exclude<ManagementAction, null>) {
     resetAction();
@@ -1773,8 +1902,22 @@ function RecordManagementPanel({
         {hasArchivedContract && (
           <button className="secondary-button" type="button" disabled={saving} onClick={() => choose("replace")}><FileUp size={17} /> Sustituir contrato</button>
         )}
+        <button className="secondary-button" type="button" disabled={saving || backupLoading} onClick={() => void toggleBackups()}><History size={17} /> {backupLoading ? "Cargando copias…" : "Copias recuperables"}</button>
         <button className="secondary-button delete-button" type="button" disabled={saving || !cancelled} onClick={() => choose("delete")} title={cancelled ? "Eliminar un registro creado por error" : "Primero debes anular el expediente"}><Trash2 size={17} /> Eliminar definitivamente</button>
       </div>
+      {backupError && <p className="management-help">{backupError}</p>}
+      {backups !== null && (
+        <div className="management-history backup-history">
+          <div className="history-list">
+            {backups.length ? backups.map((backup) => (
+              <article key={backup.key}>
+                <div><strong>{backup.reason || "Copia automática"}</strong><small>{backup.savedAt ? new Date(backup.savedAt).toLocaleString("es-ES") : "Fecha no disponible"} · {backup.savedBy || "Administrador"}</small></div>
+                <button className="text-button" type="button" disabled={saving} onClick={() => void restoreBackup(backup)}><RotateCcw size={16} /> Restaurar</button>
+              </article>
+            )) : <p className="management-help">Todavía no hay copias anteriores de este expediente.</p>}
+          </div>
+        </div>
+      )}
       {!cancelled && <p className="management-help">El borrado definitivo solo se habilita después de anular el expediente.</p>}
 
       {action && (
@@ -1842,6 +1985,8 @@ function ReviewPanel({
   onStatusChange,
   onContractReplace,
   onDeleteRecord,
+  onLoadBackups,
+  onRestoreBackup,
   onBack,
 }: {
   row: ControlRow;
@@ -1861,6 +2006,8 @@ function ReviewPanel({
   onStatusChange: (status: "Activo" | "Anulado", reason: string) => Promise<boolean>;
   onContractReplace: (file: File, reason: string) => Promise<boolean>;
   onDeleteRecord: (reason: string, confirmation: string, acknowledgement: string) => Promise<boolean>;
+  onLoadBackups: (row: ControlRow) => Promise<RowBackupSummary[]>;
+  onRestoreBackup: (row: ControlRow, key: string) => Promise<boolean>;
   onBack: () => void;
 }) {
   function update<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
@@ -1965,7 +2112,9 @@ function ReviewPanel({
             </small>
           </span>
         </div>
-        {hasArchivedContract ? (
+        {readOnly ? (
+          <span className="confidential-document"><ShieldCheck size={16} /> Descarga restringida al Administrador</span>
+        ) : hasArchivedContract ? (
           <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Descargando…" : "Descargar contrato firmado"}</button>
         ) : canAttachFinalContract && !readOnly ? (
           <div className="contract-panel-actions">
@@ -2002,7 +2151,7 @@ function ReviewPanel({
             <strong>Contrato anterior utilizado como referencia</strong>
             <small>{purchase.contractDetails.previousContractFilename || "Contrato anterior"}{purchase.contractDetails.previousContractPurchaseId ? ` · origen ${purchase.contractDetails.previousContractPurchaseId}` : " · subido manualmente"}</small>
           </span>
-          <button className="text-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(purchase.contractDetails.previousContractArchiveId)}><Download size={16} /> Descargar</button>
+          {!readOnly && <button className="text-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(purchase.contractDetails.previousContractArchiveId)}><Download size={16} /> Descargar</button>}
         </div>
       )}
 
@@ -2013,7 +2162,7 @@ function ReviewPanel({
             {[...contractHistory].reverse().map((entry) => (
               <article key={`${entry.archiveId}-${entry.replacedAt}`}>
                 <div><strong>{entry.archiveFilename || "Contrato anterior"}</strong><small>Sustituido por {entry.replacedBy || "Administrador"}{entry.replacedAt ? ` · ${formatDate(entry.replacedAt.slice(0, 10))}` : ""}<br />Motivo: {entry.reason || "No indicado"}</small></div>
-                <button className="text-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(entry.archiveId)}><Download size={16} /> Descargar</button>
+                {!readOnly && <button className="text-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(entry.archiveId)}><Download size={16} /> Descargar</button>}
               </article>
             ))}
           </div>
@@ -2029,6 +2178,8 @@ function ReviewPanel({
           onStatusChange={onStatusChange}
           onContractReplace={onContractReplace}
           onDeleteRecord={onDeleteRecord}
+          onLoadBackups={onLoadBackups}
+          onRestoreBackup={onRestoreBackup}
         />
       )}
 

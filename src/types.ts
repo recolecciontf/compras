@@ -93,6 +93,7 @@ export type ContractOutputFormat = "pdf" | "docx";
 
 export type ControlRow = {
   tableIndex: number;
+  revision: string;
   id: string;
   provider: string;
   taxId: string;
@@ -132,6 +133,13 @@ export type ControlRow = {
   statusUpdatedAt: string;
   statusUpdatedBy: string;
   statusHistoryJson: string;
+};
+
+export type RowBackupSummary = {
+  key: string;
+  savedAt: string;
+  savedBy: string;
+  reason: string;
 };
 
 export type PurchaseForm = Pick<
@@ -236,4 +244,4 @@ export type ControlCatalogData = {
 };
 
 export type AppView = "records" | "review" | "new" | "harvest" | "certificates";
-export type RecordFilter = "all" | "blocked" | "authorized" | "expired" | "cancelled";
+export type RecordFilter = "all" | "blocked" | "authorized" | "documented" | "expired" | "cancelled";

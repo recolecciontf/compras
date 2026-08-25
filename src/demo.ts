@@ -48,6 +48,7 @@ function demoMaterials(items: Array<{ id: string; crop: string; variety: string;
 export const DEMO_ROWS: ControlRow[] = [
   {
     tableIndex: 0,
+    revision: "demo-0",
     id: "DEM-001",
     provider: "AGRICULTOR DE PRUEBA 1",
     taxId: "00000000A",
@@ -103,6 +104,7 @@ export const DEMO_ROWS: ControlRow[] = [
   },
   {
     tableIndex: 1,
+    revision: "demo-1",
     id: "DEM-002",
     provider: "AGRICULTOR DE PRUEBA 2",
     taxId: "00000000B",
@@ -152,6 +154,7 @@ export const DEMO_ROWS: ControlRow[] = [
   },
   {
     tableIndex: 2,
+    revision: "demo-2",
     id: "DEM-003",
     provider: "AGRICULTOR DE PRUEBA 3",
     taxId: "00000000C",
