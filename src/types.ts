@@ -27,8 +27,10 @@ export type ContractDetails = {
   buyerCompany: "" | "MR. ORGÁNICA, S.L." | "TOÑIFRUIT, S.L.";
   signatureDate: string;
   contractNumber: string;
+  sellerTreatment: "" | "D." | "Dña.";
   sellerRepresentative: string;
   sellerDni: string;
+  sellerRepresentativeAddress: string;
   sellerAddress: string;
   organicOperatorCode: string;
   certifierCode: string;
@@ -36,6 +38,7 @@ export type ContractDetails = {
   modality: "" | "A KILOS" | "POR TANTO";
   collectionBy: "" | "Vendedor" | "Comprador";
   transportBy: "" | "Vendedor" | "Comprador";
+  priceAgreement: "IMPORTE" | "A RESULTAS";
   pricePerKg: string;
   totalPrice: string;
   ivaPercent: string;

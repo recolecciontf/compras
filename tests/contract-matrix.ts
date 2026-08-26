@@ -27,6 +27,10 @@ const modelSpecies = [
   ["Mandarina", "Nadorcott", "mandarina"],
   ["Clementina", "Clemenules", "mandarina"],
   ["Uva", "Arra 19", "uva"],
+  ["Paraguayo", "Zodiac", "fruta-hueso"],
+  ["Nectarina", "Flariba", "fruta-hueso"],
+  ["Melocotón", "Astoria", "fruta-hueso"],
+  ["Albaricoque", "Cebas Red", "fruta-hueso"],
 ] as const;
 
 function material(crop: string, variety: string, id = `${crop}-${variety}`): MaterialItem {
@@ -54,8 +58,8 @@ function purchase(company: ContractDetails["buyerCompany"], crop = "Uva", variet
     otherAgreements: "Avisar 24 horas antes del corte.",
     contractDetails: {
       contractOrigin: "generated", buyerCompany: company, signatureDate: "2026-08-12", contractNumber: company.startsWith("TOÑ") ? "TON-QA-001" : "MRO-QA-001",
-      sellerRepresentative: "Representante de demostración", sellerDni: "00000000T", sellerAddress: "Finca demo, Murcia", organicOperatorCode: "MU-QA/E", certifierCode: "CAAE-QA", ailimpoRegepaCode: "REG-QA",
-      modality: "A KILOS", collectionBy: "Comprador", transportBy: "Comprador", pricePerKg: "0.55", totalPrice: "", ivaPercent: "12", irpfPercent: "2", advancePayment: "0", paymentDays: "30",
+      sellerTreatment: "D.", sellerRepresentative: "Representante de demostración", sellerDni: "00000000T", sellerRepresentativeAddress: "Domicilio del representante", sellerAddress: "Finca demo, Murcia", organicOperatorCode: "MU-QA/E", certifierCode: "CAAE-QA", ailimpoRegepaCode: "REG-QA",
+      modality: "A KILOS", collectionBy: "Comprador", transportBy: "Comprador", priceAgreement: "IMPORTE", pricePerKg: "0.55", totalPrice: "", ivaPercent: "12", irpfPercent: "2", advancePayment: "0", paymentDays: "30",
       insuranceProvider: "Agroseguro", insurancePolicy: "", applyDestrio: "No", destrioLocation: "", destrioDefects: "", destrioPrice: "", sellerEmail: "", companyEmail: "",
       buyerRepresentative: "Responsable de Compras", archiveId: "", archiveFilename: "", archivedAt: "", emailStatus: "", sellerSignedAt: "", buyerSignedAt: "", signatureMethod: "", archiveHistoryJson: "",
       previousContractMode: "none", previousContractPurchaseId: "", previousContractArchiveId: "", previousContractSourceArchiveId: "", previousContractFilename: "", previousContractStoredAt: "",
@@ -67,7 +71,12 @@ for (const company of companies) {
   for (const [crop, variety, expectedKind] of modelSpecies) {
     const kind = contractKind(crop);
     const name = kind ? templateName(company, kind) : "";
-    record(`${company} · ${crop}/${variety}`, kind === expectedKind && Boolean(name), name || "sin modelo");
+    const intentionallyMissing = company === "MR. ORGÁNICA, S.L." && crop === "Uva";
+    record(
+      `${company} · ${crop}/${variety}`,
+      kind === expectedKind && (intentionallyMissing ? !name : Boolean(name)),
+      name || "sin modelo: pendiente de recibir",
+    );
   }
 }
 
@@ -89,9 +98,10 @@ const workflowMatrix = [
 record("Matriz de flujos", workflowMatrix.length === 23 && new Set(workflowMatrix.map((item) => JSON.stringify(item))).size === 23, `${workflowMatrix.length} alternativas únicas`);
 
 for (const company of companies) {
-  const multiVariety = purchase(company);
-  multiVariety.materials.push(material("Uva", "Red Globe", "uva-red-globe"));
-  multiVariety.variety = "Arra 19 · Red Globe";
+  const isMro = company === "MR. ORGÁNICA, S.L.";
+  const multiVariety = purchase(company, isMro ? "Limón" : "Uva", isMro ? "Fino" : "Arra 19");
+  multiVariety.materials.push(material(isMro ? "Limón" : "Uva", isMro ? "Verna" : "Red Globe", "segunda-variedad"));
+  multiVariety.variety = isMro ? "Fino · Verna" : "Arra 19 · Red Globe";
   multiVariety.expectedKg = "25000";
   try {
     validateContractGeneration(multiVariety);
@@ -127,7 +137,7 @@ async function uvaTemplate() {
   return response.arrayBuffer();
 }
 
-for (const company of companies) {
+for (const company of companies.filter((value) => value === "TOÑIFRUIT, S.L.")) {
   for (const format of ["docx", "pdf"] as ContractOutputFormat[]) {
     for (const signed of [false, true]) {
       try {

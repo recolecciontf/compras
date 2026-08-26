@@ -109,6 +109,10 @@ function clean(value = "") {
     .trim();
 }
 
+function cleanTaxId(value = "") {
+  return value.toLocaleUpperCase("es").replace(/[^A-Z0-9-]/g, "");
+}
+
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -168,7 +172,9 @@ function textFromElement(element: Element) {
 async function extractDocx(file: File): Promise<ExtractedDocument> {
   const zip = await JSZip.loadAsync(await file.arrayBuffer());
   const documentParts = Object.values(zip.files)
-    .filter((entry) => /^word\/(?:document|header\d*|footer\d*)\.xml$/i.test(entry.name))
+    // Algunos contratos guardan datos en encabezados, pies, notas o cuadros de
+    // texto. Leer todas estas partes evita que un Word importado pierda campos.
+    .filter((entry) => /^word\/(?:document|header\d*|footer\d*|footnotes|endnotes|comments)\.xml$/i.test(entry.name))
     .sort((left, right) => left.name.localeCompare(right.name));
   const paragraphs: string[] = [];
   const tables: string[][][] = [];
@@ -277,7 +283,11 @@ async function ocrPdfPages(
       context.fillRect(0, 0, canvas.width, canvas.height);
       await page.render({ canvas, canvasContext: context, viewport }).promise;
       const result = await worker.recognize(canvas);
-      pageTexts[pageNumber - 1] = result.data.text.trim();
+      const selectableText = pageTexts[pageNumber - 1].trim();
+      const recognizedText = result.data.text.trim();
+      // Los PDF híbridos pueden contener solo una parte del texto seleccionable
+      // y el resto como imagen. Se conservan ambos resultados.
+      pageTexts[pageNumber - 1] = [selectableText, recognizedText].filter(Boolean).join("\n");
       page.cleanup();
       canvas.width = 1;
       canvas.height = 1;
@@ -356,7 +366,8 @@ async function extractPdf(
     }
     const sparsePageNumbers = pages
       .map((text, index) => ({ index, length: fold(text).length }))
-      .filter(({ length }) => length < 80)
+      // Detecta también páginas híbridas con una capa de texto parcial.
+      .filter(({ length }) => length < 350)
       .map(({ index }) => index + 1);
     if (sparsePageNumbers.length) {
       await ocrPdfPages(pdf, pages, sparsePageNumbers, onProgress);
@@ -497,13 +508,14 @@ function detectCutDates(tables: string[][][], text: string) {
 
 function detectPrice(text: string) {
   const priceSection = text.match(/(?:4\s*[.º°o]?\s*PRECIO|PRECIO\s*:)([\s\S]{0,1400}?)(?=5\s*[.º°o]?\s*(?:FORMA\s+DE\s+PAGO|PAGO)|$)/i)?.[1] || text;
+  if (/\bA\s+RESULTAS\b/i.test(priceSection)) return { priceAgreement: "A RESULTAS" as const, pricePerKg: "", totalPrice: "" };
   const perKg = findMatch(priceSection, [
     /(?:precio[^\d]{0,80})?([\d]+(?:[.,]\d{1,3})?)\s*(?:€|euros?)\s*(?:\/\s*(?:kg|kilo)|por\s+(?:kg|kilo))/i,
     /([\d]+(?:[.,]\d{1,3})?)\s*€\s*\/\s*kg/i,
   ]);
-  if (perKg) return { pricePerKg: spanishNumber(perKg), totalPrice: "" };
+  if (perKg) return { priceAgreement: "IMPORTE" as const, pricePerKg: spanishNumber(perKg), totalPrice: "" };
   const total = findMatch(priceSection, [/(?:precio\s+total|por\s+la\s+totalidad)[^\d]{0,80}([\d.]+(?:,\d{1,2})?)\s*(?:€|euros?)/i]);
-  return { pricePerKg: "", totalPrice: spanishNumber(total) };
+  return { priceAgreement: "IMPORTE" as const, pricePerKg: "", totalPrice: spanishNumber(total) };
 }
 
 function detectPartyBlock(text: string) {
@@ -559,30 +571,47 @@ export async function importPurchaseFromContract(
   }
 
   const sellerBlock = detectPartyBlock(text);
+  const treatmentMatch = sellerBlock.match(/VENDEDOR\s*:\s*(D(?:ON|OÑA|ÑA)?[.ªº]?)/i)?.[1] || "";
   const representative = findMatch(sellerBlock, [
-    /VENDEDOR\s*:\s*(?:D[.ªº]?\s*)?(.+?)(?=,\s*(?:con\s+)?(?:DNI|NIF|CIF)\b)/i,
+    /VENDEDOR\s*:\s*(?:D(?:ON|OÑA|ÑA)?[.ªº]?\s*)?(.+?)(?=,?\s*(?:con\s+)?(?:DNI|NIF|CIF)\b)/i,
   ]);
-  const representativeDni = findMatch(sellerBlock, [/(?:DNI|NIF|CIF)\s*(?:n[º°o]?\s*)?([A-Z0-9\-]+)/i]);
+  const representativeDni = cleanTaxId(findMatch(sellerBlock, [/(?:DNI|NIF|CIF)\s*[.:]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]));
   const representedCompany = findMatch(sellerBlock, [
     /poderes\s+suficientes(?:\s+de|\s+del|\s+de\s+la)\s+(.+?)(?=,\s*con\s+(?:NIF|CIF)\b)/i,
     /en\s+representaci[óo]n(?:\s+de|\s+del|\s+de\s+la)\s+(.+?)(?=,\s*con\s+(?:NIF|CIF)\b)/i,
   ]);
+  const representedBlock = representedCompany
+    ? sellerBlock.slice(Math.max(0, sellerBlock.indexOf(representedCompany)))
+    : "";
   const companyTaxId = representedCompany
-    ? findMatch(sellerBlock.slice(Math.max(0, sellerBlock.indexOf(representedCompany))), [/(?:NIF|CIF)\s*(?:n[º°o]?\s*)?([A-Z0-9\-]+)/i])
+    ? cleanTaxId(findMatch(representedBlock, [/(?:NIF|CIF)\s*[.:]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]))
     : "";
   next.provider = representedCompany || representative;
   next.taxId = companyTaxId || representativeDni;
+  next.contractDetails.sellerTreatment = representedCompany
+    ? (/OÑA|ÑA|ª/i.test(treatmentMatch) ? "Dña." : treatmentMatch ? "D." : "")
+    : "";
   next.contractDetails.sellerRepresentative = representedCompany ? representative : "";
   next.contractDetails.sellerDni = representedCompany ? representativeDni : "";
-  next.contractDetails.sellerAddress = findMatch(sellerBlock, [
-    /domicilio\s+en\s+(.+?)(?=,\s*(?:en\s+representaci[óo]n|en\s+adelante|con\s+n[úu]mero)|\.\s*(?:Con\s+n[úu]mero|$))/i,
-  ]);
+  next.contractDetails.sellerRepresentativeAddress = representedCompany
+    ? findMatch(sellerBlock.slice(0, Math.max(0, sellerBlock.indexOf(representedCompany))), [
+      /domicilio\s+en\s+(.+?)(?=,\s*en\s+representaci[óo]n)/i,
+    ])
+    : "";
+  next.contractDetails.sellerAddress = representedCompany
+    ? findMatch(representedBlock, [
+      /domiciliad[ao]\s+en\s+(.+?)(?=,\s*en\s+adelante|\.\s*(?:Con\s+n[úu]mero|$))/i,
+    ])
+    : findMatch(sellerBlock, [
+      /domicilio\s+en\s+(.+?)(?=,\s*(?:en\s+representaci[óo]n|en\s+adelante|con\s+n[úu]mero)|\.\s*(?:Con\s+n[úu]mero|$))/i,
+    ]);
   next.contractDetails.sellerEmail = findMatch(sellerBlock, [/\b([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})\b/i]);
   if (next.provider) detectedFields.push("Agricultor / razón social");
   else warnings.push("No se ha reconocido el agricultor o la razón social.");
   if (next.taxId) detectedFields.push("NIF / CIF");
   else warnings.push("No se ha reconocido el NIF o CIF del vendedor.");
   if (next.contractDetails.sellerRepresentative) detectedFields.push("Representante");
+  if (next.contractDetails.sellerRepresentativeAddress) detectedFields.push("Domicilio del representante");
   if (next.contractDetails.sellerAddress) detectedFields.push("Domicilio");
   if (next.contractDetails.sellerEmail) detectedFields.push("Correo del agricultor");
 
@@ -646,6 +675,7 @@ export async function importPurchaseFromContract(
   }
 
   const price = detectPrice(text);
+  next.contractDetails.priceAgreement = price.priceAgreement;
   next.contractDetails.pricePerKg = price.pricePerKg;
   next.contractDetails.totalPrice = price.totalPrice;
   if (price.pricePerKg) {
@@ -654,6 +684,8 @@ export async function importPurchaseFromContract(
   } else if (price.totalPrice) {
     next.contractDetails.modality = "POR TANTO";
     detectedFields.push("Precio total");
+  } else if (price.priceAgreement === "A RESULTAS") {
+    detectedFields.push("Precio a resultas");
   } else {
     warnings.push("No se ha reconocido el precio; debe comprobarse antes de generar el nuevo contrato.");
   }
@@ -683,11 +715,12 @@ export async function importPurchaseFromContract(
   next.contractDetails.buyerSignedAt = "";
   next.contractDetails.signatureMethod = "";
   next.contractDetails.archiveHistoryJson = "";
-  next.contractDetails.previousContractMode = "uploaded";
+  const importedPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+  next.contractDetails.previousContractMode = importedPdf ? "uploaded" : "none";
   next.contractDetails.previousContractPurchaseId = "";
   next.contractDetails.previousContractArchiveId = "";
   next.contractDetails.previousContractSourceArchiveId = "";
-  next.contractDetails.previousContractFilename = file.name;
+  next.contractDetails.previousContractFilename = importedPdf ? file.name : "";
   next.contractDetails.previousContractStoredAt = "";
 
   return {
