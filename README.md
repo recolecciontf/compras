@@ -41,6 +41,7 @@ Estos valores se configuran como secretos del alojamiento y nunca se añaden al 
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
 - `GOOGLE_PRIVATE_KEY`
 - `GOOGLE_SPREADSHEET_ID`
+- `CONTRACT_TEMPLATE_KEY` (clave AES de los modelos contractuales cifrados)
 
 También se pueden configurar:
 
@@ -48,6 +49,15 @@ También se pueden configurar:
 - `GOOGLE_DATA_START_ROW` (por defecto, `9`)
 - `GOOGLE_DATA_END_ROW` (por defecto, `108`)
 - `ALLOWED_ORIGINS` (orígenes autorizados separados por comas)
+
+## Modelos contractuales
+
+La aplicación incorpora los modelos 2026/2027, 2027/2028 y 2028/2029 facilitados por la empresa. Se seleccionan siempre por sociedad compradora y especie, nunca por variedad:
+
+- MR. Orgánica: limón, pomelo, naranja, mandarina y fruta de hueso.
+- Toñifruit: limón, pomelo, naranja, mandarina, fruta de hueso y uva.
+
+No se reutiliza un modelo de otra sociedad. Para generar uva con MR. Orgánica será necesario incorporar su modelo específico. Los Word originales no se publican como archivos estáticos: el servidor solo incluye copias cifradas y las descifra tras una solicitud autorizada.
 
 ## Publicación en GitHub Pages
 

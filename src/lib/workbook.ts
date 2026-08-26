@@ -124,8 +124,10 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   buyerCompany: "",
   signatureDate: new Date().toISOString().slice(0, 10),
   contractNumber: "",
+  sellerTreatment: "",
   sellerRepresentative: "",
   sellerDni: "",
+  sellerRepresentativeAddress: "",
   sellerAddress: "",
   organicOperatorCode: "",
   certifierCode: "",
@@ -133,6 +135,7 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   modality: "A KILOS",
   collectionBy: "Comprador",
   transportBy: "Comprador",
+  priceAgreement: "IMPORTE",
   pricePerKg: "",
   totalPrice: "",
   ivaPercent: "",
@@ -324,8 +327,8 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     if (!contract.modality) issues.push("Falta la modalidad de compraventa");
     if (!contract.collectionBy) issues.push("Falta indicar quién asume la recolección");
     if (!contract.transportBy) issues.push("Falta indicar quién asume el transporte");
-    if (contract.modality === "POR TANTO" ? !contract.totalPrice : !contract.pricePerKg) issues.push(contract.modality === "POR TANTO" ? "Falta el precio total" : "Falta el precio por kg");
-    if (contract.pricePerKg && contract.totalPrice) issues.push("Hay dos tipos de precio; debe indicarse solo uno");
+    if (contract.priceAgreement !== "A RESULTAS" && (contract.modality === "POR TANTO" ? !contract.totalPrice : !contract.pricePerKg)) issues.push(contract.modality === "POR TANTO" ? "Falta el precio total" : "Falta el precio por kg");
+    if (contract.priceAgreement !== "A RESULTAS" && contract.pricePerKg && contract.totalPrice) issues.push("Hay dos tipos de precio; debe indicarse solo uno");
     if (!contract.paymentDays) issues.push("Falta el plazo de pago");
   }
   if (contract.applyDestrio === "Sí") {

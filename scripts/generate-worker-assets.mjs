@@ -20,7 +20,7 @@ async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
-    if (entry.name === "server" || entry.name === ".openai") continue;
+    if (entry.name === "server" || entry.name === ".openai" || entry.name === "contract-templates") continue;
     if (entry.name === "og.png") continue;
     if (entry.name.startsWith("__qa")) continue;
     const path = resolve(directory, entry.name);

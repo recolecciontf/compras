@@ -9,16 +9,20 @@ const CONTENT_TYPES_NS = "http://schemas.openxmlformats.org/package/2006/content
 const CORE_PROPERTIES_NS = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
 const DUBLIN_CORE_NS = "http://purl.org/dc/elements/1.1/";
 
-export type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina" | "uva";
+export type ContractKind = "limon" | "pomelo" | "naranja" | "mandarina" | "uva" | "fruta-hueso";
 
 export const CONTRACT_TEMPLATE_NAMES = [
   "mro-limon.docx",
   "mro-pomelo.docx",
   "mro-naranja.docx",
   "mro-mandarina.docx",
+  "mro-fruta-hueso.docx",
+  "tonifruit-limon.docx",
+  "tonifruit-pomelo.docx",
   "tonifruit-naranja.docx",
   "tonifruit-mandarina.docx",
   "tonifruit-uva.docx",
+  "tonifruit-fruta-hueso.docx",
 ] as const;
 
 type ContractBatch = {
@@ -38,6 +42,7 @@ export function contractKind(crop: string): ContractKind | null {
   if (value === "naranja") return "naranja";
   if (value.includes("mandarina") || value.includes("clementina")) return "mandarina";
   if (value === "uva") return "uva";
+  if (["paraguayo", "nectarina", "melocoton", "albaricoque", "fruta de hueso"].includes(value)) return "fruta-hueso";
   return null;
 }
 
@@ -47,35 +52,32 @@ export function templateName(company: PurchaseForm["contractDetails"]["buyerComp
   // puntuación o acentuación. El modelo se resuelve por empresa y especie,
   // nunca por variedad.
   if (buyer.includes("organica")) {
-    // El modelo de uva es común; al rellenarlo se sustituye siempre la
-    // identidad del comprador por la empresa elegida.
-    if (kind === "uva") return "tonifruit-uva.docx";
+    // No se cruza nunca un modelo de otra sociedad. MR. Orgánica todavía no
+    // dispone de un modelo de uva en la biblioteca entregada.
+    if (kind === "uva") return "";
     return `mro-${kind}.docx`;
   }
   if (buyer.includes("tonifruit")) {
-    if (["naranja", "mandarina", "uva"].includes(kind)) return `tonifruit-${kind}.docx`;
-    // Los modelos AILIMPO de limón y pomelo son modelos oficiales por
-    // producto, no por comprador. Conservamos intacto el documento original
-    // y sustituimos únicamente la identificación del comprador al rellenarlo.
-    if (["limon", "pomelo"].includes(kind)) return `mro-${kind}.docx`;
+    return `tonifruit-${kind}.docx`;
   }
   return "";
 }
 
 function buyerParagraphText(company: PurchaseForm["contractDetails"]["buyerCompany"], isAilimpo: boolean) {
   const buyer = normalized(company);
+  const label = isAilimpo ? "Y de la otra parte, Comprador:" : "Comprador:";
   const commonRepresentative = "D. Juan Antonio Martínez Rubio, con DNI 52805756X, mayor de edad, con domicilio en 30892 Librilla (Murcia) España, en representación y con poderes suficientes de";
   if (buyer.includes("tonifruit")) {
     const identity = `${commonRepresentative} TOÑIFRUIT, S.L., con NIF B73636086 domiciliada en P.E. Cabecicos Blancos - C/ Molino Grande, S/N, Buzón 22 - 30892 Librilla (Murcia) España, en adelante comprador.`;
     return isAilimpo
-      ? `Comprador: ${identity} Con número de operador ecológico: MU-3078/E. Código registro AILIMPO ____________.`
-      : `Comprador: ${identity} Con número de operador ecológico: MU-3078/E.`;
+      ? `${label} ${identity} Con número de operador ecológico: MU-3078/E. Código registro AILIMPO ____________.`
+      : `${label} ${identity} Con número de operador ecológico: MU-3078/E.`;
   }
   if (buyer.includes("organica")) {
     const identity = `${commonRepresentative} MR. Orgánica, S.L., con NIF B73894065 domiciliada en P.E. Cabecicos Blancos - C/ Molino Grande, S/N, Buzón 31 - 30892 Librilla (Murcia) España, en adelante comprador.`;
     return isAilimpo
-      ? `Comprador: ${identity} Con número de operador ecológico: MU-3684/E. Código registro AILIMPO ____________.`
-      : `Comprador: ${identity} Con número de operador ecológico: MU-3684/E.`;
+      ? `${label} ${identity} Con número de operador ecológico: MU-3684/E. Código registro AILIMPO ____________.`
+      : `${label} ${identity} Con número de operador ecológico: MU-3684/E.`;
   }
   return "";
 }
@@ -620,6 +622,37 @@ function totalKg(materials: MaterialItem[]) {
   return materials.reduce((sum, material) => sum + (Number(material.expectedKg.replace(",", ".")) || 0), 0);
 }
 
+function fruitStoneSpecies(materials: MaterialItem[]) {
+  const plurals: Record<string, string> = {
+    paraguayo: "paraguayos",
+    nectarina: "nectarinas",
+    melocoton: "melocotones",
+    albaricoque: "albaricoques",
+    "fruta de hueso": "fruta de hueso",
+  };
+  const values = [...new Set(materials.map((material) => plurals[normalized(material.crop)]).filter(Boolean))];
+  return values.join(" y ") || "fruta de hueso";
+}
+
+function replaceHighlightedPlaceholders(document: Document, replacement: string) {
+  for (const paragraph of Array.from(document.getElementsByTagNameNS(WORD_NS, "p"))) {
+    const highlightedRuns = Array.from(paragraph.getElementsByTagNameNS(WORD_NS, "r")).filter((run) => {
+      const properties = childElements(run, "rPr")[0];
+      return Boolean(properties && childElements(properties, "highlight").length && /\*/.test(paragraphText(run)));
+    });
+    if (!highlightedRuns.length) continue;
+    highlightedRuns.forEach((run, index) => {
+      const textNodes = Array.from(run.getElementsByTagNameNS(WORD_NS, "t"));
+      textNodes.forEach((node, textIndex) => {
+        node.textContent = index === 0 && textIndex === 0 ? replacement : "";
+        node.setAttributeNS(XML_NS, "xml:space", "preserve");
+      });
+      const properties = childElements(run, "rPr")[0];
+      childElements(properties, "highlight").forEach((highlight) => highlight.remove());
+    });
+  }
+}
+
 function fillDocument(document: Document, purchase: PurchaseForm, batch: ContractBatch) {
   const details = purchase.contractDetails;
   const isAilimpo = batch.kind === "limon" || batch.kind === "pomelo";
@@ -628,25 +661,43 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   const filledHalfPoints = batch.kind === "uva" ? 20 : undefined;
   const contractNumber = details.contractNumber || purchase.id || "PENDIENTE";
 
-  const dateParagraph = findParagraph(document, (text) => text.startsWith("En Librilla"));
-  if (dateParagraph) setParagraph(dateParagraph, `En Librilla (Murcia) a ${longDate(details.signatureDate)}          Nº CONTRATO: ${contractNumber}`, "", filledHalfPoints);
-
-  const sellerParagraph = findParagraph(document, (text) => text.trimStart().startsWith("Vendedor:"));
-  if (sellerParagraph) {
-    const representative = details.sellerRepresentative.trim();
-    const address = details.sellerAddress.trim();
-    const sellerIdentity = representative
-      ? `D. ${representative}, con DNI ${details.sellerDni.trim() || "__________"}, mayor de edad${address ? `, con domicilio en ${address}` : ""}, en representación y con poderes suficientes de ${purchase.provider}, con NIF ${purchase.taxId}${address ? `, domiciliada en ${address}` : ""}, en adelante vendedor.`
-      : `${purchase.provider}, con NIF ${purchase.taxId}${address ? `, con domicilio en ${address}` : ""}, en adelante vendedor.`;
-    const sellerText = isAilimpo
-      ? `Vendedor: ${sellerIdentity} Con número de operador ecológico: ${details.organicOperatorCode.trim() || "____________"}. Certificado por la autoridad u organismo de control con Código: ${details.certifierCode.trim() || "__________"}. Código registro AILIMPO/REGEPA ${details.ailimpoRegepaCode.trim() || "____________"}.`
-      : `Vendedor: ${sellerIdentity} Código operador ecológico: ${details.organicOperatorCode.trim() || "____________"}`;
-    setParagraph(sellerParagraph, sellerText, "Vendedor:", filledHalfPoints);
+  if (batch.kind === "fruta-hueso") {
+    const species = fruitStoneSpecies(batch.materials);
+    replaceHighlightedPlaceholders(document, species);
+    for (const paragraph of Array.from(document.getElementsByTagNameNS(WORD_NS, "p"))) {
+      replaceInParagraph(paragraph, "MANDARINAS", species.toLocaleUpperCase("es"));
+      replaceInParagraph(paragraph, "Mandarinas", `${species.charAt(0).toLocaleUpperCase("es")}${species.slice(1)}`);
+    }
   }
 
-  const buyerParagraph = findParagraph(document, (text) => text.trimStart().startsWith("Comprador:"));
+  const dateParagraph = findParagraph(document, (text) => text.replace(/\s+/g, " ").startsWith("En Librilla"));
+  if (dateParagraph) setParagraph(dateParagraph, `En Librilla (Murcia) a ${longDate(details.signatureDate)}          Nº CONTRATO: ${contractNumber}`, "", filledHalfPoints);
+
+  const sellerParagraph = findParagraph(document, (text) => {
+    const compact = text.trimStart().replace(/\s+/g, " ");
+    return compact.startsWith("Vendedor:") || /^De una parte, Vendedor:/i.test(compact);
+  });
+  if (sellerParagraph) {
+    const representative = details.sellerRepresentative.trim();
+    const representativeAddress = details.sellerRepresentativeAddress?.trim() || "";
+    const address = details.sellerAddress.trim();
+    const treatment = details.sellerTreatment || "D.";
+    const sellerIdentity = representative
+      ? `${treatment} ${representative}, con DNI ${details.sellerDni.trim() || "__________"}, mayor de edad${representativeAddress ? `, con domicilio en ${representativeAddress}` : ""}, en representación y con poderes suficientes de ${purchase.provider}, con NIF ${purchase.taxId}${address ? `, domiciliada en ${address}` : ""}, en adelante vendedor.`
+      : `${purchase.provider}, con NIF ${purchase.taxId}${address ? `, con domicilio en ${address}` : ""}, en adelante vendedor.`;
+    const sellerLabel = isAilimpo ? "De una parte, Vendedor:" : "Vendedor:";
+    const sellerText = isAilimpo
+      ? `${sellerLabel} ${sellerIdentity} Con número de operador ecológico: ${details.organicOperatorCode.trim() || "____________"}. Código registro AILIMPO/REGEPA ${details.ailimpoRegepaCode.trim() || "____________"}.`
+      : `Vendedor: ${sellerIdentity} Código operador ecológico: ${details.organicOperatorCode.trim() || "____________"}`;
+    setParagraph(sellerParagraph, sellerText, sellerLabel, filledHalfPoints);
+  }
+
+  const buyerParagraph = findParagraph(document, (text) => {
+    const compact = text.trimStart().replace(/\s+/g, " ");
+    return compact.startsWith("Comprador:") || /^Y de la otra parte, Comprador:/i.test(compact);
+  });
   const buyerText = buyerParagraphText(details.buyerCompany, isAilimpo);
-  if (buyerParagraph && buyerText) setParagraph(buyerParagraph, buyerText, "Comprador:", filledHalfPoints);
+  if (buyerParagraph && buyerText) setParagraph(buyerParagraph, buyerText, isAilimpo ? "Y de la otra parte, Comprador:" : "Comprador:", filledHalfPoints);
 
   const varieties = [...new Set(batch.materials.map((material) => material.variety.trim()).filter(Boolean))].join(", ");
   const varietiesParagraph = findParagraph(document, (text) => text.includes("siguiente/s variedad/es"));
@@ -754,14 +805,21 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   const priceParagraph = priceParagraphs.find((paragraph) => paragraphText(paragraph).includes("IVA"));
   if (priceParagraph) {
     const priceValue = priceMode === "POR TANTO" ? details.totalPrice : details.pricePerKg;
-    const existingUnitPrice = paragraphText(priceParagraph).match(/\d+(?:[.,]\d+)?\s*€\s*\/\s*Kg\./i)?.[0];
-    if (existingUnitPrice) {
-      replaceInParagraph(priceParagraph, existingUnitPrice, `${numberEs(priceValue)} € / Kg.`);
-    } else if (paragraphText(priceParagraph).trimStart().startsWith("€ / Kg.")) {
-      replaceInParagraph(priceParagraph, " € / Kg.", ` ${numberEs(priceValue)} € / Kg.`);
-    } else if (!replaceNextBlank(priceParagraph, numberEs(priceValue))) {
-      const marker = paragraphText(priceParagraph).includes(" € / Kg.") ? " € / Kg." : " €/";
-      replaceInParagraph(priceParagraph, marker, `${numberEs(priceValue)}${marker}`);
+    if (details.priceAgreement === "A RESULTAS") {
+      const current = paragraphText(priceParagraph);
+      const priceWithUnit = current.match(/(?:\d+(?:[.,]\d+)?|_{2,})?\s*€\s*(?:\/\s*(?:Kg\.?|kilo))?/i)?.[0];
+      if (priceWithUnit?.trim()) replaceInParagraph(priceParagraph, priceWithUnit, "A RESULTAS");
+      else if (!replaceNextBlank(priceParagraph, "A RESULTAS")) setParagraph(priceParagraph, `A RESULTAS, más el ___% IVA y, en su caso, menos el ___% IRPF según régimen fiscal aplicable.`, "", filledHalfPoints);
+    } else {
+      const existingUnitPrice = paragraphText(priceParagraph).match(/\d+(?:[.,]\d+)?\s*€\s*\/\s*Kg\./i)?.[0];
+      if (existingUnitPrice) {
+        replaceInParagraph(priceParagraph, existingUnitPrice, `${numberEs(priceValue)} € / Kg.`);
+      } else if (paragraphText(priceParagraph).trimStart().startsWith("€ / Kg.")) {
+        replaceInParagraph(priceParagraph, " € / Kg.", ` ${numberEs(priceValue)} € / Kg.`);
+      } else if (!replaceNextBlank(priceParagraph, numberEs(priceValue))) {
+        const marker = paragraphText(priceParagraph).includes(" € / Kg.") ? " € / Kg." : " €/";
+        replaceInParagraph(priceParagraph, marker, `${numberEs(priceValue)}${marker}`);
+      }
     }
     if (details.ivaPercent) {
       replaceInParagraph(priceParagraph, "más el ___% IVA", `más el ${numberEs(details.ivaPercent)}% IVA`);
@@ -840,11 +898,6 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     const clauseSeven = findParagraph(document, (text) => /^7\.o DURACIÓN/.test(text.trimStart()));
     if (clauseSeven) addPageBreakBefore(clauseSeven);
 
-    // La declaración laboral anexa constituye la última página del modelo.
-    // Mantener su título unido al contenido evita una página de continuación
-    // sin margen superior y otra página casi vacía solo para las firmas.
-    const laborDeclaration = findParagraph(document, (text) => text.trim() === "OTROS:");
-    if (laborDeclaration) addPageBreakBefore(laborDeclaration);
   }
 
   repeatDefaultHeaderOnEveryPage(document);
@@ -874,7 +927,7 @@ async function setContractMetadata(zip: JSZip, purchase: PurchaseForm, batch: Co
   const coreDocument = new DOMParser().parseFromString(await coreFile.async("string"), "application/xml");
   if (coreDocument.getElementsByTagName("parsererror").length) return;
   const contractNumber = purchase.contractDetails.contractNumber || purchase.id || "PENDIENTE";
-  const species = ({ limon: "Limón", pomelo: "Pomelo", naranja: "Naranja", mandarina: "Mandarina", uva: "Uva" } as const)[batch.kind];
+  const species = ({ limon: "Limón", pomelo: "Pomelo", naranja: "Naranja", mandarina: "Mandarina", uva: "Uva", "fruta-hueso": "Fruta de hueso" } as const)[batch.kind];
   const ecological = batch.kind === "pomelo" || batch.kind === "limon" ? "ecológico" : "ecológica";
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:title", "title", `Contrato de ${species} - ${contractNumber} - ${purchase.provider}`);
   setCoreProperty(coreDocument, DUBLIN_CORE_NS, "dc:subject", "subject", `Contrato de compraventa de ${species.toLocaleLowerCase("es")} ${ecological}`);
@@ -955,16 +1008,16 @@ export function validateContractGeneration(purchase: PurchaseForm) {
     [details.modality, "modalidad de compraventa"],
     [details.collectionBy, "responsable de recolección"],
     [details.transportBy, "responsable de transporte"],
-    [details.modality === "POR TANTO" ? details.totalPrice : details.pricePerKg, details.modality === "POR TANTO" ? "precio total" : "precio por kg"],
+    [details.priceAgreement === "A RESULTAS" ? "A RESULTAS" : details.modality === "POR TANTO" ? details.totalPrice : details.pricePerKg, details.modality === "POR TANTO" ? "precio total" : "precio por kg"],
     [details.paymentDays, "plazo de pago"],
   ];
   const missing = required.filter(([value]) => !value).map(([, label]) => label);
   if (missing.length) throw new Error(`Completa antes de descargar: ${missing.join(", ")}.`);
-  if (details.pricePerKg && details.totalPrice) {
+  if (details.priceAgreement !== "A RESULTAS" && details.pricePerKg && details.totalPrice) {
     throw new Error("Indica solo un tipo de precio: precio por kg o precio total.");
   }
-  if (details.modality === "A KILOS" && details.totalPrice) throw new Error("La modalidad A KILOS requiere precio por kg, no precio total.");
-  if (details.modality === "POR TANTO" && details.pricePerKg) throw new Error("La modalidad POR TANTO requiere precio total, no precio por kg.");
+  if (details.priceAgreement !== "A RESULTAS" && details.modality === "A KILOS" && details.totalPrice) throw new Error("La modalidad A KILOS requiere precio por kg, no precio total.");
+  if (details.priceAgreement !== "A RESULTAS" && details.modality === "POR TANTO" && details.pricePerKg) throw new Error("La modalidad POR TANTO requiere precio total, no precio por kg.");
   if (purchase.materials.some((material) => !material.crop || !material.variety || !material.expectedKg)) {
     throw new Error("Completa la especie, variedad y kg de todas las materias primas.");
   }

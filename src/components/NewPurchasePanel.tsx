@@ -229,7 +229,9 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
     setPreviousSource("");
     setSelectedPreviousRow("");
     setPreviousFile(null);
-    setExistingFile(mode === "existing" ? importedContractFile : null);
+    setExistingFile(mode === "existing" && importedContractFile && /\.pdf$/i.test(importedContractFile.name)
+      ? importedContractFile
+      : null);
     setSellerSignature("");
     setConsent(false);
     setFormError("");
@@ -302,8 +304,10 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
         contractOrigin: "generated",
         buyerCompany: previousContract.buyerCompany,
         contractNumber: "",
+        sellerTreatment: previousContract.sellerTreatment,
         sellerRepresentative: previousContract.sellerRepresentative,
         sellerDni: previousContract.sellerDni,
+        sellerRepresentativeAddress: previousContract.sellerRepresentativeAddress || "",
         sellerAddress: previousContract.sellerAddress,
         organicOperatorCode: previousContract.organicOperatorCode,
         certifierCode: previousContract.certifierCode,
@@ -311,6 +315,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
         modality: previousContract.modality || "A KILOS",
         collectionBy: previousContract.collectionBy || "Comprador",
         transportBy: previousContract.transportBy || "Comprador",
+        priceAgreement: previousContract.priceAgreement || "IMPORTE",
         pricePerKg: "",
         totalPrice: "",
         ivaPercent: previousContract.ivaPercent,
@@ -345,7 +350,9 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
   }
 
   function previousContractReference(): PreviousContractReference {
-    if (purchaseStartMode === "import" && importedContractFile) {
+    // Un Word importado es únicamente una fuente de datos. No debe enviarse al
+    // archivo de contratos anteriores, que por seguridad conserva solo PDF.
+    if (purchaseStartMode === "import" && importedContractFile && /\.pdf$/i.test(importedContractFile.name)) {
       return { mode: "uploaded", file: importedContractFile };
     }
     if (purchaseStartMode === "import" && selectedImportedPurchase?.purchase.contractDetails.archiveId) {
@@ -408,8 +415,8 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
       return;
     }
     const previousContract = previousContractReference();
-    const { pricePerKg, totalPrice } = purchase.contractDetails;
-    if ((!pricePerKg && !totalPrice) || (pricePerKg && totalPrice)) {
+    const { priceAgreement = "IMPORTE", pricePerKg, totalPrice } = purchase.contractDetails;
+    if (priceAgreement !== "A RESULTAS" && ((!pricePerKg && !totalPrice) || (pricePerKg && totalPrice))) {
       setFormError("Indica un solo tipo de precio: precio por kg o precio total.");
       return;
     }
@@ -529,7 +536,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
               <small className="contract-import-privacy">Máximo 10 MB. La lectura se realiza en este dispositivo. Si el PDF está escaneado, el OCR puede tardar unos minutos la primera vez.</small>
               {importContractError && <div className="contract-send-warning import-contract-error" role="alert"><AlertTriangle size={18} /><span><strong>No se ha podido importar</strong><small>{importContractError}</small></span></div>}
               {importReport && importedContractFile && <div className="contract-import-report" aria-live="polite">
-                <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Contrato leído{importReport.usedOcr ? " mediante OCR" : ""}: {importedContractFile.name}</strong><small>La compra está preparada con los datos reconocidos. Revisa y completa los campos antes de guardarla.</small></span></div>
+                <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Contrato leído{importReport.usedOcr ? " mediante OCR" : ""}: {importedContractFile.name}</strong><small>{/\.docx$/i.test(importedContractFile.name) ? "El Word se utiliza como origen de datos y ya puedes generar el contrato nuevo sin subir un PDF anterior." : "La compra está preparada con los datos reconocidos. Revisa y completa los campos antes de guardarla."}</small></span></div>
                 <div className="contract-import-detected"><strong>Datos reconocidos</strong><div>{importReport.detectedFields.map((field) => <span key={field}>{field}</span>)}</div></div>
                 {importReport.warnings.length > 0 && <div className="contract-import-warnings"><strong>Campos que debes revisar</strong><ul>{importReport.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div>}
               </div>}
@@ -551,7 +558,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
               <PenLine size={24} /><span><strong>No, hay que prepararlo</strong><small>Rellenar el contrato y decidir la firma al final</small></span>{contractChoice === "generated" && <CheckCircle2 size={20} />}
             </button>
           </div>
-          {contractChoice === "generated" && <p className="contract-model-note">Modelos automáticos disponibles: limón, pomelo, naranja, mandarina y uva, según la empresa compradora. Para otra especie, debe incorporarse primero su modelo contractual; nunca se reutilizará un modelo que no corresponda.</p>}
+          {contractChoice === "generated" && <p className="contract-model-note">Modelos automáticos disponibles: limón, pomelo, naranja, mandarina, fruta de hueso y uva, según la empresa compradora. El modelo de uva disponible corresponde a Toñifruit. Para otra especie debe incorporarse primero su modelo contractual; nunca se reutilizará un modelo ni una sociedad que no correspondan.</p>}
         </section>
       )}
 

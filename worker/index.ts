@@ -444,7 +444,7 @@ function json(request: Request, env: Env, body: unknown, status = 200) {
 async function contractTemplate(name: string, env: Env) {
   const encrypted = CONTRACT_ASSETS[name as keyof typeof CONTRACT_ASSETS];
   if (!encrypted) return null;
-  const configuredKey = name === "tonifruit-uva.docx" ? env.UVA_TEMPLATE_KEY : env.CONTRACT_TEMPLATE_KEY;
+  const configuredKey = env.CONTRACT_TEMPLATE_KEY;
   const keyBytes = Uint8Array.from(atob(configuredKey || ""), (character) => character.charCodeAt(0));
   if (keyBytes.length !== 32) throw new Error("La clave de los modelos contractuales no está configurada.");
   const bytes = Uint8Array.from(atob(encrypted), (character) => character.charCodeAt(0));
