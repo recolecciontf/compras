@@ -135,6 +135,8 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   modality: "A KILOS",
   collectionBy: "Comprador",
   transportBy: "Comprador",
+  cutMinMm: "",
+  cutMaxMm: "",
   priceAgreement: "IMPORTE",
   pricePerKg: "",
   totalPrice: "",

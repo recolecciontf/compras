@@ -86,17 +86,18 @@ function localToday() {
 
 function purchaseIdPrefix(company: PurchaseForm["contractDetails"]["buyerCompany"]) {
   const normalizedCompany = company.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleUpperCase("es");
-  if (normalizedCompany.includes("TONIFRUIT")) return "TON";
-  if (normalizedCompany.includes("ORGANICA")) return "MRO";
-  throw new Error("Selecciona la empresa compradora para asignar el identificador MRO o TON.");
+  if (normalizedCompany.includes("TONIFRUIT")) return "TN";
+  if (normalizedCompany.includes("ORGANICA")) return "MR";
+  throw new Error("Selecciona la empresa compradora para asignar el identificador MR o TN.");
 }
 
 function nextPurchaseId(rows: ControlRow[], company: PurchaseForm["contractDetails"]["buyerCompany"]) {
+  const prefix = purchaseIdPrefix(company);
   const highest = rows.reduce((maximum, row) => {
-    const match = row.id.trim().match(/^(?:MRO|TON)-(\d+)$/i);
+    const match = row.id.trim().match(new RegExp(`^${prefix}-(\\d+)$`, "i"));
     return match ? Math.max(maximum, Number(match[1])) : maximum;
   }, 0);
-  return `${purchaseIdPrefix(company)}-${String(highest + 1).padStart(3, "0")}`;
+  return `${prefix}-${String(highest + 1).padStart(2, "0")}`;
 }
 
 function authorized(row: ControlRow) {

@@ -485,25 +485,46 @@ function detectSignatureDate(text: string) {
   return labelled ? isoDate(labelled[1], labelled[2], labelled[3]) : "";
 }
 
-function detectCutDates(tables: string[][][], text: string) {
+function detectCutDetails(tables: string[][][], text: string) {
   for (const rows of tables) {
     const headerIndex = rows.findIndex((row) => {
       const joined = fold(row.join(" "));
       return joined.includes("cortes") && joined.includes("inicio") && (joined.includes("terminacion") || joined.includes("finalizacion"));
     });
     if (headerIndex < 0) continue;
+    const headers = rows[headerIndex].map(fold);
+    const startIndex = headers.findIndex((header) => header.includes("inicio"));
+    const endIndex = headers.findIndex((header) => header.includes("terminacion") || header.includes("finalizacion"));
+    const minIndex = headers.findIndex((header) => /(^|\s)de\s*mm($|\s)/.test(header));
+    const maxIndex = headers.findIndex((header) => /(^|\s)a\s*mm($|\s)/.test(header));
     for (const row of rows.slice(headerIndex + 1)) {
       const dates = extractDates(row.join(" "));
-      if (dates.length >= 2) return { start: dates[0], end: dates[1] };
+      if (dates.length >= 2) {
+        const start = startIndex >= 0 ? extractDates(row[startIndex] || "")[0] || dates[0] : dates[0];
+        const end = endIndex >= 0 ? extractDates(row[endIndex] || "")[0] || dates[1] : dates[1];
+        return {
+          start,
+          end,
+          minMm: minIndex >= 0 ? spanishNumber(row[minIndex] || "") : "",
+          maxMm: maxIndex >= 0 ? spanishNumber(row[maxIndex] || "") : "",
+        };
+      }
     }
   }
   const labelled = text.match(/INICIO\s*:?\s*(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4})[\s\S]{0,100}?(?:TERMINACI[ÓO]N|FINALIZACI[ÓO]N)\s*:?\s*(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4})/i);
   if (labelled) {
     const start = extractDates(labelled[1])[0] || "";
     const end = extractDates(labelled[2])[0] || "";
-    return { start, end };
+    const nearby = text.slice(labelled.index || 0, (labelled.index || 0) + labelled[0].length + 180);
+    const dimensions = nearby.match(/(?:DE\s*MM|M[IÍ]N(?:IMO)?(?:\s*MM)?)\s*:?\s*(\d+(?:[.,]\d+)?)[\s\S]{0,80}?(?:A\s*MM|M[ÁA]X(?:IMO)?(?:\s*MM)?)\s*:?\s*(\d+(?:[.,]\d+)?)/i);
+    return {
+      start,
+      end,
+      minMm: spanishNumber(dimensions?.[1] || ""),
+      maxMm: spanishNumber(dimensions?.[2] || ""),
+    };
   }
-  return { start: "", end: "" };
+  return { start: "", end: "", minMm: "", maxMm: "" };
 }
 
 function detectPrice(text: string) {
@@ -630,7 +651,7 @@ export async function importPurchaseFromContract(
 
   next.contractDetails.contractNumber = findMatch(text, [
     /N[.º°o]*\s*CONTRATO\s*:?\s*([A-Z]{2,5}-\d+)/i,
-    /\b((?:MRO|TON)-\d{1,5})\b/i,
+    /\b((?:MR|MRO|TN|TON)-\d{1,5})\b/i,
   ]);
   next.contractDetails.signatureDate = detectSignatureDate(text) || next.contractDetails.signatureDate;
   if (next.contractDetails.contractNumber) detectedFields.push("N.º de contrato");
@@ -663,16 +684,19 @@ export async function importPurchaseFromContract(
   }
   if (!next.expectedKg) warnings.push("No se han reconocido los kilogramos contratados.");
 
-  const cutDates = detectCutDates(tables, text);
-  next.contractStart = cutDates.start;
-  next.contractEnd = cutDates.end;
-  if (cutDates.start && cutDates.end) {
+  const cutDetails = detectCutDetails(tables, text);
+  next.contractStart = cutDetails.start;
+  next.contractEnd = cutDetails.end;
+  next.contractDetails.cutMinMm = cutDetails.minMm;
+  next.contractDetails.cutMaxMm = cutDetails.maxMm;
+  if (cutDetails.start && cutDetails.end) {
     detectedFields.push("Fechas del contrato");
-    const startYear = Number(cutDates.start.slice(0, 4));
+    const startYear = Number(cutDetails.start.slice(0, 4));
     next.campaign = `${startYear}/${String(startYear + 1).slice(-2)}`;
   } else {
     warnings.push("Revisa las fechas de inicio y fin: no se han encontrado ambas en el contrato.");
   }
+  if (cutDetails.minMm && cutDetails.maxMm) detectedFields.push("Calibre de corte");
 
   const price = detectPrice(text);
   next.contractDetails.priceAgreement = price.priceAgreement;

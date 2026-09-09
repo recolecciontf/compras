@@ -46,7 +46,7 @@ function purchase(company, crop, variety) {
     { id: "qa-2", crop, variety, expectedKg: "7500", situation: "Regadío", municipality: "Librilla", paraje: "Segundo paraje", polygon: "12", plot: "35", hectares: "0.75" },
   ];
   return {
-    id: company.startsWith("MR.") ? "MRO-QA-001" : "TON-QA-001",
+    id: company.startsWith("MR.") ? "MR-QA-001" : "TN-QA-001",
     provider: "CÍTRICOS BIOLÓGICOS, C.B.",
     taxId: "E54967560",
     farm: "Fincas de prueba",
@@ -66,7 +66,7 @@ function purchase(company, crop, variety) {
       contractOrigin: "generated",
       buyerCompany: company,
       signatureDate: "2026-08-26",
-      contractNumber: company.startsWith("MR.") ? "MRO-QA-001" : "TON-QA-001",
+      contractNumber: company.startsWith("MR.") ? "MR-QA-001" : "TN-QA-001",
       sellerTreatment: "Dña.",
       sellerRepresentative: "HERMENEGILDA QUIRANTE RIVES",
       sellerDni: "74178814L",
@@ -78,6 +78,8 @@ function purchase(company, crop, variety) {
       modality: "A KILOS",
       collectionBy: "Comprador",
       transportBy: "Comprador",
+      cutMinMm: "55",
+      cutMaxMm: "75",
       priceAgreement: crop === "Pomelo" ? "A RESULTAS" : "IMPORTE",
       pricePerKg: crop === "Pomelo" ? "" : "1.05",
       totalPrice: "",

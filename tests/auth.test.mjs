@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker, enrichRowsFromPrivateCatalog, rowRevision, validatePurchase, verifyExpectedRevision } = await import(workerUrl.href);
+const { default: worker, enrichRowsFromPrivateCatalog, nextPurchaseIdForCompany, rowRevision, validatePurchase, verifyExpectedRevision } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -143,6 +143,8 @@ test("permite crear una compra sin correos cuyo nuevo contrato se firmará más 
       modality: "A KILOS",
       collectionBy: "Comprador",
       transportBy: "Comprador",
+      cutMinMm: "55",
+      cutMaxMm: "75",
       priceAgreement: "IMPORTE",
       pricePerKg: "0.1",
       totalPrice: "",
@@ -158,6 +160,57 @@ test("permite crear una compra sin correos cuyo nuevo contrato se firmará más 
     },
   };
   assert.doesNotThrow(() => validatePurchase(purchase));
+});
+
+test("valida los límites mínimo y máximo del calibre de corte", () => {
+  const purchase = {
+    id: "TN-01",
+    provider: "Proveedor de prueba",
+    taxId: "B00000000",
+    farm: "Finca de prueba",
+    municipality: "Municipio de prueba",
+    crop: "Uva",
+    variety: "Arra 19",
+    expectedKg: "5000",
+    campaign: "2026/2027",
+    registeredIca: "Pendiente",
+    contractSigned: "Pendiente de firma del vendedor",
+    contractStart: "2026-08-17",
+    contractEnd: "2026-08-31",
+    documentPath: "Pendiente de devolución y archivo central",
+    otherAgreements: "",
+    materials: [{ id: "parcela-1", crop: "Uva", variety: "Arra 19", expectedKg: "5000", situation: "", municipality: "Municipio de prueba", paraje: "", polygon: "", plot: "", hectares: "" }],
+    contractDetails: {
+      contractOrigin: "generated",
+      buyerCompany: "TOÑIFRUIT, S.L.",
+      signatureDate: "2026-08-17",
+      modality: "A KILOS",
+      collectionBy: "Comprador",
+      transportBy: "Comprador",
+      priceAgreement: "IMPORTE",
+      pricePerKg: "1.05",
+      totalPrice: "",
+      paymentDays: "30",
+      applyDestrio: "No",
+      signatureMethod: "external_pending",
+      sellerSignedAt: "",
+      cutMinMm: "75",
+      cutMaxMm: "55",
+    },
+  };
+  assert.throws(() => validatePurchase(purchase), /mínimo no puede ser superior/i);
+  purchase.contractDetails.cutMinMm = "55";
+  purchase.contractDetails.cutMaxMm = "";
+  assert.throws(() => validatePurchase(purchase), /dos límites/i);
+});
+
+test("genera series MR y TN independientes desde 01", () => {
+  const legacyIds = ["MRO-052", "TON-109"];
+  assert.equal(nextPurchaseIdForCompany(legacyIds, "MR. ORGÁNICA, S.L."), "MR-01");
+  assert.equal(nextPurchaseIdForCompany(legacyIds, "TOÑIFRUIT, S.L."), "TN-01");
+  const currentIds = [...legacyIds, "MR-01", "MR-02", "TN-01"];
+  assert.equal(nextPurchaseIdForCompany(currentIds, "MR. ORGÁNICA, S.L."), "MR-03");
+  assert.equal(nextPurchaseIdForCompany(currentIds, "TOÑIFRUIT, S.L."), "TN-02");
 });
 
 test("detecta una edición concurrente antes de sobrescribir el expediente", async () => {

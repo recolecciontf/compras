@@ -783,7 +783,13 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     const cutRows = rows(nestedCuts);
     if (cutRows[1]) {
       const cutCells = cells(cutRows[1]);
-      ["1", shortDate(purchase.contractStart), shortDate(purchase.contractEnd), "", ""].forEach((value, index) => {
+      [
+        "1",
+        shortDate(purchase.contractStart),
+        shortDate(purchase.contractEnd),
+        details.cutMinMm ? numberEs(details.cutMinMm) : "",
+        details.cutMaxMm ? numberEs(details.cutMaxMm) : "",
+      ].forEach((value, index) => {
         if (cutCells[index]) setCellText(cutCells[index], value, filledHalfPoints);
       });
     }
@@ -1015,6 +1021,17 @@ export function validateContractGeneration(purchase: PurchaseForm) {
   if (missing.length) throw new Error(`Completa antes de descargar: ${missing.join(", ")}.`);
   if (details.priceAgreement !== "A RESULTAS" && details.pricePerKg && details.totalPrice) {
     throw new Error("Indica solo un tipo de precio: precio por kg o precio total.");
+  }
+  if (Boolean(details.cutMinMm) !== Boolean(details.cutMaxMm)) {
+    throw new Error("Indica los dos límites del calibre de corte: mínimo y máximo.");
+  }
+  if (details.cutMinMm && details.cutMaxMm) {
+    const minimum = Number(details.cutMinMm.replace(",", "."));
+    const maximum = Number(details.cutMaxMm.replace(",", "."));
+    if (!Number.isFinite(minimum) || minimum <= 0 || !Number.isFinite(maximum) || maximum <= 0) {
+      throw new Error("Los milímetros mínimo y máximo deben ser números superiores a cero.");
+    }
+    if (minimum > maximum) throw new Error("El calibre mínimo no puede ser superior al máximo.");
   }
   if (details.priceAgreement !== "A RESULTAS" && details.modality === "A KILOS" && details.totalPrice) throw new Error("La modalidad A KILOS requiere precio por kg, no precio total.");
   if (details.priceAgreement !== "A RESULTAS" && details.modality === "POR TANTO" && details.pricePerKg) throw new Error("La modalidad POR TANTO requiere precio total, no precio por kg.");

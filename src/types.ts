@@ -38,6 +38,8 @@ export type ContractDetails = {
   modality: "" | "A KILOS" | "POR TANTO";
   collectionBy: "" | "Vendedor" | "Comprador";
   transportBy: "" | "Vendedor" | "Comprador";
+  cutMinMm: string;
+  cutMaxMm: string;
   priceAgreement: "IMPORTE" | "A RESULTAS";
   pricePerKg: string;
   totalPrice: string;
