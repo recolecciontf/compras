@@ -17,6 +17,8 @@ function demoContractDetails(overrides: Record<string, string>) {
     modality: "A KILOS",
     collectionBy: "Comprador",
     transportBy: "Comprador",
+    cutMinMm: "55",
+    cutMaxMm: "75",
     priceAgreement: "IMPORTE",
     pricePerKg: "0.45",
     totalPrice: "",
@@ -90,7 +92,7 @@ export const DEMO_ROWS: ControlRow[] = [
     registeredIca: "Sí",
     contractDetailsJson: demoContractDetails({
       contractOrigin: "existing",
-      contractNumber: "TON-DEMO-001",
+      contractNumber: "TN-DEMO-001",
       archiveId: "demo-contract-ton-001",
       archiveFilename: "contrato-firmado-ton-demo-001.pdf",
       archivedAt: "2026-07-15T10:30:00.000Z",
@@ -146,7 +148,7 @@ export const DEMO_ROWS: ControlRow[] = [
     registeredIca: "Sí",
     contractDetailsJson: demoContractDetails({
       buyerCompany: "MR. ORGÁNICA, S.L.",
-      contractNumber: "MRO-DEMO-002",
+      contractNumber: "MR-DEMO-002",
       pricePerKg: "0.62",
     }),
     recordStatus: "Activo",
@@ -196,7 +198,7 @@ export const DEMO_ROWS: ControlRow[] = [
     contractDetailsJson: demoContractDetails({
       contractOrigin: "existing",
       buyerCompany: "MR. ORGÁNICA, S.L.",
-      contractNumber: "MRO-DEMO-003",
+      contractNumber: "MR-DEMO-003",
       archiveId: "demo-contract-mro-003",
       archiveFilename: "contrato-firmado-mro-demo-003.pdf",
       archivedAt: "2026-05-15T09:00:00.000Z",

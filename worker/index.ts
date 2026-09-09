@@ -1015,6 +1015,19 @@ export function validatePurchase(purchase: PurchasePayload, requireComplete = tr
       if (purchase.contractDetails.pricePerKg && purchase.contractDetails.totalPrice) {
         throw new InputError("Indica solo un tipo de precio: precio por kg o precio total.");
       }
+      const cutMinMm = String(purchase.contractDetails.cutMinMm || "").trim();
+      const cutMaxMm = String(purchase.contractDetails.cutMaxMm || "").trim();
+      if (Boolean(cutMinMm) !== Boolean(cutMaxMm)) {
+        throw new InputError("Indica los dos límites del calibre de corte: mínimo y máximo.");
+      }
+      if (cutMinMm && cutMaxMm) {
+        const minimum = Number(cutMinMm.replace(",", "."));
+        const maximum = Number(cutMaxMm.replace(",", "."));
+        if (!Number.isFinite(minimum) || minimum <= 0 || !Number.isFinite(maximum) || maximum <= 0) {
+          throw new InputError("Los milímetros mínimo y máximo deben ser números superiores a cero.");
+        }
+        if (minimum > maximum) throw new InputError("El calibre mínimo no puede ser superior al máximo.");
+      }
     }
     const missingContract = requiredContractFields.filter(([key]) => !purchase.contractDetails[key]).map(([, label]) => label);
     if (missingContract.length) throw new InputError(`Faltan datos del contrato: ${missingContract.join(", ")}.`);
@@ -1064,9 +1077,9 @@ async function firstAvailableRow(env: Env) {
 
 function purchaseIdPrefix(company: string) {
   const normalizedCompany = company.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleUpperCase("es");
-  if (normalizedCompany.includes("TONIFRUIT")) return "TON";
-  if (normalizedCompany.includes("ORGANICA")) return "MRO";
-  throw new InputError("La empresa compradora no permite asignar una serie MRO o TON.");
+  if (normalizedCompany.includes("TONIFRUIT")) return "TN";
+  if (normalizedCompany.includes("ORGANICA")) return "MR";
+  throw new InputError("La empresa compradora no permite asignar una serie MR o TN.");
 }
 
 async function currentPurchaseIds(env: Env) {
@@ -1077,13 +1090,17 @@ async function currentPurchaseIds(env: Env) {
   return (result.values || []).map((row) => String(row[0] ?? "").trim()).filter(Boolean);
 }
 
-async function generatedPurchaseId(env: Env, company: string) {
-  const ids = await currentPurchaseIds(env);
+export function nextPurchaseIdForCompany(ids: string[], company: string) {
+  const prefix = purchaseIdPrefix(company);
   const highest = ids.reduce((maximum, id) => {
-    const match = id.match(/^(?:MRO|TON)-(\d+)$/i);
+    const match = id.match(new RegExp(`^${prefix}-(\\d+)$`, "i"));
     return match ? Math.max(maximum, Number(match[1])) : maximum;
   }, 0);
-  return `${purchaseIdPrefix(company)}-${String(highest + 1).padStart(3, "0")}`;
+  return `${prefix}-${String(highest + 1).padStart(2, "0")}`;
+}
+
+async function generatedPurchaseId(env: Env, company: string) {
+  return nextPurchaseIdForCompany(await currentPurchaseIds(env), company);
 }
 
 async function savePurchase(env: Env, row: number, purchase: PurchasePayload, create = false) {
@@ -1103,8 +1120,8 @@ async function savePurchase(env: Env, row: number, purchase: PurchasePayload, cr
   if (!generatedId) generatedId = await generatedPurchaseId(env, String(purchase.contractDetails.buyerCompany || ""));
   if (create) {
     const expectedPrefix = purchaseIdPrefix(String(purchase.contractDetails.buyerCompany || ""));
-    if (!new RegExp(`^${expectedPrefix}-\\d{3,}$`, "i").test(generatedId)) {
-      throw new InputError(`El identificador debe usar la serie ${expectedPrefix}-XXX.`);
+    if (!new RegExp(`^${expectedPrefix}-\\d{2,}$`, "i").test(generatedId)) {
+      throw new InputError(`El identificador debe usar la serie ${expectedPrefix}-XX.`);
     }
     const existingIds = await currentPurchaseIds(env);
     if (existingIds.some((id) => id.toLocaleUpperCase("es") === generatedId.toLocaleUpperCase("es"))) {

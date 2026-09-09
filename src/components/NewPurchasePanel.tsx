@@ -42,8 +42,8 @@ function blankGeneratedPurchase(previousContractMode: "" | "none" | "archived" |
 
 function buyerCompanyForPurchase(purchase: PurchaseForm): BuyerCompany {
   if (purchase.contractDetails.buyerCompany) return purchase.contractDetails.buyerCompany;
-  if (/^MRO-/i.test(purchase.id)) return "MR. ORGÁNICA, S.L.";
-  if (/^TON-/i.test(purchase.id)) return "TOÑIFRUIT, S.L.";
+  if (/^(?:MR|MRO)-/i.test(purchase.id)) return "MR. ORGÁNICA, S.L.";
+  if (/^(?:TN|TON)-/i.test(purchase.id)) return "TOÑIFRUIT, S.L.";
   return "";
 }
 
@@ -315,6 +315,8 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
         modality: previousContract.modality || "A KILOS",
         collectionBy: previousContract.collectionBy || "Comprador",
         transportBy: previousContract.transportBy || "Comprador",
+        cutMinMm: previousContract.cutMinMm || "",
+        cutMaxMm: previousContract.cutMaxMm || "",
         priceAgreement: previousContract.priceAgreement || "IMPORTE",
         pricePerKg: "",
         totalPrice: "",
@@ -487,10 +489,10 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
               <strong>Empresa compradora <span aria-hidden="true">*</span></strong>
               <div className="contract-choice-grid" role="group" aria-label="Empresa compradora de la compra que se va a importar">
                 <button type="button" className={importBuyerCompany === "TOÑIFRUIT, S.L." ? "selected" : ""} onClick={() => chooseImportBuyerCompany("TOÑIFRUIT, S.L.")}>
-                  <ShoppingBasket size={22} /><span><strong>Toñifruit</strong><small>Mostrar expedientes TON</small></span>{importBuyerCompany === "TOÑIFRUIT, S.L." && <CheckCircle2 size={18} />}
+                  <ShoppingBasket size={22} /><span><strong>Toñifruit</strong><small>Mostrar expedientes TN</small></span>{importBuyerCompany === "TOÑIFRUIT, S.L." && <CheckCircle2 size={18} />}
                 </button>
                 <button type="button" className={importBuyerCompany === "MR. ORGÁNICA, S.L." ? "selected" : ""} onClick={() => chooseImportBuyerCompany("MR. ORGÁNICA, S.L.")}>
-                  <ShoppingBasket size={22} /><span><strong>Mr. Orgánica</strong><small>Mostrar expedientes MRO</small></span>{importBuyerCompany === "MR. ORGÁNICA, S.L." && <CheckCircle2 size={18} />}
+                  <ShoppingBasket size={22} /><span><strong>Mr. Orgánica</strong><small>Mostrar expedientes MR</small></span>{importBuyerCompany === "MR. ORGÁNICA, S.L." && <CheckCircle2 size={18} />}
                 </button>
               </div>
             </div>

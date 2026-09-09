@@ -1171,6 +1171,45 @@ h3,
   grid-column: 1 / -1;
 }
 
+.cut-caliber-box {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #d7e2d1;
+  border-radius: 11px;
+  background: #f4f8f1;
+}
+
+.cut-caliber-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cut-caliber-heading strong {
+  color: var(--green-850);
+  font-size: 0.7rem;
+}
+
+.cut-caliber-heading small {
+  color: #68756b;
+  font-size: 0.61rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+@media (max-width: 619px) {
+  .cut-caliber-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cut-caliber-heading small {
+    text-align: left;
+  }
+}
+
 .destrio-box {
   display: grid;
   gap: 12px;
