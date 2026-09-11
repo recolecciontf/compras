@@ -136,10 +136,17 @@ function isoDate(day: string, month: string, year: string) {
 
 function extractDates(value: string) {
   const dates: string[] = [];
-  const numeric = /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/g;
+  const numeric = /\b(\d{1,2})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{2,4})\b/g;
   for (const match of value.matchAll(numeric)) {
     const date = isoDate(match[1], match[2], match[3]);
     if (date) dates.push(date);
+  }
+  if (!dates.length) {
+    const spaced = /\b(\d{1,2})\s+(\d{1,2})\s+(\d{2,4})\b/g;
+    for (const match of value.matchAll(spaced)) {
+      const date = isoDate(match[1], match[2], match[3]);
+      if (date) dates.push(date);
+    }
   }
   return dates;
 }
@@ -167,6 +174,32 @@ function textFromElement(element: Element) {
     .map((node) => node.textContent || "")
     .join("")
     .trim();
+}
+
+function headerColumns(
+  items: Array<{ x: number; value: string }>,
+  labels: string[],
+) {
+  const columns: Array<{ x: number; value: string }> = [];
+  let searchFrom = 0;
+  for (const label of labels) {
+    let found = -1;
+    for (let index = searchFrom; index < items.length && found < 0; index += 1) {
+      let candidate = "";
+      for (let end = index; end < Math.min(items.length, index + 5); end += 1) {
+        candidate += fold(items[end].value).replace(/[^a-z0-9]/g, "");
+        if (candidate === label) {
+          found = index;
+          break;
+        }
+        if (!label.startsWith(candidate)) break;
+      }
+    }
+    if (found < 0) return [];
+    columns.push({ x: items[found].x, value: label });
+    searchFrom = found + 1;
+  }
+  return columns;
 }
 
 async function extractDocx(file: File): Promise<ExtractedDocument> {
@@ -329,10 +362,23 @@ async function extractPdf(
       const lines = positionedLines.map(({ items }) => items.map((item) => item.value).join(" "));
       positionedLines.forEach((headerLine, headerIndex) => {
         const headerText = fold(headerLine.items.map((item) => item.value).join(" "));
-        const isParcelHeader = headerText.includes("variedad") && headerText.includes("paraje") && headerText.includes("parcela") && headerText.includes("kg");
-        const isCutsHeader = headerText.includes("cortes") && headerText.includes("inicio") && (headerText.includes("terminacion") || headerText.includes("finalizacion"));
+        const compactHeaderText = headerText.replace(/[^a-z0-9]/g, "");
+        const isParcelHeader = compactHeaderText.includes("variedad") && compactHeaderText.includes("paraje") && compactHeaderText.includes("parcela") && compactHeaderText.includes("kg");
+        const isCutsHeader = compactHeaderText.includes("cortes") && compactHeaderText.includes("inicio") && (compactHeaderText.includes("terminacion") || compactHeaderText.includes("finalizacion"));
         if (!isParcelHeader && !isCutsHeader) return;
-        const headerItems = headerLine.items.filter((item) => item.value.trim());
+        const rawHeaderItems = headerLine.items.filter((item) => item.value.trim());
+        const parcelLabels = ["variedad", "situacion", "termino", "paraje", "poligono", "parcela", "ha", "kg"]
+          .filter((label) => ["variedad", "paraje", "parcela", "kg"].includes(label) || compactHeaderText.includes(label));
+        const cutsLabels = [
+          "cortes",
+          "inicio",
+          compactHeaderText.includes("terminacion") ? "terminacion" : "finalizacion",
+          ...(compactHeaderText.includes("demm") ? ["demm"] : []),
+          ...(compactHeaderText.includes("amm") ? ["amm"] : []),
+        ];
+        const headerItems = isParcelHeader
+          ? headerColumns(rawHeaderItems, parcelLabels)
+          : headerColumns(rawHeaderItems, cutsLabels);
         if (headerItems.length < 3) return;
         const rows: string[][] = [headerItems.map((item) => item.value)];
         const columnStarts = headerItems.map((item) => item.x);
@@ -350,7 +396,9 @@ async function extractPdf(
             cells[column] = clean(`${cells[column]} ${item.value}`);
           }
           if (!cells.some(Boolean)) continue;
-          const startsNewRow = Boolean(cells[0]) || Boolean(cells[cells.length - 1]) || rows.length === 1;
+          // Una celda combinada de kg suele aparecer centrada en la siguiente
+          // línea del PDF. Si no hay variedad, pertenece a la fila anterior.
+          const startsNewRow = Boolean(cells[0]) || rows.length === 1;
           if (startsNewRow) rows.push(cells);
           else {
             const previous = rows[rows.length - 1];
@@ -426,6 +474,59 @@ function detectKnownVarieties(text: string, crop: string) {
     .filter((variety, index, all) => !all.slice(0, index).some((longer) => fold(longer).includes(fold(variety))));
 }
 
+function canonicalVariety(value: string, crop: string) {
+  const cleaned = clean(value);
+  if (!cleaned || !crop) return cleaned;
+  const comparable = fold(cleaned);
+  return (PRODUCT_CATALOG[crop] || []).find((variety) => fold(variety) === comparable) || cleaned;
+}
+
+function repairOverflowedLocation(material: MaterialItem) {
+  const trailingPreposition = material.paraje.match(/^(.*?)\s+(DE|DEL)$/i);
+  const municipalityWords = clean(material.municipality).split(" ").filter(Boolean);
+  if (!trailingPreposition || municipalityWords.length < 2) return material;
+  material.paraje = clean(trailingPreposition[1]);
+  municipalityWords.splice(municipalityWords.length - 1, 0, trailingPreposition[2].toLocaleUpperCase("es"));
+  material.municipality = municipalityWords.join(" ");
+  return material;
+}
+
+function mergeMaterialFragments(materials: MaterialItem[], fallbackCrop: string) {
+  const merged: MaterialItem[] = [];
+  let orphanKg = "";
+  for (const source of materials) {
+    const material = emptyMaterial({
+      ...source,
+      crop: source.crop || fallbackCrop,
+      variety: canonicalVariety(source.variety, source.crop || fallbackCrop),
+    });
+    const hasIdentity = Boolean(material.variety || material.situation || material.municipality
+      || material.paraje || material.polygon || material.plot || material.hectares);
+    if (!hasIdentity && material.expectedKg) {
+      orphanKg ||= material.expectedKg;
+      continue;
+    }
+    const previous = merged[merged.length - 1];
+    const sameParcel = previous
+      && fold(previous.variety) === fold(material.variety)
+      && (!previous.polygon || !material.polygon || fold(previous.polygon) === fold(material.polygon));
+    if (sameParcel && !material.expectedKg && (!material.paraje || !previous.paraje)) {
+      previous.situation = clean(`${previous.situation} ${material.situation}`);
+      previous.municipality = clean(`${previous.municipality} ${material.municipality}`);
+      previous.paraje = clean(`${previous.paraje} ${material.paraje}`);
+      previous.polygon = previous.polygon || material.polygon;
+      previous.plot = clean(`${previous.plot} ${material.plot}`);
+      previous.hectares = previous.hectares || material.hectares;
+      continue;
+    }
+    merged.push(material);
+  }
+  if (orphanKg && merged.length && !merged.some((material) => material.expectedKg)) {
+    merged[0].expectedKg = orphanKg;
+  }
+  return merged.map(repairOverflowedLocation);
+}
+
 function tableMaterials(tables: string[][][], fallbackCrop: string) {
   const materials: MaterialItem[] = [];
   for (const rows of tables) {
@@ -454,7 +555,7 @@ function tableMaterials(tables: string[][][], fallbackCrop: string) {
       if (!meaningful || fold(row.join(" ")).includes("identificacion exacta")) continue;
       materials.push(emptyMaterial({
         crop: fallbackCrop,
-        variety,
+        variety: canonicalVariety(variety, fallbackCrop),
         expectedKg: kg,
         situation: at(columns.situation),
         municipality: at(columns.municipality),
@@ -465,7 +566,7 @@ function tableMaterials(tables: string[][][], fallbackCrop: string) {
       }));
     }
   }
-  return materials;
+  return mergeMaterialFragments(materials, fallbackCrop);
 }
 
 function detectKg(text: string) {
@@ -495,8 +596,8 @@ function detectCutDetails(tables: string[][][], text: string) {
     const headers = rows[headerIndex].map(fold);
     const startIndex = headers.findIndex((header) => header.includes("inicio"));
     const endIndex = headers.findIndex((header) => header.includes("terminacion") || header.includes("finalizacion"));
-    const minIndex = headers.findIndex((header) => /(^|\s)de\s*mm($|\s)/.test(header));
-    const maxIndex = headers.findIndex((header) => /(^|\s)a\s*mm($|\s)/.test(header));
+    const minIndex = headers.findIndex((header) => header.replace(/[^a-z0-9]/g, "") === "demm");
+    const maxIndex = headers.findIndex((header) => header.replace(/[^a-z0-9]/g, "") === "amm");
     for (const row of rows.slice(headerIndex + 1)) {
       const dates = extractDates(row.join(" "));
       if (dates.length >= 2) {
@@ -523,6 +624,11 @@ function detectCutDetails(tables: string[][][], text: string) {
       minMm: spanishNumber(dimensions?.[1] || ""),
       maxMm: spanishNumber(dimensions?.[2] || ""),
     };
+  }
+  const cutsSection = text.match(/CORTES\s+INICIO\s+(?:TERMINACI[ÓO]N|FINALIZACI[ÓO]N)([\s\S]{0,350})/i)?.[1] || "";
+  const sectionDates = extractDates(cutsSection);
+  if (sectionDates.length >= 2) {
+    return { start: sectionDates[0], end: sectionDates[1], minMm: "", maxMm: "" };
   }
   return { start: "", end: "", minMm: "", maxMm: "" };
 }
@@ -592,20 +698,20 @@ export async function importPurchaseFromContract(
   }
 
   const sellerBlock = detectPartyBlock(text);
-  const treatmentMatch = sellerBlock.match(/VENDEDOR\s*:\s*(D(?:ON|OÑA|ÑA)?[.ªº]?)/i)?.[1] || "";
+  const treatmentMatch = sellerBlock.match(/VENDEDOR\s*:\s*(D(?:ON|OÑA|ÑA)?\s*[.ªº]?)/i)?.[1] || "";
   const representative = findMatch(sellerBlock, [
-    /VENDEDOR\s*:\s*(?:D(?:ON|OÑA|ÑA)?[.ªº]?\s*)?(.+?)(?=,?\s*(?:con\s+)?(?:DNI|NIF|CIF)\b)/i,
+    /VENDEDOR\s*:\s*(?:D(?:ON|OÑA|ÑA)?\s*[.ªº]?\s*)?([\s\S]+?)(?=,?\s*(?:con\s+)?(?:D\s*\.?\s*N\s*\.?\s*I\.?|N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
   ]);
-  const representativeDni = cleanTaxId(findMatch(sellerBlock, [/(?:DNI|NIF|CIF)\s*[.:]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]));
+  const representativeDni = cleanTaxId(findMatch(sellerBlock, [/(?:D\s*\.?\s*N\s*\.?\s*I\.?|N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)\s*[:.]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]));
   const representedCompany = findMatch(sellerBlock, [
-    /poderes\s+suficientes(?:\s+de|\s+del|\s+de\s+la)\s+(.+?)(?=,\s*con\s+(?:NIF|CIF)\b)/i,
-    /en\s+representaci[óo]n(?:\s+de|\s+del|\s+de\s+la)\s+(.+?)(?=,\s*con\s+(?:NIF|CIF)\b)/i,
+    /poderes\s+suficientes(?:\s+de|\s+del|\s+de\s+la)\s+([\s\S]+?)(?=,\s*con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
+    /en\s+representaci[óo]n(?:\s+de|\s+del|\s+de\s+la)\s+([\s\S]+?)(?=,\s*con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
   ]);
   const representedBlock = representedCompany
     ? sellerBlock.slice(Math.max(0, sellerBlock.indexOf(representedCompany)))
     : "";
   const companyTaxId = representedCompany
-    ? cleanTaxId(findMatch(representedBlock, [/(?:NIF|CIF)\s*[.:]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]))
+    ? cleanTaxId(findMatch(representedBlock, [/(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)\s*[:.]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]))
     : "";
   next.provider = representedCompany || representative;
   next.taxId = companyTaxId || representativeDni;
@@ -616,15 +722,15 @@ export async function importPurchaseFromContract(
   next.contractDetails.sellerDni = representedCompany ? representativeDni : "";
   next.contractDetails.sellerRepresentativeAddress = representedCompany
     ? findMatch(sellerBlock.slice(0, Math.max(0, sellerBlock.indexOf(representedCompany))), [
-      /domicilio\s+en\s+(.+?)(?=,\s*en\s+representaci[óo]n)/i,
+      /domicilio\s+en\s+([\s\S]+?)(?=,\s*en\s+representaci[óo]n)/i,
     ])
     : "";
   next.contractDetails.sellerAddress = representedCompany
     ? findMatch(representedBlock, [
-      /domiciliad[ao]\s+en\s+(.+?)(?=,\s*en\s+adelante|\.\s*(?:Con\s+n[úu]mero|$))/i,
+      /domiciliad[ao]\s+en\s+([\s\S]+?)(?=,\s*en\s+adelante|\.\s*(?:Con\s+n[úu]mero|$))/i,
     ])
     : findMatch(sellerBlock, [
-      /domicilio\s+en\s+(.+?)(?=,\s*(?:en\s+representaci[óo]n|en\s+adelante|con\s+n[úu]mero)|\.\s*(?:Con\s+n[úu]mero|$))/i,
+      /domicilio\s+en\s+([\s\S]+?)(?=\s+con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)|,\s*(?:en\s+representaci[óo]n|en\s+adelante|con\s+n[úu]mero)|\.\s*(?:Con\s+n[úu]mero|$))/i,
     ]);
   next.contractDetails.sellerEmail = findMatch(sellerBlock, [/\b([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})\b/i]);
   if (next.provider) detectedFields.push("Agricultor / razón social");
