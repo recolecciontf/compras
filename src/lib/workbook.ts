@@ -160,6 +160,9 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   draftArchiveFilename: "",
   draftArchivedAt: "",
   emailStatus: "",
+  driveBackupStatus: "",
+  driveBackupFileId: "",
+  driveBackupFilename: "",
   sellerSignedAt: "",
   buyerSignedAt: "",
   signatureMethod: "",
@@ -523,6 +526,7 @@ export class WorkbookClient {
     form.set("sellerEmail", purchase.contractDetails.sellerEmail);
     form.set("companyEmail", purchase.contractDetails.companyEmail);
     form.set("contractNumber", purchase.contractDetails.contractNumber || purchase.id);
+    form.set("buyerCompany", purchase.contractDetails.buyerCompany);
     const response = await fetch(this.endpoint(`/api/rows/${row.tableIndex}/contract`), {
       method: "POST",
       cache: "no-store",
@@ -609,7 +613,7 @@ export class WorkbookClient {
     file: Blob,
     filename: string,
     purchase: PurchaseForm,
-    options: { sendCopies?: boolean } = {},
+    options: { sendCopies?: boolean; documentKind?: "signed_contract" | "generated_draft" } = {},
   ) {
     const form = new FormData();
     form.set("file", file, filename);
@@ -617,6 +621,8 @@ export class WorkbookClient {
     form.set("sellerEmail", purchase.contractDetails.sellerEmail);
     form.set("companyEmail", purchase.contractDetails.companyEmail);
     form.set("contractNumber", purchase.contractDetails.contractNumber || purchase.id);
+    form.set("buyerCompany", purchase.contractDetails.buyerCompany);
+    form.set("documentKind", options.documentKind || "signed_contract");
     form.set("sendCopies", options.sendCopies === false ? "false" : "true");
     const response = await fetch(this.endpoint("/api/contract-files"), {
       method: "POST",
@@ -636,6 +642,9 @@ export class WorkbookClient {
       archiveFilename: string;
       archivedAt: string;
       emailStatus: "sent" | "pending_configuration" | "failed";
+      driveBackupStatus: "stored" | "pending_configuration" | "failed";
+      driveBackupFileId: string;
+      driveBackupFilename: string;
     };
     if (!archived.archiveId || !archived.archiveFilename || !archived.archivedAt) {
       throw new Error("El servidor no ha confirmado el archivo del contrato. El expediente no se ha modificado.");
@@ -648,6 +657,8 @@ export class WorkbookClient {
     form.set("file", file, file.name);
     form.set("provider", purchase.provider);
     form.set("sourcePurchaseId", purchase.contractDetails.previousContractPurchaseId || "");
+    form.set("contractNumber", purchase.contractDetails.contractNumber || purchase.id);
+    form.set("buyerCompany", purchase.contractDetails.buyerCompany);
     const response = await fetch(this.endpoint("/api/previous-contract-files"), {
       method: "POST",
       cache: "no-store",

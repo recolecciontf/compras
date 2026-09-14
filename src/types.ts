@@ -63,6 +63,9 @@ export type ContractDetails = {
   draftArchiveFilename: string;
   draftArchivedAt: string;
   emailStatus: "" | "sent" | "pending_configuration" | "failed";
+  driveBackupStatus: "" | "stored" | "pending_configuration" | "failed";
+  driveBackupFileId: string;
+  driveBackupFilename: string;
   sellerSignedAt: string;
   buyerSignedAt: string;
   signatureMethod: "" | "uploaded" | "in_app" | "external_pending";

@@ -841,6 +841,9 @@ export async function importPurchaseFromContract(
   next.contractDetails.archiveFilename = "";
   next.contractDetails.archivedAt = "";
   next.contractDetails.emailStatus = "";
+  next.contractDetails.driveBackupStatus = "";
+  next.contractDetails.driveBackupFileId = "";
+  next.contractDetails.driveBackupFilename = "";
   next.contractDetails.sellerSignedAt = "";
   next.contractDetails.buyerSignedAt = "";
   next.contractDetails.signatureMethod = "";

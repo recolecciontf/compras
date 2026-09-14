@@ -37,6 +37,11 @@ interface Env {
   GOOGLE_WORKSHEET_NAME?: string;
   GOOGLE_DATA_START_ROW?: string;
   GOOGLE_DATA_END_ROW?: string;
+  GOOGLE_DRIVE_BACKUP_FOLDER_ID?: string;
+  GOOGLE_DRIVE_TN_FOLDER_ID?: string;
+  GOOGLE_DRIVE_MR_FOLDER_ID?: string;
+  GOOGLE_DRIVE_BACKUP_WEBHOOK_URL?: string;
+  GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN?: string;
   CONTRACT_TEMPLATE_KEY: string;
   UVA_TEMPLATE_KEY?: string;
   CONTRACT_FILES?: ContractBucket;
@@ -457,6 +462,109 @@ function safeContractFilename(value: string) {
   return (cleaned || "contrato-firmado").slice(0, 180);
 }
 
+type DriveBackupStatus = "stored" | "pending_configuration" | "failed";
+
+type DriveBackupResult = {
+  status: DriveBackupStatus;
+  fileId: string;
+  filename: string;
+  folderId: string;
+};
+
+export function driveBackupFolderId(env: Env, buyerCompany: string, contractNumber: string) {
+  const identity = `${buyerCompany} ${contractNumber}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleUpperCase("es");
+  if ((identity.includes("MR. ORGANICA") || /\bMRO?-/.test(identity)) && env.GOOGLE_DRIVE_MR_FOLDER_ID) {
+    return env.GOOGLE_DRIVE_MR_FOLDER_ID;
+  }
+  if ((identity.includes("TONIFRUIT") || /\bTN-/.test(identity)) && env.GOOGLE_DRIVE_TN_FOLDER_ID) {
+    return env.GOOGLE_DRIVE_TN_FOLDER_ID;
+  }
+  return env.GOOGLE_DRIVE_BACKUP_FOLDER_ID || "";
+}
+
+function driveBackupFilename(filename: string, provider: string, contractNumber: string, documentKind: string) {
+  const kind = documentKind === "previous_contract_reference"
+    ? "ANTERIOR"
+    : documentKind === "generated_draft" ? "BORRADOR" : "FIRMADO";
+  const date = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid" }).format(new Date());
+  return safeContractFilename(`${date} - ${contractNumber || "SIN REFERENCIA"} - ${provider} - ${kind} - ${filename}`);
+}
+
+async function uploadContractBackupToDrive(
+  env: Env,
+  bytes: ArrayBuffer,
+  metadata: {
+    archiveId: string;
+    filename: string;
+    contentType: string;
+    provider: string;
+    buyerCompany: string;
+    contractNumber: string;
+    documentKind: string;
+  },
+): Promise<DriveBackupResult> {
+  const folderId = driveBackupFolderId(env, metadata.buyerCompany, metadata.contractNumber);
+  if (!folderId || !env.GOOGLE_DRIVE_BACKUP_WEBHOOK_URL || !env.GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN) {
+    return { status: "pending_configuration", fileId: "", filename: "", folderId };
+  }
+
+  const filename = driveBackupFilename(metadata.filename, metadata.provider, metadata.contractNumber, metadata.documentKind);
+  try {
+    const source = new Uint8Array(bytes);
+    let binary = "";
+    for (let offset = 0; offset < source.length; offset += 0x8000) {
+      binary += String.fromCharCode(...source.subarray(offset, Math.min(offset + 0x8000, source.length)));
+    }
+    const response = await fetch(env.GOOGLE_DRIVE_BACKUP_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({
+        token: env.GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN,
+        action: "upload",
+        folderId,
+        filename,
+        contentType: metadata.contentType,
+        archiveId: metadata.archiveId,
+        provider: metadata.provider,
+        contractNumber: metadata.contractNumber,
+        documentKind: metadata.documentKind,
+        fileBase64: btoa(binary),
+      }),
+    });
+    const result = await response.json().catch(() => ({})) as { ok?: boolean; id?: string; name?: string; error?: string };
+    if (!response.ok || !result.ok || !result.id) throw new Error(result.error || "Google Drive no ha aceptado la copia.");
+    return { status: "stored", fileId: result.id, filename: result.name || filename, folderId };
+  } catch (error) {
+    console.error("Drive contract backup failed", error);
+    return { status: "failed", fileId: "", filename, folderId };
+  }
+}
+
+async function googleDriveBackupStatus(env: Env) {
+  const configuredFolders = [
+    ["Copia general", env.GOOGLE_DRIVE_BACKUP_FOLDER_ID],
+    ["Toñifruit", env.GOOGLE_DRIVE_TN_FOLDER_ID],
+    ["Mr. Orgánica", env.GOOGLE_DRIVE_MR_FOLDER_ID],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+  if (!configuredFolders.length || !env.GOOGLE_DRIVE_BACKUP_WEBHOOK_URL || !env.GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN) {
+    return { configured: false, folders: [] };
+  }
+  const folders = await Promise.all(configuredFolders.map(async ([label, id]) => {
+    const response = await fetch(env.GOOGLE_DRIVE_BACKUP_WEBHOOK_URL!, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({ token: env.GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN, action: "status", folderId: id }),
+    });
+    const result = await response.json().catch(() => ({})) as { ok?: boolean; id?: string; name?: string; error?: string };
+    if (!response.ok || !result.ok || !result.id) throw new Error(result.error || `No se puede acceder a ${label}.`);
+    return { label, id: result.id, name: result.name || label };
+  }));
+  return { configured: true, folders };
+}
+
 async function sendContractCopies(
   env: Env,
   bytes: ArrayBuffer,
@@ -501,6 +609,8 @@ async function storeContract(form: FormData, env: Env) {
     sellerEmail: String(form.get("sellerEmail") || "").trim().slice(0, 254),
     companyEmail: String(form.get("companyEmail") || "").trim().slice(0, 254),
     contractNumber: String(form.get("contractNumber") || "").trim().slice(0, 80),
+    buyerCompany: String(form.get("buyerCompany") || "").trim().slice(0, 120),
+    documentKind: String(form.get("documentKind") || "signed_contract").trim().slice(0, 50),
   };
   if (!metadata.provider) throw new InputError("Falta identificar al agricultor o proveedor.");
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -511,7 +621,10 @@ async function storeContract(form: FormData, env: Env) {
   const bytes = await file.arrayBuffer();
   const archiveId = crypto.randomUUID();
   const archivedAt = new Date().toISOString();
-  const putArchive = (emailStatus: "sent" | "pending_configuration" | "failed") => env.CONTRACT_FILES!.put(archiveId, bytes, {
+  const putArchive = (
+    emailStatus: "sent" | "pending_configuration" | "failed",
+    driveBackup: DriveBackupResult,
+  ) => env.CONTRACT_FILES!.put(archiveId, bytes, {
     httpMetadata: { contentType: metadata.contentType },
     customMetadata: {
       filename: metadata.filename,
@@ -519,15 +632,33 @@ async function storeContract(form: FormData, env: Env) {
       sellerEmail: metadata.sellerEmail,
       companyEmail: metadata.companyEmail,
       contractNumber: metadata.contractNumber,
+      buyerCompany: metadata.buyerCompany,
+      documentKind: metadata.documentKind,
       archivedAt,
       emailStatus,
+      driveBackupStatus: driveBackup.status,
+      driveBackupFileId: driveBackup.fileId,
+      driveBackupFilename: driveBackup.filename,
+      driveBackupFolderId: driveBackup.folderId,
     },
   });
-  await putArchive("pending_configuration");
+  const pendingBackup: DriveBackupResult = { status: "pending_configuration", fileId: "", filename: "", folderId: "" };
+  await putArchive("pending_configuration", pendingBackup);
   const sendCopies = String(form.get("sendCopies") || "true").toLocaleLowerCase("es") !== "false";
-  const emailStatus = sendCopies ? await sendContractCopies(env, bytes, metadata) : "pending_configuration";
-  if (emailStatus !== "pending_configuration") await putArchive(emailStatus);
-  return { archiveId, archiveFilename: metadata.filename, archivedAt, emailStatus };
+  const [emailStatus, driveBackup] = await Promise.all([
+    sendCopies ? sendContractCopies(env, bytes, metadata) : Promise.resolve("pending_configuration" as const),
+    uploadContractBackupToDrive(env, bytes, { ...metadata, archiveId }),
+  ]);
+  await putArchive(emailStatus, driveBackup);
+  return {
+    archiveId,
+    archiveFilename: metadata.filename,
+    archivedAt,
+    emailStatus,
+    driveBackupStatus: driveBackup.status,
+    driveBackupFileId: driveBackup.fileId,
+    driveBackupFilename: driveBackup.filename,
+  };
 }
 
 async function archiveContract(request: Request, env: Env) {
@@ -586,17 +717,34 @@ async function storePreviousContract(request: Request, env: Env) {
   const previousContractArchiveId = crypto.randomUUID();
   const previousContractFilename = safeContractFilename(file.name);
   const previousContractStoredAt = new Date().toISOString();
-  await env.CONTRACT_FILES.put(previousContractArchiveId, await file.arrayBuffer(), {
+  const bytes = await file.arrayBuffer();
+  const buyerCompany = String(form.get("buyerCompany") || "").trim().slice(0, 120);
+  const contractNumber = String(form.get("contractNumber") || form.get("sourcePurchaseId") || "").trim().slice(0, 80);
+  const driveBackup = await uploadContractBackupToDrive(env, bytes, {
+    archiveId: previousContractArchiveId,
+    filename: previousContractFilename,
+    contentType: file.type || "application/pdf",
+    provider,
+    buyerCompany,
+    contractNumber,
+    documentKind: "previous_contract_reference",
+  });
+  await env.CONTRACT_FILES.put(previousContractArchiveId, bytes, {
     httpMetadata: { contentType: file.type || "application/pdf" },
     customMetadata: {
       filename: previousContractFilename,
       provider,
       sourcePurchaseId: String(form.get("sourcePurchaseId") || "").trim().slice(0, 80),
+      buyerCompany,
       storedAt: previousContractStoredAt,
       kind: "previous_contract_reference",
+      driveBackupStatus: driveBackup.status,
+      driveBackupFileId: driveBackup.fileId,
+      driveBackupFilename: driveBackup.filename,
+      driveBackupFolderId: driveBackup.folderId,
     },
   });
-  return { previousContractArchiveId, previousContractFilename, previousContractStoredAt };
+  return { previousContractArchiveId, previousContractFilename, previousContractStoredAt, driveBackupStatus: driveBackup.status };
 }
 
 async function copyPreviousContract(value: unknown, env: Env) {
@@ -1269,6 +1417,9 @@ async function replaceArchivedContract(env: Env, row: number, request: Request, 
     archiveFilename: archived.archiveFilename,
     archivedAt: archived.archivedAt,
     emailStatus: archived.emailStatus,
+    driveBackupStatus: archived.driveBackupStatus,
+    driveBackupFileId: archived.driveBackupFileId,
+    driveBackupFilename: archived.driveBackupFilename,
     archiveHistoryJson: JSON.stringify(history.slice(-20)),
   };
 
@@ -1440,6 +1591,11 @@ async function handleApi(request: Request, env: Env) {
   if (url.pathname === "/api/contract-files" && request.method === "POST") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos." }, 403);
     return json(request, env, await archiveContract(request, env), 201);
+  }
+
+  if (url.pathname === "/api/drive-backup/status" && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "La copia externa está restringida al Administrador." }, 403);
+    return json(request, env, await googleDriveBackupStatus(env));
   }
 
   if (url.pathname === "/api/previous-contract-files" && request.method === "POST") {

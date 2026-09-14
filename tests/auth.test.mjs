@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
-const { default: worker, enrichRowsFromPrivateCatalog, nextPurchaseIdForCompany, rowRevision, validatePurchase, verifyExpectedRevision } = await import(workerUrl.href);
+const { default: worker, driveBackupFolderId, enrichRowsFromPrivateCatalog, nextPurchaseIdForCompany, rowRevision, validatePurchase, verifyExpectedRevision } = await import(workerUrl.href);
 const storedContracts = new Map();
 
 const env = {
@@ -33,6 +33,67 @@ const env = {
 function api(path, init = {}) {
   return worker.fetch(new Request(`https://app.example${path}`, init), env);
 }
+
+test("separa la copia externa por empresa y mantiene una carpeta general de respaldo", () => {
+  const folders = {
+    GOOGLE_DRIVE_BACKUP_FOLDER_ID: "general",
+    GOOGLE_DRIVE_TN_FOLDER_ID: "tonifruit",
+    GOOGLE_DRIVE_MR_FOLDER_ID: "mr-organica",
+  };
+  assert.equal(driveBackupFolderId(folders, "TOÑIFRUIT, S.L.", "TN-01"), "tonifruit");
+  assert.equal(driveBackupFolderId(folders, "MR. ORGÁNICA, S.L.", "MR-01"), "mr-organica");
+  assert.equal(driveBackupFolderId(folders, "", "SIN-REFERENCIA"), "general");
+});
+
+test("duplica en Google Drive el contrato que se archiva", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const driveEnv = {
+    ...env,
+    GOOGLE_DRIVE_BACKUP_FOLDER_ID: "general-folder",
+    GOOGLE_DRIVE_TN_FOLDER_ID: "tonifruit-folder",
+    GOOGLE_DRIVE_MR_FOLDER_ID: "mr-folder",
+    GOOGLE_DRIVE_BACKUP_WEBHOOK_URL: "https://script.example.invalid/backup",
+    GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN: "test-backup-token",
+  };
+  const originalFetch = globalThis.fetch;
+  let uploadedBody = "";
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url === driveEnv.GOOGLE_DRIVE_BACKUP_WEBHOOK_URL) {
+      uploadedBody = String(init.body || "");
+      return Response.json({ ok: true, id: "drive-file-1", name: "copia-contrato.pdf" });
+    }
+    throw new Error(`Petición externa inesperada: ${url}`);
+  };
+  try {
+    const form = new FormData();
+    form.set("file", new Blob(["copia independiente"], { type: "application/pdf" }), "contrato.pdf");
+    form.set("provider", "Agricultor de respaldo");
+    form.set("contractNumber", "TN-01");
+    form.set("buyerCompany", "TOÑIFRUIT, S.L.");
+    form.set("sendCopies", "false");
+    const upload = await worker.fetch(new Request("https://app.example/api/contract-files", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    }), driveEnv);
+    assert.equal(upload.status, 201);
+    const archived = await upload.json();
+    assert.equal(archived.driveBackupStatus, "stored");
+    assert.equal(archived.driveBackupFileId, "drive-file-1");
+    assert.match(uploadedBody, /tonifruit-folder/);
+    assert.match(uploadedBody, /TN-01/);
+    assert.match(uploadedBody, /Agricultor de respaldo/);
+    assert.equal(storedContracts.get(archived.archiveId).customMetadata.driveBackupStatus, "stored");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("sirve la PWA aunque el alojamiento no inyecte los archivos estÃ¡ticos", async () => {
   const response = await api("/");
@@ -352,6 +413,7 @@ test("archiva y descarga una copia firmada sin exponerla públicamente", async (
   const archived = await upload.json();
   assert.equal(archived.archiveFilename, "contrato-firmado.pdf");
   assert.equal(archived.emailStatus, "pending_configuration");
+  assert.equal(archived.driveBackupStatus, "pending_configuration");
 
   const unauthenticated = await api(`/api/contract-files/${archived.archiveId}`);
   assert.equal(unauthenticated.status, 401);

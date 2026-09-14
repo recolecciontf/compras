@@ -169,6 +169,9 @@ type ArchivedContract = {
   archiveFilename: string;
   archivedAt: string;
   emailStatus: "sent" | "pending_configuration" | "failed";
+  driveBackupStatus: "stored" | "pending_configuration" | "failed";
+  driveBackupFileId: string;
+  driveBackupFilename: string;
 };
 
 function withArchivedGeneratedContract(purchase: PurchaseForm, archived: ArchivedContract): PurchaseForm {
@@ -181,6 +184,9 @@ function withArchivedGeneratedContract(purchase: PurchaseForm, archived: Archive
       draftArchiveId: archived.archiveId,
       draftArchiveFilename: archived.archiveFilename,
       draftArchivedAt: archived.archivedAt,
+      driveBackupStatus: archived.driveBackupStatus,
+      driveBackupFileId: archived.driveBackupFileId,
+      driveBackupFilename: archived.driveBackupFilename,
     },
   };
 }
@@ -617,7 +623,7 @@ export default function App() {
               operation.contractArtifact.blob,
               operation.contractArtifact.filename,
               finalPurchase,
-              { sendCopies: false },
+              { sendCopies: false, documentKind: "generated_draft" },
             );
             finalPurchase = withArchivedGeneratedContract(finalPurchase, archived);
             const persistedPurchase = finalId === originalId ? finalPurchase : {
@@ -1019,7 +1025,7 @@ export default function App() {
             },
           };
           offlineCandidate = preparedPurchase;
-          const archived = await client.archiveContract(artifact.blob, artifact.filename, identifiedPurchase, { sendCopies: false });
+          const archived = await client.archiveContract(artifact.blob, artifact.filename, identifiedPurchase, { sendCopies: false, documentKind: "generated_draft" });
           preparedPurchase = withArchivedGeneratedContract(preparedPurchase, archived);
           offlineCandidate = preparedPurchase;
         } else {

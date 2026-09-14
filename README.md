@@ -41,6 +41,9 @@ Estos valores se configuran como secretos del alojamiento y nunca se añaden al 
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
 - `GOOGLE_PRIVATE_KEY`
 - `GOOGLE_SPREADSHEET_ID`
+- `GOOGLE_DRIVE_BACKUP_FOLDER_ID` (carpeta general de copia de seguridad)
+- `GOOGLE_DRIVE_TN_FOLDER_ID` y `GOOGLE_DRIVE_MR_FOLDER_ID` (subcarpetas por empresa)
+- `GOOGLE_DRIVE_BACKUP_WEBHOOK_URL` y `GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN` (puente privado que crea las copias bajo la cuenta propietaria de Drive)
 - `CONTRACT_TEMPLATE_KEY` (clave AES de los modelos contractuales cifrados)
 
 También se pueden configurar:
@@ -49,6 +52,8 @@ También se pueden configurar:
 - `GOOGLE_DATA_START_ROW` (por defecto, `9`)
 - `GOOGLE_DATA_END_ROW` (por defecto, `108`)
 - `ALLOWED_ORIGINS` (orígenes autorizados separados por comas)
+
+Cada contrato PDF o Word archivado se conserva en el almacén privado de la aplicación y, si las carpetas de Drive están configuradas, se duplica automáticamente en Google Drive. El puente privado se ejecuta con la cuenta propietaria de las carpetas y solo acepta peticiones autenticadas con su secreto.
 
 ## Modelos contractuales
 
