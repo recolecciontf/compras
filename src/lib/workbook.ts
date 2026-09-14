@@ -156,6 +156,9 @@ const CONTRACT_DEFAULTS: ContractDetails = {
   archiveId: "",
   archiveFilename: "",
   archivedAt: "",
+  draftArchiveId: "",
+  draftArchiveFilename: "",
+  draftArchivedAt: "",
   emailStatus: "",
   sellerSignedAt: "",
   buyerSignedAt: "",
@@ -370,7 +373,7 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
 
 export class ArchiveUnavailableError extends Error {
   constructor() {
-    super("El archivo central de contratos no está disponible. El PDF no se ha marcado como archivado ni firmado; vuelve a intentarlo cuando se restablezca el servicio.");
+    super("El archivo central de contratos no está disponible. El documento no se ha marcado como archivado ni firmado; vuelve a intentarlo cuando se restablezca el servicio.");
     this.name = "ArchiveUnavailableError";
   }
 }
@@ -602,13 +605,19 @@ export class WorkbookClient {
     for (const name of names) await this.contractTemplate(name);
   }
 
-  async archiveContract(file: Blob, filename: string, purchase: PurchaseForm) {
+  async archiveContract(
+    file: Blob,
+    filename: string,
+    purchase: PurchaseForm,
+    options: { sendCopies?: boolean } = {},
+  ) {
     const form = new FormData();
     form.set("file", file, filename);
     form.set("provider", purchase.provider);
     form.set("sellerEmail", purchase.contractDetails.sellerEmail);
     form.set("companyEmail", purchase.contractDetails.companyEmail);
     form.set("contractNumber", purchase.contractDetails.contractNumber || purchase.id);
+    form.set("sendCopies", options.sendCopies === false ? "false" : "true");
     const response = await fetch(this.endpoint("/api/contract-files"), {
       method: "POST",
       cache: "no-store",
@@ -620,7 +629,7 @@ export class WorkbookClient {
       if (response.status === 404 || response.status === 503 || detail.error?.includes("archivo central")) {
         throw new ArchiveUnavailableError();
       }
-      throw new Error(detail.error || "No se ha podido archivar el contrato firmado.");
+      throw new Error(detail.error || "No se ha podido archivar el contrato.");
     }
     const archived = await response.json() as {
       archiveId: string;

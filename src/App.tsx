@@ -58,6 +58,8 @@ import {
   queueOfflineCreate,
   queueOfflineUpdate,
   removeOfflineOperation,
+  updateOfflineCreate,
+  type OfflineContractArtifact,
 } from "./lib/offlineStore";
 import {
   contractArchiveHistory,
@@ -153,13 +155,34 @@ function belongsInExpiredQueue(row: ControlRow) {
 }
 
 function hasDocumentedContract(row: ControlRow) {
-  if (/archivo central|biblioteca contractual privada/i.test(row.documentPath)) return true;
+  if (/biblioteca contractual privada/i.test(row.documentPath)) return true;
   try {
     const details = JSON.parse(row.contractDetailsJson || "{}") as { archiveId?: unknown };
     return Boolean(String(details.archiveId || "").trim());
   } catch {
     return false;
   }
+}
+
+type ArchivedContract = {
+  archiveId: string;
+  archiveFilename: string;
+  archivedAt: string;
+  emailStatus: "sent" | "pending_configuration" | "failed";
+};
+
+function withArchivedGeneratedContract(purchase: PurchaseForm, archived: ArchivedContract): PurchaseForm {
+  const awaitingSeller = purchase.contractDetails.signatureMethod === "external_pending";
+  return {
+    ...purchase,
+    documentPath: `Copia generada guardada: ${archived.archiveFilename} · ${awaitingSeller ? "Pendiente de firma del agricultor" : "Pendiente de firma digital del comprador"}`,
+    contractDetails: {
+      ...purchase.contractDetails,
+      draftArchiveId: archived.archiveId,
+      draftArchiveFilename: archived.archiveFilename,
+      draftArchivedAt: archived.archivedAt,
+    },
+  };
 }
 
 function matchesRecordFilter(row: ControlRow, filter: RecordFilter) {
@@ -262,6 +285,7 @@ export default function App() {
   const autoSaveTimer = useRef<number | null>(null);
   const autoSaveBusy = useRef(false);
   const pendingAutoSave = useRef<AutoSaveTask | null>(null);
+  const offlineSyncBusy = useRef(false);
   const reviewFingerprint = useRef("");
   const purchaseFingerprint = useRef("");
   const loadedRowIndex = useRef<number | null>(null);
@@ -560,33 +584,61 @@ export default function App() {
   }
 
   async function synchronizeOfflineChanges() {
-    if (!client || !signedIn || demoMode || !navigator.onLine || syncingOffline) return;
+    if (!client || !signedIn || demoMode || !navigator.onLine || offlineSyncBusy.current) return;
     const operations = await listOfflineOperations();
     if (!operations.length) {
       setPendingOfflineCount(0);
       setOfflineSession(false);
       return;
     }
+    offlineSyncBusy.current = true;
     setSyncingOffline(true);
     try {
       let currentRows = await client.rows();
       const synchronizedIds = new Map<string, string>();
       for (const operation of operations) {
         if (operation.kind === "create") {
-          const existing = currentRows.find((row) => row.id === operation.purchase.id);
-          if (existing && existing.provider === operation.purchase.provider && existing.taxId === operation.purchase.taxId) {
-            synchronizedIds.set(operation.purchase.id, existing.id);
-          } else {
-            const finalId = existing
-              ? nextPurchaseId(currentRows, operation.purchase.contractDetails.buyerCompany)
-              : operation.purchase.id;
-            const finalPurchase = finalId === operation.purchase.id ? operation.purchase : {
-              ...operation.purchase,
-              id: finalId,
-              contractDetails: { ...operation.purchase.contractDetails, contractNumber: finalId },
+          const originalId = operation.purchase.id;
+          const existingById = currentRows.find((row) => row.id === originalId);
+          const samePurchase = existingById
+            && existingById.provider === operation.purchase.provider
+            && existingById.taxId === operation.purchase.taxId;
+          const finalId = existingById && !samePurchase
+            ? nextPurchaseId(currentRows, operation.purchase.contractDetails.buyerCompany)
+            : originalId;
+          let finalPurchase = finalId === originalId ? operation.purchase : {
+            ...operation.purchase,
+            id: finalId,
+            contractDetails: { ...operation.purchase.contractDetails, contractNumber: finalId },
+          };
+
+          if (operation.contractArtifact && !finalPurchase.contractDetails.draftArchiveId) {
+            const archived = await client.archiveContract(
+              operation.contractArtifact.blob,
+              operation.contractArtifact.filename,
+              finalPurchase,
+              { sendCopies: false },
+            );
+            finalPurchase = withArchivedGeneratedContract(finalPurchase, archived);
+            const persistedPurchase = finalId === originalId ? finalPurchase : {
+              ...finalPurchase,
+              id: originalId,
+              contractDetails: { ...finalPurchase.contractDetails, contractNumber: operation.purchase.contractDetails.contractNumber || originalId },
             };
+            await updateOfflineCreate(operation, persistedPurchase, undefined);
+          }
+
+          if (samePurchase && existingById) {
+            const storedPurchase = purchaseFromRow(existingById);
+            if (finalPurchase.contractDetails.draftArchiveId
+              && storedPurchase.contractDetails.draftArchiveId !== finalPurchase.contractDetails.draftArchiveId) {
+              await client.savePurchase(existingById, finalPurchase);
+              currentRows = await client.rows();
+            }
+            synchronizedIds.set(originalId, existingById.id);
+          } else {
             const created = await client.createPurchase(finalPurchase);
-            synchronizedIds.set(operation.purchase.id, created.id);
+            synchronizedIds.set(originalId, created.id);
             currentRows = await client.rows();
           }
         } else {
@@ -633,6 +685,7 @@ export default function App() {
         setError(reason instanceof Error ? reason.message : "No se han podido sincronizar los cambios sin conexión.");
       }
     } finally {
+      offlineSyncBusy.current = false;
       setSyncingOffline(false);
     }
   }
@@ -640,6 +693,28 @@ export default function App() {
   useEffect(() => {
     if (isOnline && signedIn && client && !demoMode) void synchronizeOfflineChanges();
   }, [isOnline, signedIn, client, demoMode]);
+
+  useEffect(() => {
+    if (!pendingOfflineCount || !signedIn || !client || demoMode) return;
+    const retry = () => {
+      if (!navigator.onLine || document.visibilityState === "hidden") return;
+      setIsOnline(true);
+      void synchronizeOfflineChanges();
+    };
+    const initialRetry = window.setTimeout(retry, 500);
+    const retryTimer = window.setInterval(retry, 30_000);
+    const retryWhenVisible = () => {
+      if (document.visibilityState === "visible") retry();
+    };
+    window.addEventListener("focus", retry);
+    document.addEventListener("visibilitychange", retryWhenVisible);
+    return () => {
+      window.clearTimeout(initialRetry);
+      window.clearInterval(retryTimer);
+      window.removeEventListener("focus", retry);
+      document.removeEventListener("visibilitychange", retryWhenVisible);
+    };
+  }, [pendingOfflineCount, signedIn, client, demoMode]);
 
   async function refresh(silent = false) {
     if (demoMode) {
@@ -818,6 +893,7 @@ export default function App() {
     setSaving(true);
     setError("");
     let offlineCandidate: PurchaseForm | null = null;
+    let offlineContractArtifact: OfflineContractArtifact | undefined;
     try {
       const assignedId = nextPurchase.id || nextPurchaseId(rows, nextPurchase.contractDetails.buyerCompany);
       let identifiedPurchase: PurchaseForm = {
@@ -877,6 +953,7 @@ export default function App() {
           signatures,
           contractSubmission.format,
         );
+        offlineContractArtifact = artifact;
         triggerDownload(artifact.blob, artifact.filename);
         preparedPurchase = {
           ...identifiedPurchase,
@@ -926,6 +1003,7 @@ export default function App() {
         if (contractSubmission.mode !== "existing") {
           const signatures = contractSubmission.mode === "generated" ? contractSubmission.signatures : undefined;
           const artifact = await generateContractPackage(identifiedPurchase, (name) => client.contractTemplate(name), signatures, contractSubmission.format);
+          offlineContractArtifact = artifact;
           triggerDownload(artifact.blob, artifact.filename);
           preparedPurchase = {
             ...identifiedPurchase,
@@ -940,6 +1018,10 @@ export default function App() {
               emailStatus: "pending_configuration",
             },
           };
+          offlineCandidate = preparedPurchase;
+          const archived = await client.archiveContract(artifact.blob, artifact.filename, identifiedPurchase, { sendCopies: false });
+          preparedPurchase = withArchivedGeneratedContract(preparedPurchase, archived);
+          offlineCandidate = preparedPurchase;
         } else {
           const artifact = { blob: contractSubmission.file as Blob, filename: contractSubmission.file.name };
           const archived = await client.archiveContract(artifact.blob, artifact.filename, identifiedPurchase);
@@ -991,7 +1073,7 @@ export default function App() {
       } else if (!isOnline) {
         createdIndex = Math.min(-1, ...rows.map((row) => row.tableIndex)) - 1;
         const offlineRow = rowFromOfflinePurchase(preparedPurchase, createdIndex);
-        await queueOfflineCreate(preparedPurchase, createdIndex);
+        await queueOfflineCreate(preparedPurchase, createdIndex, offlineContractArtifact);
         const nextRows = [...rows, offlineRow];
         await storeRowsLocally(nextRows);
         await updateOfflineCount();
@@ -1017,9 +1099,9 @@ export default function App() {
       setToast(!isOnline
         ? "Compra guardada en el dispositivo. Se sincronizará automáticamente cuando vuelva internet."
         : contractSubmission.mode === "generated"
-        ? `Compra creada y ${generatedFormat} descargado. Pendiente de firma digital del comprador, archivo y AICA.`
+        ? `Compra creada, ${generatedFormat} descargado y copia guardada. Pendiente de firma digital del comprador y AICA.`
         : contractSubmission.mode === "unsigned"
-        ? `Compra creada y ${generatedFormat} descargado. Pendiente de firma del agricultor, devolución, archivo y AICA.`
+        ? `Compra creada, ${generatedFormat} descargado y copia guardada. Pendiente de firma del agricultor, devolución y AICA.`
         : preparedPurchase.contractDetails.emailStatus === "sent"
         ? "Compra creada, contrato archivado y copias enviadas."
         : preparedPurchase.contractDetails.archiveId
@@ -1030,7 +1112,11 @@ export default function App() {
       if (!demoMode && offlineCandidate && isNetworkUnavailable(reason)) {
         const createdIndex = Math.min(-1, ...rows.map((row) => row.tableIndex)) - 1;
         const offlineRow = rowFromOfflinePurchase(offlineCandidate, createdIndex);
-        await queueOfflineCreate(offlineCandidate, createdIndex);
+        await queueOfflineCreate(
+          offlineCandidate,
+          createdIndex,
+          offlineCandidate.contractDetails.draftArchiveId ? undefined : offlineContractArtifact,
+        );
         await storeRowsLocally([...rows, offlineRow]);
         await updateOfflineCount();
         setIsOnline(false);
@@ -2021,6 +2107,7 @@ function ReviewPanel({
 
   const hasSignedContract = ["sí", "si"].includes(purchase.contractSigned.trim().toLocaleLowerCase("es"));
   const hasArchivedContract = Boolean(purchase.contractDetails.archiveId);
+  const hasArchivedDraft = Boolean(purchase.contractDetails.draftArchiveId);
   const awaitsExternalSignature = purchase.contractDetails.signatureMethod === "external_pending";
   const canAttachFinalContract = hasSignedContract || Boolean(purchase.contractDetails.sellerSignedAt) || awaitsExternalSignature;
   const selectedCertifications = certificationSelection(review.certificateType);
@@ -2106,9 +2193,9 @@ function ReviewPanel({
               {hasArchivedContract
                 ? `Copia central: ${purchase.contractDetails.archiveFilename || "contrato firmado"}. Disponible para los usuarios autorizados.`
                 : awaitsExternalSignature
-                  ? "Envía el PDF al agricultor. Cuando lo devuelva firmado, adjunta aquí la copia definitiva; después podrá completarse la firma de la empresa y validarse el registro en AICA."
+                  ? `${hasArchivedDraft ? "La copia generada ya está guardada. " : ""}Envía el PDF al agricultor. Cuando lo devuelva firmado, adjunta aquí la copia definitiva; después podrá completarse la firma de la empresa y validarse el registro en AICA.`
                 : canAttachFinalContract
-                  ? "Tras la firma digital de la empresa, adjunta el PDF definitivo. Después podrá validarse el registro en AICA."
+                  ? `${hasArchivedDraft ? "La copia generada ya está guardada. " : ""}Tras la firma digital de la empresa, adjunta el PDF definitivo. Después podrá validarse el registro en AICA.`
                   : "Puedes descargar una copia PDF estable o el documento Word. Si hay varias especies, se descarga un contrato por especie."}
             </small>
           </span>
@@ -2119,6 +2206,9 @@ function ReviewPanel({
           <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload()}><Download size={18} /> {saving ? "Descargando…" : "Descargar contrato firmado"}</button>
         ) : canAttachFinalContract && !readOnly ? (
           <div className="contract-panel-actions">
+            {hasArchivedDraft && (
+              <button className="secondary-button" type="button" disabled={saving} onClick={() => void onArchivedContractDownload(purchase.contractDetails.draftArchiveId)}><Download size={18} /> Descargar copia guardada</button>
+            )}
             {awaitsExternalSignature && <>
               <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload("pdf")}><Download size={18} /> {saving ? "Generando…" : "Descargar PDF sin firmas"}</button>
               <button className="secondary-button" type="button" disabled={saving} onClick={() => void onContractDownload("docx")}><Download size={18} /> {saving ? "Generando…" : "Descargar Word sin firmas"}</button>

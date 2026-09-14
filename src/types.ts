@@ -59,6 +59,9 @@ export type ContractDetails = {
   archiveId: string;
   archiveFilename: string;
   archivedAt: string;
+  draftArchiveId: string;
+  draftArchiveFilename: string;
+  draftArchivedAt: string;
   emailStatus: "" | "sent" | "pending_configuration" | "failed";
   sellerSignedAt: string;
   buyerSignedAt: string;

@@ -484,14 +484,15 @@ async function sendContractCopies(
 async function storeContract(form: FormData, env: Env) {
   if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
   const file = form.get("file");
-  if (!(file instanceof File)) throw new InputError("Adjunta el contrato firmado.");
+  if (!(file instanceof File)) throw new InputError("Adjunta el contrato.");
   if (file.size <= 0 || file.size > 10 * 1024 * 1024) throw new InputError("El contrato debe ocupar entre 1 byte y 10 MB.");
   const allowed = [
     "application/pdf",
     "application/octet-stream",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ];
-  if (file.type && !allowed.includes(file.type)) throw new InputError("El contrato firmado debe ser un PDF.");
-  if (!/\.pdf$/i.test(file.name)) throw new InputError("El archivo debe tener extensión PDF.");
+  if (file.type && !allowed.includes(file.type)) throw new InputError("El contrato debe ser un archivo PDF o Word.");
+  if (!/\.(pdf|docx)$/i.test(file.name)) throw new InputError("El archivo debe tener extensión PDF o DOCX.");
 
   const metadata = {
     filename: safeContractFilename(file.name),
@@ -523,7 +524,8 @@ async function storeContract(form: FormData, env: Env) {
     },
   });
   await putArchive("pending_configuration");
-  const emailStatus = await sendContractCopies(env, bytes, metadata);
+  const sendCopies = String(form.get("sendCopies") || "true").toLocaleLowerCase("es") !== "false";
+  const emailStatus = sendCopies ? await sendContractCopies(env, bytes, metadata) : "pending_configuration";
   if (emailStatus !== "pending_configuration") await putArchive(emailStatus);
   return { archiveId, archiveFilename: metadata.filename, archivedAt, emailStatus };
 }

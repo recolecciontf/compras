@@ -24,9 +24,15 @@ export type OfflineOperation =
       id: string;
       kind: "create";
       purchase: PurchaseForm;
+      contractArtifact?: OfflineContractArtifact;
       temporaryRowIndex: number;
       createdAt: string;
     };
+
+export type OfflineContractArtifact = {
+  blob: Blob;
+  filename: string;
+};
 
 type StoredValue<T> = { key: string; value: T; savedAt: string };
 
@@ -144,14 +150,33 @@ export async function queueOfflineUpdate(
   return operation;
 }
 
-export async function queueOfflineCreate(purchase: PurchaseForm, temporaryRowIndex: number) {
+export async function queueOfflineCreate(
+  purchase: PurchaseForm,
+  temporaryRowIndex: number,
+  contractArtifact?: OfflineContractArtifact,
+) {
   const operation: Extract<OfflineOperation, { kind: "create" }> = {
     id: crypto.randomUUID(),
     kind: "create",
     purchase,
+    contractArtifact,
     temporaryRowIndex,
     createdAt: new Date().toISOString(),
   };
   await withStore(QUEUE_STORE, "readwrite", (store) => store.put(operation));
   return operation;
+}
+
+export async function updateOfflineCreate(
+  operation: Extract<OfflineOperation, { kind: "create" }>,
+  purchase: PurchaseForm,
+  contractArtifact: OfflineContractArtifact | undefined,
+) {
+  const updated: Extract<OfflineOperation, { kind: "create" }> = {
+    ...operation,
+    purchase,
+    contractArtifact,
+  };
+  await withStore(QUEUE_STORE, "readwrite", (store) => store.put(updated));
+  return updated;
 }

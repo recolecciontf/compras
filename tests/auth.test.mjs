@@ -364,6 +364,40 @@ test("archiva y descarga una copia firmada sin exponerla públicamente", async (
   assert.equal(await download.text(), "contrato firmado");
 });
 
+test("archiva una copia Word generada sin tratarla como envío firmado", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const form = new FormData();
+  form.set(
+    "file",
+    new Blob(["contrato generado"], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }),
+    "contrato-generado.docx",
+  );
+  form.set("provider", "Agricultor de prueba");
+  form.set("contractNumber", "TN-01");
+  form.set("sendCopies", "false");
+  const upload = await api("/api/contract-files", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  assert.equal(upload.status, 201);
+  const archived = await upload.json();
+  assert.equal(archived.archiveFilename, "contrato-generado.docx");
+  assert.equal(archived.emailStatus, "pending_configuration");
+
+  const download = await api(`/api/contract-files/${archived.archiveId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(download.status, 200);
+  assert.match(download.headers.get("content-disposition"), /contrato-generado\.docx/);
+  assert.equal(await download.text(), "contrato generado");
+});
+
 test("guarda o copia un contrato anterior como referencia independiente", async () => {
   const login = await api("/api/login", {
     method: "POST",
