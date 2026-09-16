@@ -32,6 +32,7 @@ export const EMPTY_CONTRACT_DETAILS: ContractDetails = {
   modality: "A KILOS",
   collectionBy: "Comprador",
   transportBy: "Comprador",
+  cutDescription: "",
   cutMinMm: "",
   cutMaxMm: "",
   priceAgreement: "IMPORTE",
@@ -228,8 +229,9 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
           <label className="field required-field"><span>Recolección por cuenta de</span><select required disabled={disabled} value={contract.collectionBy} onChange={(event) => updateContract("collectionBy", event.target.value as ContractDetails["collectionBy"])}><option>Vendedor</option><option>Comprador</option></select></label>
           <label className="field required-field"><span>Transporte por cuenta de</span><select required disabled={disabled} value={contract.transportBy} onChange={(event) => updateContract("transportBy", event.target.value as ContractDetails["transportBy"])}><option>Vendedor</option><option>Comprador</option></select></label>
           <div className="cut-caliber-box field-span">
-            <div className="cut-caliber-heading"><strong>Calibre de corte</strong><small>Opcional · se trasladará a las columnas «De mm» y «A mm» del contrato</small></div>
+            <div className="cut-caliber-heading"><strong>Corte y calibre</strong><small>Datos opcionales · solo se trasladarán al contrato cuando se indiquen</small></div>
             <div className="two-columns">
+              <label className="field field-span"><span>Corte</span><input disabled={disabled} value={contract.cutDescription} onChange={(event) => updateContract("cutDescription", event.target.value)} placeholder="Primer corte, segundo corte, todo limón…" /></label>
               <label className="field"><span>Mínimo (mm)</span><input disabled={disabled} type="number" min="0.1" step="0.1" inputMode="decimal" value={contract.cutMinMm} onChange={(event) => updateContract("cutMinMm", event.target.value)} placeholder="De mm" /></label>
               <label className="field"><span>Máximo (mm)</span><input disabled={disabled} type="number" min="0.1" step="0.1" inputMode="decimal" value={contract.cutMaxMm} onChange={(event) => updateContract("cutMaxMm", event.target.value)} placeholder="A mm" /></label>
             </div>

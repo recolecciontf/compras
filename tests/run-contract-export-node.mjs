@@ -78,6 +78,7 @@ function purchase(company, crop, variety) {
       modality: "A KILOS",
       collectionBy: "Comprador",
       transportBy: "Comprador",
+      cutDescription: "Primer corte",
       cutMinMm: "55",
       cutMaxMm: "75",
       priceAgreement: crop === "Pomelo" ? "A RESULTAS" : "IMPORTE",

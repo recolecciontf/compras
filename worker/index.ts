@@ -1167,15 +1167,13 @@ export function validatePurchase(purchase: PurchasePayload, requireComplete = tr
       }
       const cutMinMm = String(purchase.contractDetails.cutMinMm || "").trim();
       const cutMaxMm = String(purchase.contractDetails.cutMaxMm || "").trim();
-      if (Boolean(cutMinMm) !== Boolean(cutMaxMm)) {
-        throw new InputError("Indica los dos límites del calibre de corte: mínimo y máximo.");
+      const minimum = cutMinMm ? Number(cutMinMm.replace(",", ".")) : null;
+      const maximum = cutMaxMm ? Number(cutMaxMm.replace(",", ".")) : null;
+      if ((minimum !== null && (!Number.isFinite(minimum) || minimum <= 0))
+        || (maximum !== null && (!Number.isFinite(maximum) || maximum <= 0))) {
+        throw new InputError("Los milímetros indicados deben ser números superiores a cero.");
       }
-      if (cutMinMm && cutMaxMm) {
-        const minimum = Number(cutMinMm.replace(",", "."));
-        const maximum = Number(cutMaxMm.replace(",", "."));
-        if (!Number.isFinite(minimum) || minimum <= 0 || !Number.isFinite(maximum) || maximum <= 0) {
-          throw new InputError("Los milímetros mínimo y máximo deben ser números superiores a cero.");
-        }
+      if (minimum !== null && maximum !== null) {
         if (minimum > maximum) throw new InputError("El calibre mínimo no puede ser superior al máximo.");
       }
     }

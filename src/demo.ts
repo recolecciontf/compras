@@ -17,6 +17,7 @@ function demoContractDetails(overrides: Record<string, string>) {
     modality: "A KILOS",
     collectionBy: "Comprador",
     transportBy: "Comprador",
+    cutDescription: "Primer corte",
     cutMinMm: "55",
     cutMaxMm: "75",
     priceAgreement: "IMPORTE",

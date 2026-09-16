@@ -784,7 +784,7 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     if (cutRows[1]) {
       const cutCells = cells(cutRows[1]);
       [
-        "1",
+        details.cutDescription || "",
         shortDate(purchase.contractStart),
         shortDate(purchase.contractEnd),
         details.cutMinMm ? numberEs(details.cutMinMm) : "",
@@ -1022,15 +1022,13 @@ export function validateContractGeneration(purchase: PurchaseForm) {
   if (details.priceAgreement !== "A RESULTAS" && details.pricePerKg && details.totalPrice) {
     throw new Error("Indica solo un tipo de precio: precio por kg o precio total.");
   }
-  if (Boolean(details.cutMinMm) !== Boolean(details.cutMaxMm)) {
-    throw new Error("Indica los dos límites del calibre de corte: mínimo y máximo.");
+  const minimum = details.cutMinMm ? Number(details.cutMinMm.replace(",", ".")) : null;
+  const maximum = details.cutMaxMm ? Number(details.cutMaxMm.replace(",", ".")) : null;
+  if ((minimum !== null && (!Number.isFinite(minimum) || minimum <= 0))
+    || (maximum !== null && (!Number.isFinite(maximum) || maximum <= 0))) {
+    throw new Error("Los milímetros indicados deben ser números superiores a cero.");
   }
-  if (details.cutMinMm && details.cutMaxMm) {
-    const minimum = Number(details.cutMinMm.replace(",", "."));
-    const maximum = Number(details.cutMaxMm.replace(",", "."));
-    if (!Number.isFinite(minimum) || minimum <= 0 || !Number.isFinite(maximum) || maximum <= 0) {
-      throw new Error("Los milímetros mínimo y máximo deben ser números superiores a cero.");
-    }
+  if (minimum !== null && maximum !== null) {
     if (minimum > maximum) throw new Error("El calibre mínimo no puede ser superior al máximo.");
   }
   if (details.priceAgreement !== "A RESULTAS" && details.modality === "A KILOS" && details.totalPrice) throw new Error("La modalidad A KILOS requiere precio por kg, no precio total.");

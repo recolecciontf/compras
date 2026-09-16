@@ -596,6 +596,7 @@ function detectCutDetails(tables: string[][][], text: string) {
     const headers = rows[headerIndex].map(fold);
     const startIndex = headers.findIndex((header) => header.includes("inicio"));
     const endIndex = headers.findIndex((header) => header.includes("terminacion") || header.includes("finalizacion"));
+    const descriptionIndex = headers.findIndex((header) => header.includes("cortes"));
     const minIndex = headers.findIndex((header) => header.replace(/[^a-z0-9]/g, "") === "demm");
     const maxIndex = headers.findIndex((header) => header.replace(/[^a-z0-9]/g, "") === "amm");
     for (const row of rows.slice(headerIndex + 1)) {
@@ -604,6 +605,7 @@ function detectCutDetails(tables: string[][][], text: string) {
         const start = startIndex >= 0 ? extractDates(row[startIndex] || "")[0] || dates[0] : dates[0];
         const end = endIndex >= 0 ? extractDates(row[endIndex] || "")[0] || dates[1] : dates[1];
         return {
+          description: descriptionIndex >= 0 ? clean(row[descriptionIndex] || "") : "",
           start,
           end,
           minMm: minIndex >= 0 ? spanishNumber(row[minIndex] || "") : "",
@@ -619,6 +621,7 @@ function detectCutDetails(tables: string[][][], text: string) {
     const nearby = text.slice(labelled.index || 0, (labelled.index || 0) + labelled[0].length + 180);
     const dimensions = nearby.match(/(?:DE\s*MM|M[IÍ]N(?:IMO)?(?:\s*MM)?)\s*:?\s*(\d+(?:[.,]\d+)?)[\s\S]{0,80}?(?:A\s*MM|M[ÁA]X(?:IMO)?(?:\s*MM)?)\s*:?\s*(\d+(?:[.,]\d+)?)/i);
     return {
+      description: "",
       start,
       end,
       minMm: spanishNumber(dimensions?.[1] || ""),
@@ -628,9 +631,9 @@ function detectCutDetails(tables: string[][][], text: string) {
   const cutsSection = text.match(/CORTES\s+INICIO\s+(?:TERMINACI[ÓO]N|FINALIZACI[ÓO]N)([\s\S]{0,350})/i)?.[1] || "";
   const sectionDates = extractDates(cutsSection);
   if (sectionDates.length >= 2) {
-    return { start: sectionDates[0], end: sectionDates[1], minMm: "", maxMm: "" };
+    return { description: "", start: sectionDates[0], end: sectionDates[1], minMm: "", maxMm: "" };
   }
-  return { start: "", end: "", minMm: "", maxMm: "" };
+  return { description: "", start: "", end: "", minMm: "", maxMm: "" };
 }
 
 function detectPrice(text: string) {
@@ -793,6 +796,7 @@ export async function importPurchaseFromContract(
   const cutDetails = detectCutDetails(tables, text);
   next.contractStart = cutDetails.start;
   next.contractEnd = cutDetails.end;
+  next.contractDetails.cutDescription = cutDetails.description;
   next.contractDetails.cutMinMm = cutDetails.minMm;
   next.contractDetails.cutMaxMm = cutDetails.maxMm;
   if (cutDetails.start && cutDetails.end) {
@@ -803,6 +807,7 @@ export async function importPurchaseFromContract(
     warnings.push("Revisa las fechas de inicio y fin: no se han encontrado ambas en el contrato.");
   }
   if (cutDetails.minMm && cutDetails.maxMm) detectedFields.push("Calibre de corte");
+  if (cutDetails.description) detectedFields.push("Corte");
 
   const price = detectPrice(text);
   next.contractDetails.priceAgreement = price.priceAgreement;

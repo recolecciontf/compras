@@ -59,7 +59,7 @@ function purchase(company: ContractDetails["buyerCompany"], crop = "Uva", variet
     contractDetails: {
       contractOrigin: "generated", buyerCompany: company, signatureDate: "2026-08-12", contractNumber: company.startsWith("TOÑ") ? "TN-QA-001" : "MR-QA-001",
       sellerTreatment: "D.", sellerRepresentative: "Representante de demostración", sellerDni: "00000000T", sellerRepresentativeAddress: "Domicilio del representante", sellerAddress: "Finca demo, Murcia", organicOperatorCode: "MU-QA/E", certifierCode: "CAAE-QA", ailimpoRegepaCode: "REG-QA",
-      modality: "A KILOS", collectionBy: "Comprador", transportBy: "Comprador", cutMinMm: "55", cutMaxMm: "75", priceAgreement: "IMPORTE", pricePerKg: "0.55", totalPrice: "", ivaPercent: "12", irpfPercent: "2", advancePayment: "0", paymentDays: "30",
+      modality: "A KILOS", collectionBy: "Comprador", transportBy: "Comprador", cutDescription: "Primer corte", cutMinMm: "55", cutMaxMm: "75", priceAgreement: "IMPORTE", pricePerKg: "0.55", totalPrice: "", ivaPercent: "12", irpfPercent: "2", advancePayment: "0", paymentDays: "30",
       insuranceProvider: "Agroseguro", insurancePolicy: "", applyDestrio: "No", destrioLocation: "", destrioDefects: "", destrioPrice: "", sellerEmail: "", companyEmail: "",
       buyerRepresentative: "Responsable de Compras", archiveId: "", archiveFilename: "", archivedAt: "", draftArchiveId: "", draftArchiveFilename: "", draftArchivedAt: "", emailStatus: "", sellerSignedAt: "", buyerSignedAt: "", signatureMethod: "", archiveHistoryJson: "",
       previousContractMode: "none", previousContractPurchaseId: "", previousContractArchiveId: "", previousContractSourceArchiveId: "", previousContractFilename: "", previousContractStoredAt: "",

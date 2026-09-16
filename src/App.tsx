@@ -543,6 +543,10 @@ export default function App() {
         .join(" ")
         .toLocaleLowerCase("es")
         .includes(normalizedQuery);
+    }).sort((left, right) => {
+      const leftDate = left.plannedCutDate || "9999-12-31";
+      const rightDate = right.plannedCutDate || "9999-12-31";
+      return leftDate.localeCompare(rightDate) || left.tableIndex - right.tableIndex;
     });
   }, [rows, filter, query, certificationFilter]);
 

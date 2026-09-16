@@ -223,7 +223,7 @@ test("permite crear una compra sin correos cuyo nuevo contrato se firmará más 
   assert.doesNotThrow(() => validatePurchase(purchase));
 });
 
-test("valida los límites mínimo y máximo del calibre de corte", () => {
+test("valida los calibres indicados sin hacerlos obligatorios", () => {
   const purchase = {
     id: "TN-01",
     provider: "Proveedor de prueba",
@@ -262,7 +262,9 @@ test("valida los límites mínimo y máximo del calibre de corte", () => {
   assert.throws(() => validatePurchase(purchase), /mínimo no puede ser superior/i);
   purchase.contractDetails.cutMinMm = "55";
   purchase.contractDetails.cutMaxMm = "";
-  assert.throws(() => validatePurchase(purchase), /dos límites/i);
+  assert.doesNotThrow(() => validatePurchase(purchase));
+  purchase.contractDetails.cutMinMm = "";
+  assert.doesNotThrow(() => validatePurchase(purchase));
 });
 
 test("genera series MR y TN independientes desde 01", () => {

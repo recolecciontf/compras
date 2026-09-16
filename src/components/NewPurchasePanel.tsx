@@ -321,6 +321,7 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
         modality: previousContract.modality || "A KILOS",
         collectionBy: previousContract.collectionBy || "Comprador",
         transportBy: previousContract.transportBy || "Comprador",
+        cutDescription: previousContract.cutDescription || "",
         cutMinMm: previousContract.cutMinMm || "",
         cutMaxMm: previousContract.cutMaxMm || "",
         priceAgreement: previousContract.priceAgreement || "IMPORTE",
