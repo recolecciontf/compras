@@ -164,6 +164,31 @@ function hasDocumentedContract(row: ControlRow) {
   }
 }
 
+function contractRecordDate(row: ControlRow) {
+  try {
+    const details = JSON.parse(row.contractDetailsJson || "{}") as { signatureDate?: unknown };
+    const signatureDate = String(details.signatureDate || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(signatureDate)) return signatureDate;
+  } catch {
+    // Las filas antiguas pueden no contener datos contractuales en JSON.
+  }
+  return row.contractStart || row.statusUpdatedAt.slice(0, 10);
+}
+
+function compareRecordsByDate(left: ControlRow, right: ControlRow) {
+  if (left.plannedCutDate && right.plannedCutDate) {
+    return left.plannedCutDate.localeCompare(right.plannedCutDate) || right.tableIndex - left.tableIndex;
+  }
+  if (left.plannedCutDate) return -1;
+  if (right.plannedCutDate) return 1;
+  const leftDate = contractRecordDate(left);
+  const rightDate = contractRecordDate(right);
+  if (leftDate && rightDate) return rightDate.localeCompare(leftDate) || right.tableIndex - left.tableIndex;
+  if (leftDate) return -1;
+  if (rightDate) return 1;
+  return right.tableIndex - left.tableIndex;
+}
+
 type ArchivedContract = {
   archiveId: string;
   archiveFilename: string;
@@ -543,11 +568,7 @@ export default function App() {
         .join(" ")
         .toLocaleLowerCase("es")
         .includes(normalizedQuery);
-    }).sort((left, right) => {
-      const leftDate = left.plannedCutDate || "9999-12-31";
-      const rightDate = right.plannedCutDate || "9999-12-31";
-      return leftDate.localeCompare(rightDate) || left.tableIndex - right.tableIndex;
-    });
+    }).sort(compareRecordsByDate);
   }, [rows, filter, query, certificationFilter]);
 
   const certificationOptions = useMemo(() => certificationSelection(rows
@@ -1724,7 +1745,7 @@ export default function App() {
                         <span className="record-crop">{row.crop || "Especie sin indicar"}{row.variety ? ` · ${row.variety}` : ""}</span>
                         <span className="record-meta">
                           <span><Sprout size={15} /> {row.farm || "Finca sin indicar"}</span>
-                          <span><CalendarDays size={15} /> {row.plannedCutDate ? formatDate(row.plannedCutDate) : "Corte pendiente"}</span>
+                          <span><CalendarDays size={15} /> {row.plannedCutDate ? formatDate(row.plannedCutDate) : contractRecordDate(row) ? `Corte pendiente · contrato ${formatDate(contractRecordDate(row))}` : "Corte pendiente · sin fecha"}</span>
                           {filter === "expired" && <span><History size={15} /> Contrato hasta {formatDate(row.contractEnd)}</span>}
                           {filter === "expired" && <span><FileText size={15} /> Campaña {row.campaign || "sin indicar"}</span>}
                           {row.expectedKg && <span><PackageCheck size={15} /> {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(Number(row.expectedKg))} kg previstos</span>}
