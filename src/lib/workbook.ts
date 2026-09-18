@@ -1,6 +1,7 @@
 import { canonicalMaterial, materialSummary } from "./catalog";
 import type {
   AppConfig,
+  AuditEvent,
   ContractArchiveHistoryEntry,
   ContractDetails,
   ControlCatalogData,
@@ -471,6 +472,11 @@ export class WorkbookClient {
 
   async controlCatalog() {
     return this.request<ControlCatalogData>("/api/control-catalog");
+  }
+
+  async auditEvents(limit = 150) {
+    const result = await this.request<{ events: AuditEvent[] }>(`/api/audit-events?limit=${Math.min(Math.max(limit, 1), 300)}`);
+    return result.events;
   }
 
   async saveReview(row: ControlRow, review: ReviewForm) {

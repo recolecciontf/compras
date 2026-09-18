@@ -41,6 +41,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { HarvestPanel } from "./components/HarvestPanel";
+import { ActivityLogPanel } from "./components/ActivityLogPanel";
 import { CertificateControlPanel } from "./components/CertificateControlPanel";
 import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurchasePanel";
 import { PurchaseFields } from "./components/PurchaseFields";
@@ -419,6 +420,9 @@ export default function App() {
     [rows, selectedIndex],
   );
   const canEdit = demoMode || profile?.canEdit === true;
+  const isAdmin = !demoMode && profile?.role === "admin";
+  const currentActor = profile?.displayName || profile?.userPrincipalName || "Usuario";
+  const roleLabel = profile?.role === "admin" ? "Administrador" : profile?.role === "editor" ? "Usuario" : "Consultas";
 
   useEffect(() => {
     if (!selected) {
@@ -1343,12 +1347,12 @@ export default function App() {
       let statusUpdate: Pick<ControlRow, "recordStatus" | "statusReason" | "statusUpdatedAt" | "statusUpdatedBy" | "statusHistoryJson"> & Partial<Pick<ControlRow, "revision">>;
       if (demoMode) {
         const changedAt = new Date().toISOString();
-        const history = [...recordStatusHistory(selected), { status, reason, changedAt, changedBy: "ADMINISTRADOR" }];
+        const history = [...recordStatusHistory(selected), { status, reason, changedAt, changedBy: currentActor }];
         statusUpdate = {
           recordStatus: status,
           statusReason: reason,
           statusUpdatedAt: changedAt,
-          statusUpdatedBy: "ADMINISTRADOR",
+          statusUpdatedBy: currentActor,
           statusHistoryJson: JSON.stringify(history),
         };
       } else {
@@ -1384,7 +1388,7 @@ export default function App() {
           archiveFilename: purchase.contractDetails.archiveFilename,
           archivedAt: purchase.contractDetails.archivedAt,
           replacedAt: new Date().toISOString(),
-          replacedBy: "ADMINISTRADOR",
+          replacedBy: currentActor,
           reason,
         };
         const updated: PurchaseForm = {
@@ -1437,7 +1441,7 @@ export default function App() {
   }
 
   async function deleteRecord(reason: string, confirmation: string, acknowledgement: string) {
-    if (!selected || !canEdit) return false;
+    if (!selected || !isAdmin) return false;
     if (!demoMode && !isOnline) {
       setError("El borrado definitivo requiere conexión con el registro central.");
       return false;
@@ -1468,13 +1472,13 @@ export default function App() {
   }
 
   async function loadRowBackups(row: ControlRow) {
-    if (!client || demoMode) return [];
+    if (!client || demoMode || !isAdmin) return [];
     if (!isOnline) throw new Error("Las copias recuperables necesitan conexión.");
     return client.rowBackups(row);
   }
 
   async function restoreRowBackup(row: ControlRow, key: string) {
-    if (!client || demoMode || !canEdit) return false;
+    if (!client || demoMode || !isAdmin) return false;
     if (!isOnline) {
       setError("Restaurar una copia requiere conexión con el registro central.");
       return false;
@@ -1496,6 +1500,12 @@ export default function App() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function loadAuditEvents() {
+    if (!client || !isAdmin) return [];
+    if (!isOnline) throw new Error("El registro de actividad necesita conexión con el servidor.");
+    return client.auditEvents(200);
   }
 
   async function installApp() {
@@ -1547,10 +1557,11 @@ export default function App() {
             {canEdit && <button className={view === "new" ? "active" : ""} onClick={() => setView("new")}><Plus size={17} /> Nueva compra</button>}
             <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}><PackageCheck size={17} /> Cortes</button>
             <button className={view === "certificates" ? "active" : ""} onClick={() => setView("certificates")}><FileCheck2 size={17} /> Certificados</button>
+            {isAdmin && <button className={view === "activity" ? "active" : ""} onClick={() => setView("activity")}><History size={17} /> Actividad</button>}
           </nav>
         )}
         <div className="topbar-actions">
-          {(signedIn || demoMode) && <span className="role-pill">{canEdit ? "Administrador" : "Consultas"}</span>}
+          {(signedIn || demoMode) && <span className="role-pill" title={profile?.userPrincipalName}>{profile?.displayName || "Usuario"} · {roleLabel}</span>}
           <span className={`connection ${isOnline ? "online" : "offline"}`} title={isOnline ? "Con conexión" : "Sin conexión"}>
             {isOnline ? <Wifi size={17} /> : <CloudOff size={17} />}
           </span>
@@ -1613,10 +1624,12 @@ export default function App() {
             onDemo={startDemo}
           />
         ) : (
-          <div className={`workspace ${view === "certificates" ? "catalog-workspace" : ""}`}>
-            {view === "certificates" ? (
+          <div className={`workspace ${view === "certificates" ? "catalog-workspace" : view === "activity" ? "activity-workspace" : ""}`}>
+            {view === "activity" && isAdmin ? (
+              <ActivityLogPanel onLoad={loadAuditEvents} onBack={() => setView("records")} />
+            ) : view === "certificates" ? (
               <CertificateControlPanel
-                canEdit={Boolean(canEdit && !demoMode)}
+                canEdit={Boolean(isAdmin)}
                 onLoadCatalog={loadControlCatalog}
                 onDownloadDocument={downloadLibraryDocument}
                 onUploadDocument={uploadLibraryDocument}
@@ -1647,7 +1660,8 @@ export default function App() {
               <div className="quick-actions">
                 {canEdit && <button className="action-card action-card-primary" onClick={() => setView("new")}><span className="action-icon"><Plus size={20} /></span><span><strong>Nueva compra</strong><small>Agricultor, fruta y contrato</small></span><ChevronRight size={19} /></button>}
                 <button className="action-card" onClick={() => setView("harvest")}><span className="action-icon"><PackageCheck size={20} /></span><span><strong>Cortes y kilos</strong><small>Seguimiento de recolección</small></span><ChevronRight size={19} /></button>
-                <button className="action-card" onClick={() => setView("certificates")}><span className="action-icon"><FileCheck2 size={20} /></span><span><strong>{canEdit ? "Certificados y OPFH" : "Certificados"}</strong><small>{canEdit ? "Vigencias, socios y fincas" : "Vigencias de agricultores"}</small></span><ChevronRight size={19} /></button>
+                <button className="action-card" onClick={() => setView("certificates")}><span className="action-icon"><FileCheck2 size={20} /></span><span><strong>{isAdmin ? "Certificados y OPFH" : "Certificados"}</strong><small>{isAdmin ? "Vigencias, socios y fincas" : "Vigencias de agricultores"}</small></span><ChevronRight size={19} /></button>
+                {isAdmin && <button className="action-card" onClick={() => setView("activity")}><span className="action-icon"><History size={20} /></span><span><strong>Registro de actividad</strong><small>Usuarios, fechas y cambios</small></span><ChevronRight size={19} /></button>}
               </div>
 
               <div className="summary-grid">
@@ -1787,6 +1801,7 @@ export default function App() {
                   saving={saving}
                   autoSaveStatus={autoSaveStatus}
                   readOnly={!canEdit}
+                  canAdmin={isAdmin}
                   onPurchaseChange={setPurchase}
                   onChange={setReview}
                   onSubmit={submitReview}
@@ -1891,7 +1906,7 @@ function ConnectPanel({
         <h1>Compras de campo</h1>
         <p>Gestiona contratos, documentación, materia prima y cortes desde un único lugar.</p>
         <form className="login-form" onSubmit={(event) => { event.preventDefault(); void onConnect(username, password); }}>
-          <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="ADMINISTRADOR o CONSULTAS" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+          <label className="field required-field"><span>Usuario</span><input required autoCapitalize="characters" autoComplete="username" placeholder="Tu usuario personal" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
           <label className="field required-field"><span>Contraseña</span><input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           <button className="primary-button" type="submit" disabled={loading || !username.trim() || !password}>
             <LogIn size={20} /> {loading ? "Comprobando…" : "Entrar"}
@@ -1928,6 +1943,7 @@ function RecordManagementPanel({
   onDeleteRecord,
   onLoadBackups,
   onRestoreBackup,
+  canAdmin,
 }: {
   row: ControlRow;
   cancelled: boolean;
@@ -1938,6 +1954,7 @@ function RecordManagementPanel({
   onDeleteRecord: (reason: string, confirmation: string, acknowledgement: string) => Promise<boolean>;
   onLoadBackups: (row: ControlRow) => Promise<RowBackupSummary[]>;
   onRestoreBackup: (row: ControlRow, key: string) => Promise<boolean>;
+  canAdmin: boolean;
 }) {
   const [action, setAction] = useState<ManagementAction>(null);
   const [reason, setReason] = useState("");
@@ -2008,7 +2025,7 @@ function RecordManagementPanel({
   return (
     <section className="record-management" aria-labelledby="record-management-title">
       <div className="record-management-heading">
-        <div><span className="step-number">G</span><span><strong id="record-management-title">Gestión del expediente</strong><small>Acciones reservadas al Administrador y registradas en el historial</small></span></div>
+        <div><span className="step-number">G</span><span><strong id="record-management-title">Gestión del expediente</strong><small>Todas las acciones quedan registradas con el usuario y la fecha</small></span></div>
         <ShieldCheck size={20} />
       </div>
       <div className="management-actions">
@@ -2020,8 +2037,8 @@ function RecordManagementPanel({
         {hasArchivedContract && (
           <button className="secondary-button" type="button" disabled={saving} onClick={() => choose("replace")}><FileUp size={17} /> Sustituir contrato</button>
         )}
-        <button className="secondary-button" type="button" disabled={saving || backupLoading} onClick={() => void toggleBackups()}><History size={17} /> {backupLoading ? "Cargando copias…" : "Copias recuperables"}</button>
-        <button className="secondary-button delete-button" type="button" disabled={saving || !cancelled} onClick={() => choose("delete")} title={cancelled ? "Eliminar un registro creado por error" : "Primero debes anular el expediente"}><Trash2 size={17} /> Eliminar definitivamente</button>
+        {canAdmin && <button className="secondary-button" type="button" disabled={saving || backupLoading} onClick={() => void toggleBackups()}><History size={17} /> {backupLoading ? "Cargando copias…" : "Copias recuperables"}</button>}
+        {canAdmin && <button className="secondary-button delete-button" type="button" disabled={saving || !cancelled} onClick={() => choose("delete")} title={cancelled ? "Eliminar un registro creado por error" : "Primero debes anular el expediente"}><Trash2 size={17} /> Eliminar definitivamente</button>}
       </div>
       {backupError && <p className="management-help">{backupError}</p>}
       {backups !== null && (
@@ -2036,7 +2053,7 @@ function RecordManagementPanel({
           </div>
         </div>
       )}
-      {!cancelled && <p className="management-help">El borrado definitivo solo se habilita después de anular el expediente.</p>}
+      {canAdmin && !cancelled && <p className="management-help">El borrado definitivo solo se habilita después de anular el expediente.</p>}
 
       {action && (
         <div className={`management-confirmation ${action === "delete" ? "danger-confirmation" : ""}`} role="dialog" aria-label="Confirmar acción de gestión">
@@ -2093,6 +2110,7 @@ function ReviewPanel({
   saving,
   autoSaveStatus,
   readOnly,
+  canAdmin,
   onPurchaseChange,
   onChange,
   onSubmit,
@@ -2114,6 +2132,7 @@ function ReviewPanel({
   saving: boolean;
   autoSaveStatus: "idle" | "pending" | "saving" | "saved" | "error";
   readOnly: boolean;
+  canAdmin: boolean;
   onPurchaseChange: Dispatch<SetStateAction<PurchaseForm | null>>;
   onChange: Dispatch<SetStateAction<ReviewForm | null>>;
   onSubmit: (event: FormEvent) => void;
@@ -2302,6 +2321,7 @@ function ReviewPanel({
           onDeleteRecord={onDeleteRecord}
           onLoadBackups={onLoadBackups}
           onRestoreBackup={onRestoreBackup}
+          canAdmin={canAdmin}
         />
       )}
 

@@ -5,8 +5,24 @@ export type AppConfig = {
 export type UserProfile = {
   displayName: string;
   userPrincipalName: string;
-  role: "admin" | "viewer";
+  role: "admin" | "editor" | "viewer";
   canEdit: boolean;
+};
+
+export type AuditEvent = {
+  id: string;
+  timestamp: string;
+  completedAt?: string;
+  actorUsername: string;
+  actorDisplayName: string;
+  role: "admin" | "editor" | "viewer";
+  action: string;
+  area: string;
+  summary: string;
+  recordId?: string;
+  row?: number;
+  status: "pending" | "completed" | "failed";
+  error?: string;
 };
 
 export type MaterialItem = {
@@ -255,5 +271,5 @@ export type ControlCatalogData = {
   storedDocuments: number;
 };
 
-export type AppView = "records" | "review" | "new" | "harvest" | "certificates";
+export type AppView = "records" | "review" | "new" | "harvest" | "certificates" | "activity";
 export type RecordFilter = "all" | "blocked" | "authorized" | "documented" | "expired" | "cancelled";

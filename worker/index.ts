@@ -30,6 +30,7 @@ interface Env {
   ADMIN_PASSWORD_SHA256: string;
   VIEWER_USERNAME: string;
   VIEWER_PASSWORD_SHA256: string;
+  APP_USERS_JSON?: string;
   SESSION_SECRET: string;
   GOOGLE_SERVICE_ACCOUNT_EMAIL: string;
   GOOGLE_PRIVATE_KEY: string;
@@ -49,12 +50,38 @@ interface Env {
   CONTRACT_EMAIL_WEBHOOK_TOKEN?: string;
 }
 
-type UserRole = "admin" | "viewer";
+type UserRole = "admin" | "editor" | "viewer";
 
 type Session = {
   sub: string;
   role: UserRole;
+  displayName?: string;
   exp: number;
+};
+
+type ConfiguredUser = {
+  username: string;
+  displayName: string;
+  passwordHash: string;
+  role: UserRole;
+};
+
+type AuditEventStatus = "pending" | "completed" | "failed";
+
+type AuditEvent = {
+  id: string;
+  timestamp: string;
+  completedAt?: string;
+  actorUsername: string;
+  actorDisplayName: string;
+  role: UserRole;
+  action: string;
+  area: string;
+  summary: string;
+  recordId?: string;
+  row?: number;
+  status: AuditEventStatus;
+  error?: string;
 };
 
 type ReviewPayload = {
@@ -353,8 +380,13 @@ async function sessionKey(secret: string) {
   return crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 
-async function issueSession(env: Env, sub: string, role: UserRole) {
-  const payload = base64Url(encoder.encode(JSON.stringify({ sub, role, exp: Date.now() + 8 * 60 * 60 * 1000 })));
+async function issueSession(env: Env, user: Pick<ConfiguredUser, "username" | "displayName" | "role">) {
+  const payload = base64Url(encoder.encode(JSON.stringify({
+    sub: user.username,
+    role: user.role,
+    displayName: user.displayName,
+    exp: Date.now() + 8 * 60 * 60 * 1000,
+  })));
   const signature = new Uint8Array(await crypto.subtle.sign("HMAC", await sessionKey(env.SESSION_SECRET), encoder.encode(payload)));
   return `${payload}.${base64Url(signature)}`;
 }
@@ -373,7 +405,7 @@ async function verifySession(token: string, env: Env) {
     const parsed = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload))) as Partial<Session>;
     if (
       typeof parsed.sub !== "string" ||
-      (parsed.role !== "admin" && parsed.role !== "viewer") ||
+      (parsed.role !== "admin" && parsed.role !== "editor" && parsed.role !== "viewer") ||
       typeof parsed.exp !== "number" ||
       parsed.exp <= Date.now()
     ) return null;
@@ -388,27 +420,126 @@ function normalizeUsername(value: string) {
 }
 
 function configuredUsers(env: Env) {
-  return [
+  const users: ConfiguredUser[] = [
     {
       username: normalizeUsername(env.ADMIN_USERNAME || "ADMINISTRADOR"),
+      displayName: "Administrador",
       passwordHash: env.ADMIN_PASSWORD_SHA256 || "",
       role: "admin" as const,
     },
-    {
-      username: normalizeUsername(env.VIEWER_USERNAME || "CONSULTAS"),
-      passwordHash: env.VIEWER_PASSWORD_SHA256 || "",
-      role: "viewer" as const,
-    },
   ];
+  try {
+    const parsed = JSON.parse(env.APP_USERS_JSON || "[]") as unknown;
+    if (Array.isArray(parsed)) {
+      for (const entry of parsed) {
+        if (!entry || typeof entry !== "object") continue;
+        const source = entry as Record<string, unknown>;
+        const username = normalizeUsername(String(source.username || ""));
+        const displayName = String(source.displayName || username).trim();
+        const passwordHash = String(source.passwordHash || "").trim().toLocaleLowerCase("en");
+        const role = source.role === "viewer" ? "viewer" : "editor";
+        if (!username || !displayName || !/^[a-f0-9]{64}$/.test(passwordHash)) continue;
+        if (!users.some((user) => user.username === username)) users.push({ username, displayName, passwordHash, role });
+      }
+    }
+  } catch {
+    // Una configuración no válida no debe impedir el acceso del Administrador.
+  }
+  const viewerUsername = normalizeUsername(env.VIEWER_USERNAME || "CONSULTAS");
+  if (!users.some((user) => user.username === viewerUsername)) {
+    users.push({
+      username: viewerUsername,
+      displayName: "Consultas",
+      passwordHash: env.VIEWER_PASSWORD_SHA256 || "",
+      role: "viewer",
+    });
+  }
+  return users;
 }
 
-function profileFor(session: Pick<Session, "sub" | "role">) {
+function profileFor(session: Pick<Session, "sub" | "role" | "displayName">) {
   return {
-    displayName: session.role === "admin" ? "Administrador" : "Consultas",
+    displayName: session.displayName || (session.role === "admin" ? "Administrador" : session.role === "viewer" ? "Consultas" : session.sub),
     userPrincipalName: session.sub,
     role: session.role,
-    canEdit: session.role === "admin",
+    canEdit: session.role === "admin" || session.role === "editor",
   };
+}
+
+function canEdit(session: Session) {
+  return session.role === "admin" || session.role === "editor";
+}
+
+function auditKey(event: AuditEvent) {
+  const sortableTimestamp = event.timestamp.replace(/[:.]/g, "-");
+  return `audit/events/${sortableTimestamp}-${event.id}.json`;
+}
+
+async function storeAuditEvent(env: Env, event: AuditEvent) {
+  if (!env.CONTRACT_FILES) throw new Error("El registro de actividad no está configurado.");
+  const bytes = encoder.encode(JSON.stringify(event));
+  await env.CONTRACT_FILES.put(auditKey(event), bytes.buffer as ArrayBuffer, {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: {
+      actor: event.actorUsername,
+      action: event.action,
+      status: event.status,
+      recordId: event.recordId || "",
+    },
+  });
+}
+
+async function runAuditedChange<T>(
+  env: Env,
+  session: Session,
+  input: Pick<AuditEvent, "action" | "area" | "summary" | "recordId" | "row">,
+  operation: () => Promise<T>,
+) {
+  const event: AuditEvent = {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    actorUsername: session.sub,
+    actorDisplayName: profileFor(session).displayName,
+    role: session.role,
+    action: input.action,
+    area: input.area,
+    summary: input.summary,
+    recordId: input.recordId,
+    row: input.row,
+    status: "pending",
+  };
+  await storeAuditEvent(env, event);
+  try {
+    const result = await operation();
+    await storeAuditEvent(env, { ...event, status: "completed", completedAt: new Date().toISOString() });
+    return result;
+  } catch (error) {
+    await storeAuditEvent(env, {
+      ...event,
+      status: "failed",
+      completedAt: new Date().toISOString(),
+      error: error instanceof Error ? error.message.slice(0, 300) : "Error no identificado",
+    }).catch(() => undefined);
+    throw error;
+  }
+}
+
+async function listAuditEvents(env: Env, limit: number) {
+  if (!env.CONTRACT_FILES) throw new Error("El registro de actividad no está configurado.");
+  const keys: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.CONTRACT_FILES.list({ prefix: "audit/events/", cursor, limit: 1000 });
+    keys.push(...page.objects.map((object) => object.key));
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor && keys.length < 5000);
+  const latest = keys.sort().reverse().slice(0, Math.min(Math.max(limit, 1), 300));
+  const events = await Promise.all(latest.map(async (key) => {
+    const object = await env.CONTRACT_FILES!.get(key);
+    if (!object) return null;
+    return new Response(object.body).json().catch(() => null) as Promise<AuditEvent | null>;
+  }));
+  return events.filter((event): event is AuditEvent => Boolean(event));
 }
 
 function requestToken(request: Request) {
@@ -1527,8 +1658,8 @@ async function handleApi(request: Request, env: Env) {
     if (!user) {
       return json(request, env, { error: "Usuario o contraseña incorrectos." }, 401);
     }
-    const profile = profileFor({ sub: user.username, role: user.role });
-    return json(request, env, { token: await issueSession(env, user.username, user.role), profile });
+    const profile = profileFor({ sub: user.username, role: user.role, displayName: user.displayName });
+    return json(request, env, { token: await issueSession(env, user), profile });
   }
 
   const session = await verifySession(requestToken(request), env);
@@ -1538,6 +1669,12 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/profile" && request.method === "GET") {
     return json(request, env, profileFor(session));
+  }
+
+  if (url.pathname === "/api/audit-events" && request.method === "GET") {
+    if (session.role !== "admin") return json(request, env, { error: "El registro completo de actividad está restringido al Administrador." }, 403);
+    const limit = Number(url.searchParams.get("limit") || "150");
+    return json(request, env, { events: await listAuditEvents(env, Number.isFinite(limit) ? limit : 150) });
   }
 
   if (url.pathname === "/api/control-catalog" && request.method === "GET") {
@@ -1559,12 +1696,22 @@ async function handleApi(request: Request, env: Env) {
 
   if (url.pathname === "/api/control-catalog" && request.method === "POST") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede actualizar el cat�logo." }, 403);
-    return json(request, env, { ok: true, ...await storeControlCatalog(request, env, session) });
+    const result = await runAuditedChange(env, session, {
+      action: "catalog.update",
+      area: "certificates",
+      summary: "Actualización del catálogo documental",
+    }, () => storeControlCatalog(request, env, session));
+    return json(request, env, { ok: true, ...result });
   }
 
   if (url.pathname === "/api/document-library" && request.method === "POST") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede importar documentos." }, 403);
-    return json(request, env, await storeLibraryDocument(request, env), 201);
+    const result = await runAuditedChange(env, session, {
+      action: "document.upload",
+      area: "documents",
+      summary: "Documento incorporado a la biblioteca privada",
+    }, () => storeLibraryDocument(request, env));
+    return json(request, env, result, 201);
   }
 
   const libraryDocumentMatch = url.pathname.match(/^\/api\/document-library\/([0-9a-f]{24})$/i);
@@ -1587,8 +1734,14 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/contract-files" && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos." }, 403);
-    return json(request, env, await archiveContract(request, env), 201);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos." }, 403);
+    if (!env.CONTRACT_FILES) return json(request, env, { error: "El archivo central de contratos no está configurado." }, 500);
+    const result = await runAuditedChange(env, session, {
+      action: "contract.archive",
+      area: "contracts",
+      summary: "Contrato guardado en el archivo central",
+    }, () => archiveContract(request, env));
+    return json(request, env, result, 201);
   }
 
   if (url.pathname === "/api/drive-backup/status" && request.method === "GET") {
@@ -1597,18 +1750,30 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/previous-contract-files" && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos anteriores." }, 403);
-    return json(request, env, await storePreviousContract(request, env), 201);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede archivar contratos anteriores." }, 403);
+    const result = await runAuditedChange(env, session, {
+      action: "contract.previous.upload",
+      area: "contracts",
+      summary: "Contrato anterior guardado como referencia",
+    }, () => storePreviousContract(request, env));
+    return json(request, env, result, 201);
   }
 
   if (url.pathname === "/api/previous-contract-files/copy" && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede reutilizar contratos anteriores." }, 403);
-    return json(request, env, await copyPreviousContract(await request.json().catch(() => ({})), env), 201);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede reutilizar contratos anteriores." }, 403);
+    const body = await request.json().catch(() => ({}));
+    const result = await runAuditedChange(env, session, {
+      action: "contract.previous.copy",
+      area: "contracts",
+      summary: "Contrato anterior reutilizado como referencia",
+      recordId: String((body as Record<string, unknown>).purchaseId || ""),
+    }, () => copyPreviousContract(body, env));
+    return json(request, env, result, 201);
   }
 
   const archivedContractMatch = url.pathname.match(/^\/api\/contract-files\/([0-9a-f-]{36})$/i);
   if (archivedContractMatch && request.method === "GET") {
-    if (session.role !== "admin") return json(request, env, { error: "Los contratos son confidenciales y su descarga est� restringida al Administrador." }, 403);
+    if (!canEdit(session)) return json(request, env, { error: "Los contratos son confidenciales y su descarga está restringida a usuarios autorizados." }, 403);
     if (!env.CONTRACT_FILES) return json(request, env, { error: "El archivo central de contratos no está configurado." }, 503);
     const object = await env.CONTRACT_FILES.get(archivedContractMatch[1]);
     if (!object) return json(request, env, { error: "No se ha encontrado la copia firmada del contrato." }, 404);
@@ -1625,7 +1790,7 @@ async function handleApi(request: Request, env: Env) {
 
   const templateMatch = url.pathname.match(/^\/api\/contract-templates\/([a-z0-9-]+\.docx)$/);
   if (templateMatch && request.method === "GET") {
-    if (session.role !== "admin") return json(request, env, { error: "Los modelos contractuales est�n restringidos al Administrador." }, 403);
+    if (!canEdit(session)) return json(request, env, { error: "Los modelos contractuales están restringidos a usuarios autorizados." }, 403);
     const body = await contractTemplate(templateMatch[1], env);
     if (!body) return json(request, env, { error: "Modelo contractual no encontrado." }, 404);
     return new Response(body, {
@@ -1645,20 +1810,37 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (url.pathname === "/api/rows" && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede añadir compras." }, 403);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede añadir compras." }, 403);
     const body = (await request.json().catch(() => ({}))) as { purchase?: unknown };
     const purchase = purchaseValues(body.purchase);
     validatePurchase(purchase);
-    const row = await firstAvailableRow(env);
-    const id = await savePurchase(env, row, purchase, true);
+    const result = await runAuditedChange(env, session, {
+      action: "purchase.create",
+      area: "purchases",
+      summary: `Nueva compra de ${purchase.provider || "proveedor sin indicar"}`,
+      recordId: purchase.id,
+    }, async () => {
+      const row = await firstAvailableRow(env);
+      const id = await savePurchase(env, row, purchase, true);
+      return { row, id };
+    });
+    const { row, id } = result;
     return json(request, env, { ok: true, row, id }, 201);
   }
 
   const statusMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/status$/);
   if (statusMatch && request.method === "PATCH") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede cambiar el estado de expedientes." }, 403);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede cambiar el estado de expedientes." }, 403);
     const body = await request.json().catch(() => ({}));
-    return json(request, env, { ok: true, ...await updateRecordStatus(env, Number(statusMatch[1]), body, session) });
+    const row = Number(statusMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "record.status",
+      area: "purchases",
+      summary: `Cambio de estado a ${String((body as Record<string, unknown>).status || "sin indicar")}`,
+      recordId: String((body as Record<string, unknown>).expectedId || ""),
+      row,
+    }, () => updateRecordStatus(env, row, body, session));
+    return json(request, env, { ok: true, ...result });
   }
 
   const backupsMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/backups$/);
@@ -1673,52 +1855,105 @@ async function handleApi(request: Request, env: Env) {
   if (restoreBackupMatch && request.method === "POST") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede restaurar copias." }, 403);
     const body = await request.json().catch(() => ({}));
-    return json(request, env, { ok: true, ...await restoreRowBackup(env, Number(restoreBackupMatch[1]), body, session) });
+    const row = Number(restoreBackupMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "record.backup.restore",
+      area: "administration",
+      summary: "Restauración de una copia recuperable",
+      recordId: String((body as Record<string, unknown>).expectedId || ""),
+      row,
+    }, () => restoreRowBackup(env, row, body, session));
+    return json(request, env, { ok: true, ...result });
   }
 
   const replacementMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/contract$/);
   if (replacementMatch && request.method === "POST") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede sustituir contratos." }, 403);
-    return json(request, env, { ok: true, ...await replaceArchivedContract(env, Number(replacementMatch[1]), request, session) }, 201);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede sustituir contratos." }, 403);
+    const row = Number(replacementMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "contract.replace",
+      area: "contracts",
+      summary: "Sustitución del contrato firmado",
+      row,
+    }, () => replaceArchivedContract(env, row, request, session));
+    return json(request, env, { ok: true, ...result }, 201);
   }
 
   const deleteMatch = url.pathname.match(/^\/api\/rows\/(\d+)$/);
   if (deleteMatch && request.method === "DELETE") {
     if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede eliminar expedientes." }, 403);
     const body = await request.json().catch(() => ({}));
-    return json(request, env, { ok: true, ...await deleteRecordPermanently(env, Number(deleteMatch[1]), body, session) });
+    const row = Number(deleteMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "record.delete",
+      area: "administration",
+      summary: "Eliminación definitiva de un expediente",
+      recordId: String((body as Record<string, unknown>).expectedId || ""),
+      row,
+    }, () => deleteRecordPermanently(env, row, body, session));
+    return json(request, env, { ok: true, ...result });
   }
 
   const reviewMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/review$/);
   if (reviewMatch && request.method === "PATCH") {
-    if (session.role !== "admin") {
+    if (!canEdit(session)) {
       return json(request, env, { error: "Este usuario es de consulta y no puede modificar los datos." }, 403);
     }
     const body = (await request.json().catch(() => ({}))) as { review?: unknown; expectedId?: unknown; expectedRevision?: unknown };
-    await prepareRowMutation(env, Number(reviewMatch[1]), body as Record<string, unknown>, session, "Edici�n de la revisi�n documental");
-    await saveReview(env, Number(reviewMatch[1]), reviewValues(body.review));
-    return json(request, env, { ok: true, revision: await mutationRevision(env, Number(reviewMatch[1])) });
+    const row = Number(reviewMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "review.update",
+      area: "reviews",
+      summary: "Actualización de la revisión documental",
+      recordId: String(body.expectedId || ""),
+      row,
+    }, async () => {
+      await prepareRowMutation(env, row, body as Record<string, unknown>, session, "Edición de la revisión documental");
+      await saveReview(env, row, reviewValues(body.review));
+      return { revision: await mutationRevision(env, row) };
+    });
+    return json(request, env, { ok: true, ...result });
   }
 
   const purchaseMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/purchase$/);
   if (purchaseMatch && request.method === "PATCH") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede modificar compras." }, 403);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede modificar compras." }, 403);
     const body = (await request.json().catch(() => ({}))) as { purchase?: unknown; expectedId?: unknown; expectedRevision?: unknown };
     const purchase = purchaseValues(body.purchase);
     validatePurchase(purchase, false);
-    await prepareRowMutation(env, Number(purchaseMatch[1]), body as Record<string, unknown>, session, "Edici�n de la compra");
-    await savePurchase(env, Number(purchaseMatch[1]), purchase);
-    return json(request, env, { ok: true, revision: await mutationRevision(env, Number(purchaseMatch[1])) });
+    const row = Number(purchaseMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "purchase.update",
+      area: "purchases",
+      summary: `Actualización de la compra de ${purchase.provider || "proveedor sin indicar"}`,
+      recordId: String(body.expectedId || purchase.id || ""),
+      row,
+    }, async () => {
+      await prepareRowMutation(env, row, body as Record<string, unknown>, session, "Edición de la compra");
+      await savePurchase(env, row, purchase);
+      return { revision: await mutationRevision(env, row) };
+    });
+    return json(request, env, { ok: true, ...result });
   }
 
   const harvestMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/harvest$/);
   if (harvestMatch && request.method === "PATCH") {
-    if (session.role !== "admin") return json(request, env, { error: "Este usuario es de consulta y no puede modificar cortes." }, 403);
+    if (!canEdit(session)) return json(request, env, { error: "Este usuario es de consulta y no puede modificar cortes." }, 403);
     const body = (await request.json().catch(() => ({}))) as { harvest?: unknown; expectedId?: unknown; expectedRevision?: unknown };
     const harvest = harvestValues(body.harvest);
-    await prepareRowMutation(env, Number(harvestMatch[1]), body as Record<string, unknown>, session, "Edici�n de cortes y kilos");
-    await saveHarvest(env, Number(harvestMatch[1]), harvest);
-    return json(request, env, { ok: true, revision: await mutationRevision(env, Number(harvestMatch[1])) });
+    const row = Number(harvestMatch[1]);
+    const result = await runAuditedChange(env, session, {
+      action: "harvest.update",
+      area: "harvest",
+      summary: "Actualización de cortes y kilos recolectados",
+      recordId: String(body.expectedId || ""),
+      row,
+    }, async () => {
+      await prepareRowMutation(env, row, body as Record<string, unknown>, session, "Edición de cortes y kilos");
+      await saveHarvest(env, row, harvest);
+      return { revision: await mutationRevision(env, row) };
+    });
+    return json(request, env, { ok: true, ...result });
   }
 
   return json(request, env, { error: "Operación no encontrada." }, 404);

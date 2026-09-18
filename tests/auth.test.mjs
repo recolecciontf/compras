@@ -13,6 +13,12 @@ const env = {
   ADMIN_PASSWORD_SHA256: createHash("sha256").update("admin-password").digest("hex"),
   VIEWER_USERNAME: "CONSULTAS",
   VIEWER_PASSWORD_SHA256: createHash("sha256").update("viewer-password").digest("hex"),
+  APP_USERS_JSON: JSON.stringify([{
+    username: "MIGUEL.ANGEL",
+    displayName: "Miguel Ángel",
+    role: "editor",
+    passwordHash: createHash("sha256").update("editor-password").digest("hex"),
+  }]),
   SESSION_SECRET: "test-session-secret-that-is-long-enough-for-tests",
   GOOGLE_SERVICE_ACCOUNT_EMAIL: "unused@example.invalid",
   GOOGLE_PRIVATE_KEY: "unused",
@@ -26,6 +32,13 @@ const env = {
     },
     async delete(keys) {
       for (const key of Array.isArray(keys) ? keys : [keys]) storedContracts.delete(key);
+    },
+    async list({ prefix = "", cursor, limit = 1000 } = {}) {
+      const keys = [...storedContracts.keys()].filter((key) => key.startsWith(prefix)).sort();
+      const start = cursor ? Number(cursor) : 0;
+      const objects = keys.slice(start, start + limit).map((key) => ({ key }));
+      const next = start + objects.length;
+      return { objects, truncated: next < keys.length, cursor: next < keys.length ? String(next) : undefined };
     },
   },
 };
@@ -150,6 +163,57 @@ test("incluye Naturland para los titulares confirmados", async () => {
       && normalize(record.certification) === "naturland"
     )), `Falta Naturland para ${holder}`);
   }
+});
+
+test("identifica al usuario personal y conserva su nombre en la sesión", async () => {
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "miguel.angel", password: "editor-password" }),
+  });
+  assert.equal(login.status, 200);
+  const { token, profile: loginProfile } = await login.json();
+  assert.deepEqual(loginProfile, {
+    displayName: "Miguel Ángel",
+    userPrincipalName: "MIGUEL.ANGEL",
+    role: "editor",
+    canEdit: true,
+  });
+
+  const profile = await api("/api/profile", { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal(profile.status, 200);
+  assert.deepEqual(await profile.json(), loginProfile);
+
+  const audit = await api("/api/audit-events", { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal(audit.status, 403);
+});
+
+test("registra los cambios con el usuario que los realiza", async () => {
+  for (const key of [...storedContracts.keys()]) {
+    if (key.startsWith("audit/events/")) storedContracts.delete(key);
+  }
+  const login = await api("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "ADMINISTRADOR", password: "admin-password" }),
+  });
+  const { token } = await login.json();
+  const update = await api("/api/control-catalog", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ certificates: [], opfhMembers: [], farms: [], documents: [] }),
+  });
+  assert.equal(update.status, 200);
+
+  const auditResponse = await api("/api/audit-events?limit=10", { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal(auditResponse.status, 200);
+  const { events } = await auditResponse.json();
+  assert.equal(events.length, 1);
+  assert.equal(events[0].actorUsername, "ADMINISTRADOR");
+  assert.equal(events[0].actorDisplayName, "Administrador");
+  assert.equal(events[0].action, "catalog.update");
+  assert.equal(events[0].status, "completed");
+  storedContracts.delete("catalog/control-documental.json");
 });
 
 test("un contrato nuevo no hereda el PDF histórico del agricultor", () => {
