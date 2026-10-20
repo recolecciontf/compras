@@ -1441,13 +1441,44 @@ h3,
   }
 }
 
+.representative-box,
 .destrio-box {
   display: grid;
   gap: 12px;
   margin-top: 14px;
   padding: 14px;
-  border: 1px solid #eadfbc;
   border-radius: 11px;
+}
+
+.representative-box {
+  border: 1px solid #cfe0ca;
+  background: #f5faf2;
+}
+
+.representative-heading,
+.destrio-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.representative-heading strong,
+.destrio-heading strong {
+  color: var(--green-850);
+  font-size: 0.78rem;
+}
+
+.representative-heading small,
+.destrio-heading small {
+  color: #68756b;
+  font-size: 0.63rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.destrio-box {
+  border: 1px solid #eadfbc;
   background: #fffaf0;
 }
 
@@ -1460,6 +1491,73 @@ h3,
   color: #786a3b;
   font-size: 0.66rem;
   line-height: 1.5;
+}
+
+.destrio-defects {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.destrio-defects > strong {
+  color: #5e532e;
+  font-size: 0.69rem;
+}
+
+.destrio-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.destrio-option {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  color: #655b39;
+  border: 1px solid #dfd4b5;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.destrio-option.selected {
+  color: var(--green-900);
+  border-color: #8fba72;
+  background: #edf7e7;
+}
+
+.destrio-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green-700);
+}
+
+.destrio-warning {
+  color: #a35c16;
+  font-size: 0.63rem;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .representative-heading,
+  .destrio-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .representative-heading small,
+  .destrio-heading small {
+    text-align: left;
+  }
+
+  .destrio-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .catalog-source-note {

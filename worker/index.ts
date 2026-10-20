@@ -1289,6 +1289,9 @@ export function validatePurchase(purchase: PurchasePayload, requireComplete = tr
       ["transportBy", "responsable de transporte"], ["paymentDays", "plazo de pago"],
     ];
     if (requiresSellerSignature) requiredContractFields.push(["sellerSignedAt", "firma del vendedor"]);
+    if (purchase.contractDetails.sellerRepresentative && !purchase.contractDetails.sellerDni) {
+      requiredContractFields.push(["sellerDni", "DNI del representante"]);
+    }
     if (purchase.contractDetails.contractOrigin !== "existing") {
       const priceField = purchase.contractDetails.modality === "POR TANTO" ? "totalPrice" : "pricePerKg";
       const priceLabel = purchase.contractDetails.modality === "POR TANTO" ? "precio total" : "precio por kg";
@@ -1311,8 +1314,13 @@ export function validatePurchase(purchase: PurchasePayload, requireComplete = tr
     const missingContract = requiredContractFields.filter(([key]) => !purchase.contractDetails[key]).map(([, label]) => label);
     if (missingContract.length) throw new InputError(`Faltan datos del contrato: ${missingContract.join(", ")}.`);
     if (purchase.contractDetails.applyDestrio === "Sí") {
-      const missingDestrio = ["destrioLocation", "destrioDefects", "destrioPrice"].filter((key) => !purchase.contractDetails[key]);
-      if (missingDestrio.length) throw new InputError("Completa el lugar, los defectos y el precio del destrío.");
+      const missingDestrio = ["destrioLocation", "destrioDefects"].filter((key) => !purchase.contractDetails[key]?.trim());
+      if (missingDestrio.length) throw new InputError("Completa el lugar y los defectos del destrío.");
+      if (!["Campo", "Almacén"].includes(purchase.contractDetails.destrioLocation)) throw new InputError("Selecciona Campo o Almacén como lugar del destrío.");
+      const destrioPrice = purchase.contractDetails.destrioPrice?.trim();
+      if (destrioPrice && (!Number.isFinite(Number(destrioPrice.replace(",", "."))) || Number(destrioPrice.replace(",", ".")) < 0)) {
+        throw new InputError("El precio del destrío debe ser un número igual o superior a cero.");
+      }
     }
   }
   if (purchase.contractStart && purchase.contractEnd && purchase.contractStart > purchase.contractEnd) {

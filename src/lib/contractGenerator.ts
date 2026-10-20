@@ -202,6 +202,26 @@ function replaceNextBlank(paragraph: Element, value: string) {
   return match ? replaceInParagraph(paragraph, match[0], value) : false;
 }
 
+function fillAgreementSlot(paragraph: Element, marker: RegExp, value: string, halfPoints?: number) {
+  const original = paragraphText(paragraph);
+  const heading = original.match(marker);
+  if (!heading || heading.index === undefined) return false;
+  const markerEnd = heading.index + heading[0].length;
+  const afterMarker = original.slice(markerEnd);
+  const blank = afterMarker.match(/_{2,}/);
+  if (blank && blank.index !== undefined) {
+    // Localizar el hueco DESPUÉS de la etiqueta evita rellenar por error el
+    // porcentaje u otros campos anteriores del mismo párrafo legal.
+    const target = original.slice(heading.index, markerEnd + blank.index + blank[0].length);
+    const replacement = target.slice(0, -blank[0].length) + value;
+    return replaceInParagraph(paragraph, target, replacement);
+  }
+  const sourceRun = Array.from(paragraph.getElementsByTagNameNS(WORD_NS, "r")).at(-1);
+  const sourceProperties = sourceRun ? childElements(sourceRun, "rPr")[0] : null;
+  paragraph.append(runElement(paragraph.ownerDocument, ` ${value}`, false, halfPoints, sourceProperties));
+  return true;
+}
+
 function replaceBetween(paragraph: Element, startMarker: string, endMarker: string, replacement: string) {
   const text = paragraphText(paragraph);
   const start = text.indexOf(startMarker);
@@ -843,18 +863,17 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     });
   }
 
+  const destrioAgreement = details.applyDestrio === "Sí"
+    ? `Destrío en ${details.destrioLocation.toLocaleLowerCase("es")}: ${details.destrioDefects.trim()}${details.destrioPrice.trim() ? `; el destrío se pagará a ${numberEs(details.destrioPrice)} €/kg` : ""}.`
+    : "";
+  let destrioInserted = false;
   if (priceMode === "A KILOS") {
     const leftParagraphs = childElements(leftCollectionCell, "p");
-    const agreementParagraph = leftParagraphs.find((paragraph) => paragraphText(paragraph).startsWith("Las partes podrán acordar"));
-    if (agreementParagraph) {
-      const prefix = "Las partes podrán acordar otro tipo de minoraciones que deberán quedar reflejadas de forma expresa:";
-      const agreement = details.applyDestrio === "Sí"
-        ? `Destrío en ${details.destrioLocation.toLocaleLowerCase("es")} de ${details.destrioDefects}; el destrío se pagará a ${numberEs(details.destrioPrice)} €/kg.`
-        : "____________________";
-      // La línea de puntos original es más ancha que la celda y algunos
-      // conversores la sacan del margen. Se conserva el espacio reservado sin
-      // alterar el texto contractual.
-      setParagraph(agreementParagraph, `${prefix} ${agreement}`, "", filledHalfPoints);
+    const agreementParagraph = leftParagraphs.find((paragraph) => paragraphText(paragraph).includes("Las partes podrán acordar"));
+    if (agreementParagraph && destrioAgreement) {
+      // Solo se sustituye el hueco del acuerdo; los textos y estilos fijos
+      // de la cláusula permanecen en los mismos elementos del modelo.
+      destrioInserted = fillAgreementSlot(agreementParagraph, /Las partes podrán acordar[\s\S]*?forma expresa\s*:/i, destrioAgreement, filledHalfPoints);
     }
   }
 
@@ -872,18 +891,14 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
     if (payment) setParagraph(payment, `5.o FORMA DE PAGO: Transferencia bancaria a ${details.paymentDays || "30"} días.`, "5.o FORMA DE PAGO:", filledHalfPoints);
   }
 
-  const otherAgreements = findParagraph(document, (text) => /^1[34]\.o OTROS ACUERDOS:/.test(text.trimStart()));
-  if (otherAgreements && purchase.otherAgreements.trim()) {
-    const original = paragraphText(otherAgreements);
-    if (batch.kind === "uva") {
-      const prefix = original.match(/^.*?OTROS ACUERDOS:/)?.[0] || "13.o OTROS ACUERDOS:";
-      setParagraph(otherAgreements, `${prefix} ${purchase.otherAgreements.trim()}`, prefix, 20);
-    } else if (/_{5,}/.test(original)) {
-      const prefix = original.match(/^.*?OTROS ACUERDOS:/)?.[0] || "14.o OTROS ACUERDOS:";
-      setParagraph(otherAgreements, `${prefix} ${purchase.otherAgreements.trim()}`, prefix, filledHalfPoints);
-    } else {
-      setParagraph(otherAgreements, `${original.trim()} ${purchase.otherAgreements.trim()}`, original.slice(0, original.indexOf(":") + 1), filledHalfPoints);
-    }
+  const agreementsMarker = /^1[34]\s*[.º°o]+\s*OTROS\s+ACUERDOS(?:\s+Y\/O\s+OBSERVACIONES)?\s*[:.]?/i;
+  const otherAgreements = findParagraph(document, (text) => agreementsMarker.test(text.trimStart()));
+  const additionalAgreements = [purchase.otherAgreements.trim(), !destrioInserted ? destrioAgreement : ""].filter(Boolean).join(" ");
+  if (otherAgreements && additionalAgreements) {
+    fillAgreementSlot(otherAgreements, /1[34]\s*[.º°o]+\s*OTROS\s+ACUERDOS(?:\s+Y\/O\s+OBSERVACIONES)?\s*[:.]?/i, additionalAgreements, filledHalfPoints);
+  }
+  if (destrioAgreement && !destrioInserted && !otherAgreements) {
+    throw new Error("El modelo no contiene un espacio para el acuerdo de destrío. No se ha alterado el clausulado; revisa el modelo antes de descargar.");
   }
 
   if (batch.kind === "uva") {
@@ -1033,11 +1048,16 @@ export function validateContractGeneration(purchase: PurchaseForm) {
   }
   if (details.priceAgreement !== "A RESULTAS" && details.modality === "A KILOS" && details.totalPrice) throw new Error("La modalidad A KILOS requiere precio por kg, no precio total.");
   if (details.priceAgreement !== "A RESULTAS" && details.modality === "POR TANTO" && details.pricePerKg) throw new Error("La modalidad POR TANTO requiere precio total, no precio por kg.");
+  if (details.sellerRepresentative.trim() && !details.sellerDni.trim()) throw new Error("Completa el DNI del representante del vendedor.");
   if (purchase.materials.some((material) => !material.crop || !material.variety || !material.expectedKg)) {
     throw new Error("Completa la especie, variedad y kg de todas las materias primas.");
   }
-  if (details.applyDestrio === "Sí" && (!details.destrioLocation || !details.destrioDefects || !details.destrioPrice)) {
-    throw new Error("Completa el lugar, los defectos y el precio del destrío.");
+  if (details.applyDestrio === "Sí" && (!details.destrioLocation || !details.destrioDefects.trim())) {
+    throw new Error("Completa el lugar y los defectos del destrío.");
+  }
+  if (details.applyDestrio === "Sí" && details.destrioPrice.trim()
+    && (!Number.isFinite(Number(details.destrioPrice.replace(",", "."))) || Number(details.destrioPrice.replace(",", ".")) < 0)) {
+    throw new Error("El precio del destrío debe ser un número igual o superior a cero.");
   }
 }
 

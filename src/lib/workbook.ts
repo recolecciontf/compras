@@ -341,10 +341,10 @@ export function reviewBlockages(row: ControlRow, form: ReviewForm) {
     if (contract.priceAgreement !== "A RESULTAS" && contract.pricePerKg && contract.totalPrice) issues.push("Hay dos tipos de precio; debe indicarse solo uno");
     if (!contract.paymentDays) issues.push("Falta el plazo de pago");
   }
+  if (contract.sellerRepresentative.trim() && !contract.sellerDni.trim()) issues.push("Falta el DNI del representante");
   if (contract.applyDestrio === "Sí") {
     if (!contract.destrioLocation) issues.push("Falta el lugar del destrío");
     if (!contract.destrioDefects) issues.push("Faltan los defectos a destriar");
-    if (!contract.destrioPrice) issues.push("Falta el precio del destrío");
   }
   if (!contract.archiveId) issues.push("Falta archivar la copia firmada del contrato");
   if (!row.contractStart) issues.push("Falta el inicio del contrato");

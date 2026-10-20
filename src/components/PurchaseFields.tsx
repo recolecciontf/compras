@@ -10,6 +10,13 @@ type Props = {
   contractMode?: "existing" | "generated" | "unsigned" | "editing";
 };
 
+const FIELD_DESTRIO_DEFECTS = ["Bola", "Rajada", "Mosca", "Araña", "Caracol", "Rozada", "Podrida"];
+const WAREHOUSE_DESTRIO_DEFECTS = ["Podrida", "Rozada", "Golpeada", "Calibre pequeño", "Calibre grande", "Segunda categoría"];
+
+function destrioDefectList(value: string) {
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
 function localToday() {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60_000;
@@ -196,6 +203,16 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
   const contract = value.contractDetails;
   const hasAilimpoSpecies = value.materials.some((item) => ["Limón", "Pomelo"].includes(item.crop));
   const isUnsigned = contractMode === "unsigned" || contract.signatureMethod === "external_pending";
+  const representativeRequired = Boolean(contract.sellerRepresentative.trim());
+  const selectedDestrioDefects = destrioDefectList(contract.destrioDefects);
+  const destrioDefectOptions = Array.from(new Set(contract.destrioLocation === "Almacén"
+    ? [...WAREHOUSE_DESTRIO_DEFECTS, ...FIELD_DESTRIO_DEFECTS]
+    : [...FIELD_DESTRIO_DEFECTS, ...WAREHOUSE_DESTRIO_DEFECTS]));
+
+  function toggleDestrioDefect(defect: string, checked: boolean) {
+    const current = destrioDefectList(contract.destrioDefects).filter((item) => item.toLocaleLowerCase("es") !== defect.toLocaleLowerCase("es"));
+    updateContract("destrioDefects", [...current, ...(checked ? [defect] : [])].join(", "));
+  }
 
   return (
     <div className="purchase-fields">
@@ -212,13 +229,19 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
         <label className="field required-field"><span>Campaña</span><input required disabled={disabled} value={value.campaign} onChange={(event) => update("campaign", event.target.value)} placeholder="2026/27" /></label>
       </div>
 
+      <div className="representative-box">
+        <div className="representative-heading"><strong>Representante del vendedor</strong><small>Déjalo en blanco cuando el agricultor firme en su propio nombre</small></div>
+        <div className="three-columns">
+          <label className="field"><span>Tratamiento</span><select disabled={disabled} value={contract.sellerTreatment} onChange={(event) => updateContract("sellerTreatment", event.target.value as ContractDetails["sellerTreatment"])}><option value="">Sin indicar</option><option value="D.">D.</option><option value="Dña.">Dña.</option></select></label>
+          <label className="field"><span>Nombre y apellidos</span><input disabled={disabled} value={contract.sellerRepresentative} onChange={(event) => updateContract("sellerRepresentative", event.target.value)} placeholder="Solo si actúa en representación" /></label>
+          <label className={`field ${representativeRequired ? "required-field" : ""}`}><span>DNI del representante</span><input required={representativeRequired} disabled={disabled} value={contract.sellerDni} onChange={(event) => updateContract("sellerDni", event.target.value.toLocaleUpperCase("es"))} placeholder={representativeRequired ? "Obligatorio si hay representante" : "Solo si existe representante"} /></label>
+          <label className="field field-span"><span>Domicilio del representante</span><input disabled={disabled} value={contract.sellerRepresentativeAddress} onChange={(event) => updateContract("sellerRepresentativeAddress", event.target.value)} placeholder="Opcional; solo si consta en el contrato" /></label>
+        </div>
+      </div>
+
       {contractMode !== "existing" && <details className="contract-data-details" open>
         <summary><FileText size={18} /> Datos que se insertarán en el contrato</summary>
         <div className="two-columns contract-data-grid">
-          <label className="field"><span>Tratamiento del representante</span><select disabled={disabled} value={contract.sellerTreatment} onChange={(event) => updateContract("sellerTreatment", event.target.value as ContractDetails["sellerTreatment"])}><option value="">Sin indicar</option><option value="D.">D.</option><option value="Dña.">Dña.</option></select></label>
-          <label className="field"><span>Representante del vendedor</span><input disabled={disabled} value={contract.sellerRepresentative} onChange={(event) => updateContract("sellerRepresentative", event.target.value)} placeholder="Solo si actúa en representación" /></label>
-          <label className="field"><span>DNI del representante</span><input disabled={disabled} value={contract.sellerDni} onChange={(event) => updateContract("sellerDni", event.target.value)} placeholder="Solo si existe representante" /></label>
-          <label className="field field-span"><span>Domicilio del representante</span><input disabled={disabled} value={contract.sellerRepresentativeAddress} onChange={(event) => updateContract("sellerRepresentativeAddress", event.target.value)} placeholder="Opcional; solo si consta en el contrato" /></label>
           <label className="field"><span>Correo del agricultor (opcional)</span><input disabled={disabled} type="email" value={contract.sellerEmail} onChange={(event) => updateContract("sellerEmail", event.target.value)} placeholder="agricultor@correo.es" /></label>
           <label className="field"><span>Correo de la empresa (opcional)</span><input disabled={disabled} type="email" value={contract.companyEmail} onChange={(event) => updateContract("companyEmail", event.target.value)} placeholder="compras@empresa.es" /></label>
           <label className="field field-span"><span>Domicilio de la empresa / vendedor</span><input disabled={disabled} value={contract.sellerAddress} onChange={(event) => updateContract("sellerAddress", event.target.value)} placeholder="Opcional; domicilio de la razón social o del vendedor sin representante" /></label>
@@ -247,16 +270,30 @@ export function PurchaseFields({ value, onChange, disabled = false, contractMode
           <div className="field-help-card field-span"><FileText size={18} /><span>El PDF marcará la procedencia, la modalidad, la recolección y el transporte en las casillas originales del contrato.</span></div>
         </div>
 
-        <div className="destrio-box">
-          <label className="field required-field"><span>¿Se aplicará destrío?</span><select required disabled={disabled} value={contract.applyDestrio} onChange={(event) => updateContract("applyDestrio", event.target.value as ContractDetails["applyDestrio"])}><option>No</option><option>Sí</option></select></label>
-          {contract.applyDestrio === "Sí" && <div className="three-columns">
-            <label className="field required-field"><span>Lugar del destrío</span><select required disabled={disabled} value={contract.destrioLocation} onChange={(event) => updateContract("destrioLocation", event.target.value as ContractDetails["destrioLocation"])}><option value="">Seleccionar</option><option>Campo</option><option>Almacén</option></select></label>
-            <label className="field required-field"><span>Defectos a destriar</span><input required disabled={disabled} value={contract.destrioDefects} onChange={(event) => updateContract("destrioDefects", event.target.value)} placeholder="Rodrejo, caracol, rozado…" /></label>
-            <label className="field required-field"><span>Precio destrío €/kg</span><input required disabled={disabled} type="number" min="0" step="0.001" value={contract.destrioPrice} onChange={(event) => updateContract("destrioPrice", event.target.value)} /></label>
-          </div>}
-          {contract.applyDestrio === "Sí" && <p>El generador mantendrá intactas las condiciones estándar de minoración y añadirá el acuerdo de destrío en el espacio reservado.</p>}
-        </div>
       </details>}
+
+      <div className="destrio-box">
+        <div className="destrio-heading"><strong>Destrío</strong><small>Indica dónde se realizará y qué fruta debe apartarse</small></div>
+        <label className="field required-field"><span>¿Se aplicará destrío?</span><select required disabled={disabled} value={contract.applyDestrio} onChange={(event) => updateContract("applyDestrio", event.target.value as ContractDetails["applyDestrio"])}><option>No</option><option>Sí</option></select></label>
+        {contract.applyDestrio === "Sí" && <>
+          <div className="two-columns">
+            <label className="field required-field"><span>Lugar del destrío</span><select required disabled={disabled} value={contract.destrioLocation} onChange={(event) => updateContract("destrioLocation", event.target.value as ContractDetails["destrioLocation"])}><option value="">Seleccionar</option><option>Campo</option><option>Almacén</option></select></label>
+            <label className="field"><span>Precio destrío €/kg (si se pacta)</span><input disabled={disabled} type="number" min="0" step="0.001" inputMode="decimal" value={contract.destrioPrice} onChange={(event) => updateContract("destrioPrice", event.target.value)} placeholder="Opcional" /></label>
+          </div>
+          {contract.destrioLocation && <div className="destrio-defects">
+            <strong>¿Qué se debe destriar en {contract.destrioLocation.toLocaleLowerCase("es")}?</strong>
+            <div className="destrio-options">
+              {destrioDefectOptions.map((defect) => {
+                const checked = selectedDestrioDefects.some((item) => item.toLocaleLowerCase("es") === defect.toLocaleLowerCase("es"));
+                return <label className={`destrio-option ${checked ? "selected" : ""}`} key={defect}><input type="checkbox" disabled={disabled} checked={checked} onChange={(event) => toggleDestrioDefect(defect, event.target.checked)} /><span>{defect}</span></label>;
+              })}
+            </div>
+            <label className="field required-field"><span>Defectos a destriar y otros (editables)</span><textarea required disabled={disabled} rows={2} value={contract.destrioDefects} onChange={(event) => updateContract("destrioDefects", event.target.value)} placeholder="Marca las opciones o escribe otros defectos separados por comas" /></label>
+            {!contract.destrioDefects.trim() && <small className="destrio-warning">Selecciona al menos un defecto o escríbelo en el campo anterior.</small>}
+          </div>}
+          <p>El contrato indicará el lugar y los defectos seleccionados. El precio del destrío solo se incluirá cuando se haya indicado.</p>
+        </>}
+      </div>
 
       <div className="field-section-heading section-divider">
         <span>2</span>

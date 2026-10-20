@@ -285,6 +285,16 @@ test("permite crear una compra sin correos cuyo nuevo contrato se firmará más 
     },
   };
   assert.doesNotThrow(() => validatePurchase(purchase));
+  purchase.contractDetails.sellerRepresentative = "REPRESENTANTE DE PRUEBA";
+  assert.throws(() => validatePurchase(purchase), /DNI del representante/i);
+  purchase.contractDetails.sellerDni = "00000000T";
+  purchase.contractDetails.destrioLocation = "Campo";
+  purchase.contractDetails.destrioDefects = "Bola, Rajada, Mosca, Araña";
+  assert.doesNotThrow(() => validatePurchase(purchase));
+  purchase.contractDetails.destrioPrice = "";
+  assert.doesNotThrow(() => validatePurchase(purchase));
+  purchase.contractDetails.destrioDefects = "";
+  assert.throws(() => validatePurchase(purchase), /defectos del destrío/i);
 });
 
 test("valida los calibres indicados sin hacerlos obligatorios", () => {

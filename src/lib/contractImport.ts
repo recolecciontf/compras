@@ -741,6 +741,8 @@ export async function importPurchaseFromContract(
   if (next.taxId) detectedFields.push("NIF / CIF");
   else warnings.push("No se ha reconocido el NIF o CIF del vendedor.");
   if (next.contractDetails.sellerRepresentative) detectedFields.push("Representante");
+  if (next.contractDetails.sellerDni) detectedFields.push("DNI del representante");
+  else if (next.contractDetails.sellerRepresentative) warnings.push("Se ha reconocido el representante, pero no su DNI. Complétalo antes de generar el contrato.");
   if (next.contractDetails.sellerRepresentativeAddress) detectedFields.push("Domicilio del representante");
   if (next.contractDetails.sellerAddress) detectedFields.push("Domicilio");
   if (next.contractDetails.sellerEmail) detectedFields.push("Correo del agricultor");
@@ -831,10 +833,21 @@ export async function importPurchaseFromContract(
   next.otherAgreements = detectOtherAgreements(text);
   if (next.otherAgreements) {
     detectedFields.push("Otros acuerdos");
-    if (/destr[ií]o/i.test(next.otherAgreements)) {
-      next.contractDetails.applyDestrio = "Sí";
-      next.contractDetails.destrioLocation = /almac[eé]n/i.test(next.otherAgreements) ? "Almacén" : /campo/i.test(next.otherAgreements) ? "Campo" : "";
-    }
+  }
+  const destrioClause = text.match(/(?:destr[ií]o|destriar|se\s+destr[ií]a)\s+(?:en\s+)?(campo|almac[eé]n)([\s\S]{0,240})/i);
+  if (destrioClause) {
+    const clauseText = destrioClause[0];
+    const knownDefects = ["Bola", "Rajada", "Mosca", "Araña", "Caracol", "Rozada", "Podrida", "Golpeada", "Calibre pequeño", "Calibre grande", "Segunda categoría"];
+    const defects = knownDefects.filter((defect) => clauseText.toLocaleLowerCase("es").includes(defect.toLocaleLowerCase("es")));
+    const priceMatch = clauseText.match(/(?:pagar[aá]|precio)[^\d]{0,40}(\d+(?:[.,]\d+)?)\s*(?:€|euros?)?\s*\/?\s*kg/i);
+    next.contractDetails.applyDestrio = "Sí";
+    next.contractDetails.destrioLocation = /almac[eé]n/i.test(destrioClause[1]) ? "Almacén" : "Campo";
+    const explicitDefects = destrioClause[2].match(/^\s*(?::|de(?:\s+la\s+fruta\s+con\s+los\s+siguientes\s+defectos:)?|,\s*defectos:)\s*([^;\n]+?)(?=;|\.(?:\s|$)|$)/i)?.[1]?.trim() || "";
+    next.contractDetails.destrioDefects = explicitDefects || defects.join(", ");
+    next.contractDetails.destrioPrice = priceMatch?.[1]?.replace(",", ".") || "";
+    detectedFields.push("Lugar del destrío");
+    if (next.contractDetails.destrioDefects) detectedFields.push("Defectos del destrío");
+    else warnings.push("Se ha detectado el destrío, pero no los defectos concretos. Selecciona qué fruta debe apartarse.");
   }
 
   next.id = "";
