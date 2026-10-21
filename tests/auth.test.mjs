@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readdir } from "node:fs/promises";
 import test from "node:test";
 
 const workerUrl = new URL(`../dist/server/index.js?test=${Date.now()}`, import.meta.url);
@@ -46,6 +47,18 @@ const env = {
 function api(path, init = {}) {
   return worker.fetch(new Request(`https://app.example${path}`, init), env);
 }
+
+test("sirve el lector PDF como JavaScript, también bajo /compras y con revisión de caché", async () => {
+  const assets = await readdir(new URL("../dist/assets/", import.meta.url));
+  const pdfWorker = assets.find((name) => /^pdf\.worker.*\.mjs$/.test(name));
+  assert.ok(pdfWorker, "El paquete debe incluir el lector PDF");
+  for (const prefix of ["", "/compras"]) {
+    const response = await api(`${prefix}/assets/${pdfWorker}?v=2`);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("Content-Type"), /^(?:text|application)\/javascript\b/);
+    assert.ok((await response.arrayBuffer()).byteLength > 1000);
+  }
+});
 
 test("separa la copia externa por empresa y mantiene una carpeta general de respaldo", () => {
   const folders = {

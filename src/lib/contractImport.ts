@@ -339,7 +339,9 @@ async function extractPdf(
   onProgress?: (progress: ContractImportProgress) => void,
 ): Promise<ExtractedDocument> {
   const { GlobalWorkerOptions, getDocument } = await import("pdfjs-dist");
-  GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  // Evita reutilizar la respuesta antigua almacenada como octet-stream:
+  // los módulos del lector PDF deben servirse con MIME JavaScript.
+  GlobalWorkerOptions.workerSrc = `${pdfWorkerUrl}?v=2`;
   const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
   const pdf = await loadingTask.promise;
   const pages: string[] = [];

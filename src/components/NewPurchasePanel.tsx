@@ -539,7 +539,12 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
                   type="file"
                   accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   disabled={importingContract}
-                  onChange={(event) => void importContractFile(event.target.files?.[0] || null)}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    // Permite volver a seleccionar el mismo contrato tras un error.
+                    event.target.value = "";
+                    if (file) void importContractFile(file);
+                  }}
                 />
                 <FileUp size={20} />
                 <span>{importingContract ? importProgress?.message || "Leyendo y comprobando el contrato…" : importedContractFile ? importedContractFile.name : "Seleccionar contrato PDF o Word"}</span>
