@@ -11,7 +11,7 @@
     "build": "tsc --noEmit && vite build --configLoader native && node scripts/generate-worker-assets.mjs && vite build --config vite.worker.config.ts --configLoader native && node scripts/prepare-sites-dist.mjs",
     "preview": "vite preview --configLoader native",
     "check": "tsc --noEmit",
-    "test": "node --test --test-isolation=none tests/auth.test.mjs tests/purchase-fields.test.mjs"
+    "test": "node --test --test-isolation=none tests/auth.test.mjs tests/purchase-fields.test.mjs tests/contract-agreements.test.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",

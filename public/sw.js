@@ -1,4 +1,4 @@
-const CACHE_NAME = "compras-de-campo-offline-v15-orden-cortes";
+const CACHE_NAME = "compras-de-campo-offline-v16-destrio-cuadros";
 const CACHE_PREFIX = "compras-de-campo-";
 const APP_SHELL = [
   "./",

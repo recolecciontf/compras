@@ -213,13 +213,28 @@ function fillAgreementSlot(paragraph: Element, marker: RegExp, value: string, ha
     // Localizar el hueco DESPUÉS de la etiqueta evita rellenar por error el
     // porcentaje u otros campos anteriores del mismo párrafo legal.
     const target = original.slice(heading.index, markerEnd + blank.index + blank[0].length);
-    const replacement = target.slice(0, -blank[0].length) + value;
+    const suffix = afterMarker.slice(blank.index + blank[0].length);
+    const separator = suffix && !/^\s/.test(suffix) && !/\s$/.test(value) ? " " : "";
+    const replacement = target.slice(0, -blank[0].length) + value + separator;
     return replaceInParagraph(paragraph, target, replacement);
   }
   const sourceRun = Array.from(paragraph.getElementsByTagNameNS(WORD_NS, "r")).at(-1);
   const sourceProperties = sourceRun ? childElements(sourceRun, "rPr")[0] : null;
   paragraph.append(runElement(paragraph.ownerDocument, ` ${value}`, false, halfPoints, sourceProperties));
   return true;
+}
+
+function fillDestrioSlot(scope: Element, value: string, halfPoints?: number) {
+  const markers = [
+    /Las partes podrán acordar[\s\S]*?forma expresa\s*:/i,
+    /Se\s+minorar[aá]n\s+los\s+kilos[\s\S]*?con\s+los\s+siguientes\s+defectos\s*:/i,
+    /Cualquier acuerdo entre las partes de minoraci[oó]n o descuento en el precio deber[aá] especificarse aqu[ií](?: o en documento anexo)?\s*:/i,
+  ];
+  for (const marker of markers) {
+    const paragraph = findParagraph(scope, (text) => marker.test(text));
+    if (paragraph && fillAgreementSlot(paragraph, marker, value, halfPoints)) return true;
+  }
+  return false;
 }
 
 function replaceBetween(paragraph: Element, startMarker: string, endMarker: string, replacement: string) {
@@ -866,14 +881,14 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
   const destrioAgreement = details.applyDestrio === "Sí"
     ? `Destrío en ${details.destrioLocation.toLocaleLowerCase("es")}: ${details.destrioDefects.trim()}${details.destrioPrice.trim() ? `; el destrío se pagará a ${numberEs(details.destrioPrice)} €/kg` : ""}.`
     : "";
-  let destrioInserted = false;
-  if (priceMode === "A KILOS") {
-    const leftParagraphs = childElements(leftCollectionCell, "p");
-    const agreementParagraph = leftParagraphs.find((paragraph) => paragraphText(paragraph).includes("Las partes podrán acordar"));
-    if (agreementParagraph && destrioAgreement) {
-      // Solo se sustituye el hueco del acuerdo; los textos y estilos fijos
-      // de la cláusula permanecen en los mismos elementos del modelo.
-      destrioInserted = fillAgreementSlot(agreementParagraph, /Las partes podrán acordar[\s\S]*?forma expresa\s*:/i, destrioAgreement, filledHalfPoints);
+  if (destrioAgreement) {
+    // Cada familia de modelos tiene una etiqueta distinta para este hueco.
+    // Se rellena únicamente el cuadro de la modalidad activa, nunca el de
+    // otra modalidad ni el apartado independiente de otros acuerdos.
+    const scopes = priceMode === "A KILOS" ? [leftCollectionCell] : [rightCollectionCell, activePriceCell];
+    const inserted = scopes.some((scope) => fillDestrioSlot(scope, destrioAgreement, filledHalfPoints));
+    if (!inserted) {
+      throw new Error(`El modelo no contiene un hueco de destrío en el cuadro de ${priceMode}. Revisa las condiciones o prepara un anexo antes de descargar; no se ha trasladado el destrío a Otros acuerdos.`);
     }
   }
 
@@ -893,20 +908,19 @@ function fillDocument(document: Document, purchase: PurchaseForm, batch: Contrac
 
   const agreementsMarker = /^1[34]\s*[.º°o]+\s*OTROS\s+ACUERDOS(?:\s+Y\/O\s+OBSERVACIONES)?\s*[:.]?/i;
   const otherAgreements = findParagraph(document, (text) => agreementsMarker.test(text.trimStart()));
-  const additionalAgreements = [purchase.otherAgreements.trim(), !destrioInserted ? destrioAgreement : ""].filter(Boolean).join(" ");
+  const additionalAgreements = purchase.otherAgreements.trim();
+  if (additionalAgreements && !otherAgreements) {
+    throw new Error("El modelo no contiene el apartado Otros acuerdos. No se ha generado el contrato para evitar perder las condiciones indicadas.");
+  }
   if (otherAgreements && additionalAgreements) {
     fillAgreementSlot(otherAgreements, /1[34]\s*[.º°o]+\s*OTROS\s+ACUERDOS(?:\s+Y\/O\s+OBSERVACIONES)?\s*[:.]?/i, additionalAgreements, filledHalfPoints);
   }
-  if (destrioAgreement && !destrioInserted && !otherAgreements) {
-    throw new Error("El modelo no contiene un espacio para el acuerdo de destrío. No se ha alterado el clausulado; revisa el modelo antes de descargar.");
-  }
 
   if (batch.kind === "uva") {
-    // El modelo contiene tres copias estáticas del acuerdo de calidad. Al
-    // rellenarlo debe quedar solo el texto vigente introducido en la compra.
+    // Se conserva la condición de análisis pendiente del modelo original.
+    // Eliminarla ocultaba uno de sus textos habituales de Otros acuerdos.
     removeParagraphs(document, (text) =>
-      text === "Queda pendiente resultado análisis de la fruta a recolectar"
-      || /^AL LLEGAR LA MERCANCIA SE HARA CONTROL DE CALIDAD/.test(text),
+      /^AL LLEGAR LA MERCANCIA SE HARA CONTROL DE CALIDAD/.test(text),
     );
 
     suppressParagraphBorders(findParagraph(document, (text) => text.startsWith("CONTRATO DE COMPRAVENTA DE UVA")));
