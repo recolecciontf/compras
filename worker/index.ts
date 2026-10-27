@@ -9,6 +9,7 @@ import {
 import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
 import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
 import { certificationSelection } from "../src/lib/catalog";
+import { validateAnnexFields, type ContractAnnex, type AnnexFile } from "../src/lib/contractAnnexData";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -44,6 +45,7 @@ interface Env {
   GOOGLE_DRIVE_BACKUP_WEBHOOK_URL?: string;
   GOOGLE_DRIVE_BACKUP_WEBHOOK_TOKEN?: string;
   CONTRACT_TEMPLATE_KEY: string;
+  ANNEX_TEMPLATE_KEY?: string;
   UVA_TEMPLATE_KEY?: string;
   CONTRACT_FILES?: ContractBucket;
   CONTRACT_EMAIL_WEBHOOK_URL?: string;
@@ -580,7 +582,7 @@ function json(request: Request, env: Env, body: unknown, status = 200) {
 async function contractTemplate(name: string, env: Env) {
   const encrypted = CONTRACT_ASSETS[name as keyof typeof CONTRACT_ASSETS];
   if (!encrypted) return null;
-  const configuredKey = env.CONTRACT_TEMPLATE_KEY;
+  const configuredKey = name.includes("-anexo-") ? env.ANNEX_TEMPLATE_KEY : env.CONTRACT_TEMPLATE_KEY;
   const keyBytes = Uint8Array.from(atob(configuredKey || ""), (character) => character.charCodeAt(0));
   if (keyBytes.length !== 32) throw new Error("La clave de los modelos contractuales no está configurada.");
   const bytes = Uint8Array.from(atob(encrypted), (character) => character.charCodeAt(0));
@@ -794,6 +796,101 @@ async function storeContract(form: FormData, env: Env) {
 
 async function archiveContract(request: Request, env: Env) {
   return storeContract(await request.formData(), env);
+}
+
+function annexPrefix(purchaseId: string) {
+  return `contract-annexes/${encodeURIComponent(purchaseId)}/`;
+}
+
+async function readAnnex(env: Env, purchaseId: string, id: string): Promise<ContractAnnex | null> {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const object = await env.CONTRACT_FILES.get(`${annexPrefix(purchaseId)}${id}.json`);
+  if (!object) return null;
+  const result = JSON.parse(await new Response(object.body).text()) as ContractAnnex;
+  if (result.purchaseId !== purchaseId || result.id !== id) throw new Error("La referencia del anexo no coincide con el expediente.");
+  let cursor: string | undefined;
+  result.signedCopies = [];
+  do {
+    const page = await env.CONTRACT_FILES.list({ prefix: `${annexPrefix(purchaseId)}${id}/signed/`, cursor });
+    for (const entry of page.objects) {
+      const signed = await env.CONTRACT_FILES.get(entry.key);
+      if (signed) result.signedCopies.push(JSON.parse(await new Response(signed.body).text()) as AnnexFile & { attachedBy: string });
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  result.signedCopies.sort((a, b) => a.archivedAt.localeCompare(b.archivedAt));
+  return result;
+}
+
+async function writeAnnex(env: Env, annex: ContractAnnex) {
+  const bytes = new TextEncoder().encode(JSON.stringify(annex));
+  await env.CONTRACT_FILES!.put(`${annexPrefix(annex.purchaseId)}${annex.id}.json`, bytes.buffer, { httpMetadata: { contentType: "application/json" } });
+}
+
+async function listAnnexes(env: Env, purchaseId: string) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const result: ContractAnnex[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.CONTRACT_FILES.list({ prefix: annexPrefix(purchaseId), cursor, limit: 1000 });
+    for (const object of page.objects) {
+      if (!/\/[^/]+\.json$/.test(object.key) || object.key.includes("/signed/")) continue;
+      const id = object.key.split("/").pop()?.replace(/\.json$/, "") || "";
+      const annex = await readAnnex(env, purchaseId, id);
+      if (annex) result.push(annex);
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+async function archiveAnnex(env: Env, session: Session, row: number, form: FormData, signedId?: string) {
+  const values = await loadRowValues(env, row);
+  const purchaseId = verifyExpectedId(values, String(form.get("expectedId") || ""));
+  const revision = String(form.get("expectedRevision") || "");
+  if (!revision) throw new InputError("Sincroniza el expediente antes de archivar un anexo.");
+  await verifyExpectedRevision(values, revision);
+  if (String(values[35] || "").toLowerCase() === "anulado") throw new InputError("No se pueden crear o adjuntar anexos a un expediente anulado.");
+  const details = parseJsonRecord(values[34]);
+  const company = String(details.buyerCompany || "");
+  if (!["MR. ORGÁNICA, S.L.", "TOÑIFRUIT, S.L."].includes(company)) throw new InputError("Completa y guarda la empresa del contrato original.");
+  const id = signedId || String(form.get("annexId") || "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new InputError("La referencia del anexo no es válida.");
+  const existing = await readAnnex(env, purchaseId, id);
+  let fields;
+  try { fields = validateAnnexFields(JSON.parse(String(form.get("fields") || "{}"))); }
+  catch (error) { throw new InputError(error instanceof Error ? error.message : "Revisa los datos del anexo."); }
+  if (signedId && !existing) throw new InputError("No se encuentra el anexo original.");
+  if (existing && existing.company !== company) throw new InputError("La empresa actual no coincide con la del anexo.");
+  // A stable client UUID makes a retried draft upload idempotent.
+  if (!signedId && existing) {
+    if (JSON.stringify(existing.fields) !== JSON.stringify(fields)) throw new ConflictError("Este anexo ya existe con otros datos. Recarga la lista antes de continuar.");
+    return existing;
+  }
+  const file = form.get("file");
+  if (!(file instanceof File)) throw new InputError("Adjunta el documento del anexo.");
+  if (!signedId && !/\.docx$/i.test(file.name)) throw new InputError("El original del anexo debe conservarse en Word.");
+  if (signedId && (!(file instanceof File) || !/\.pdf$/i.test(file.name))) throw new InputError("Adjunta el anexo devuelto firmado en PDF.");
+  const magic = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+  if (signedId ? String.fromCharCode(...magic) !== "%PDF-" : magic[0] !== 0x50 || magic[1] !== 0x4b) throw new InputError("El archivo no tiene un formato PDF o Word válido.");
+  // Server-side identity: never trust a supplied company/provider or send emails implicitly.
+  form.set("provider", String(values[1] || ""));
+  form.set("buyerCompany", company);
+  form.set("contractNumber", String(details.contractNumber || purchaseId));
+  form.set("sellerEmail", ""); form.set("companyEmail", ""); form.set("sendCopies", "false");
+  form.set("documentKind", signedId ? "signed_annex" : "generated_annex");
+  const archived = await storeContract(form, env);
+  const annex: ContractAnnex = existing || {
+    id, purchaseId, company, contractReference: String(details.contractNumber || purchaseId), fields,
+    createdAt: archived.archivedAt, createdBy: profileFor(session).displayName, draft: archived, signedCopies: [],
+  };
+  if (signedId) {
+    const signed = { ...archived, attachedBy: profileFor(session).displayName };
+    // Immutable copy entries avoid losing a returned file when two devices attach simultaneously.
+    await env.CONTRACT_FILES!.put(`${annexPrefix(purchaseId)}${id}/signed/${archived.archiveId}.json`, new TextEncoder().encode(JSON.stringify(signed)).buffer, { httpMetadata: { contentType: "application/json" } });
+    annex.signedCopies.push(signed);
+  } else await writeAnnex(env, annex);
+  return annex;
 }
 
 function contentTypeForLibraryDocument(filename: string, supplied: string) {
@@ -1849,6 +1946,26 @@ async function handleApi(request: Request, env: Env) {
       row,
     }, () => updateRecordStatus(env, row, body, session));
     return json(request, env, { ok: true, ...result });
+  }
+
+  const annexMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/annexes(?:\/([0-9a-f-]{36})\/signed)?$/i);
+  if (annexMatch && ["GET", "POST"].includes(request.method)) {
+    if (!canEdit(session)) return json(request, env, { error: "Los anexos contractuales están restringidos a usuarios autorizados." }, 403);
+    const row = Number(annexMatch[1]);
+    if (request.method === "GET" && !annexMatch[2]) {
+      const values = await loadRowValues(env, row);
+      const purchaseId = verifyExpectedId(values, url.searchParams.get("expectedId") || "");
+      return json(request, env, { annexes: await listAnnexes(env, purchaseId) });
+    }
+    if (request.method === "POST") {
+      const form = await request.formData();
+      const result = await runAuditedChange(env, session, {
+        action: annexMatch[2] ? "contract.annex.signed" : "contract.annex.create",
+        area: "contracts", recordId: String(form.get("expectedId") || ""), row,
+        summary: annexMatch[2] ? "Copia firmada de anexo adjuntada" : "Anexo contractual creado",
+      }, () => archiveAnnex(env, session, row, form, annexMatch[2]));
+      return json(request, env, { annex: result }, 201);
+    }
   }
 
   const backupsMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/backups$/);

@@ -8,6 +8,8 @@ type Props = {
 };
 
 const ACTION_LABELS: Record<string, string> = {
+  "contract.annex.create": "Anexo creado",
+  "contract.annex.signed": "Anexo firmado adjuntado",
   "purchase.create": "Compra creada",
   "purchase.update": "Compra actualizada",
   "review.update": "Revisión actualizada",

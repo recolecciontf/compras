@@ -2426,3 +2426,21 @@ h3,
     width: 100%;
   }
 }
+.annex-panel { margin: 24px 0; padding: 22px; border: 1px solid #cdddc5; border-radius: 16px; background: #fff; }
+.annex-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.annex-heading h3 { margin: 0 0 7px; color: #17472d; }
+.annex-heading p, .annex-hint { color: #5b6a62; font-size: .86rem; line-height: 1.5; }
+.annex-fields { margin: 20px 0; padding: 20px; border: 1px solid #d3dfcc; border-radius: 12px; background: #f6faf2; min-width: 0; }
+.annex-fields legend { padding: 0 8px; font-weight: 700; }
+.annex-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0 20px; }
+.annex-grid label { display: flex; flex-direction: column; gap: 7px; font-size: .87rem; font-weight: 700; }
+.annex-grid input, .annex-grid select, .annex-grid textarea { width: 100%; min-width: 0; padding: 12px; border: 1px solid #cbd6cd; border-radius: 9px; background: white; color: #183b2a; font: inherit; font-weight: 400; box-sizing: border-box; }
+.annex-wide { grid-column: 1 / -1; }
+.annex-check, .annex-grid .annex-check { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; font-size: .87rem; line-height: 1.5; margin: 12px 0 20px; }
+.annex-check input, .annex-grid .annex-check input { width: 18px; height: 18px; min-width: 18px; margin-top: 3px; }
+.annex-error { padding: 13px; background: #fff3ee; color: #a63221; border: 1px solid #efc9bc; border-radius: 9px; margin: 14px 0; }
+.annex-notice { padding: 13px; background: #edf6e5; color: #1e592c; border: 1px solid #bbd7a9; border-radius: 9px; margin: 14px 0; }
+.annex-list article { border-top: 1px solid #e1e7dd; padding: 18px 0; }
+.annex-list small { display: block; color: #647168; line-height: 1.5; margin-top: 5px; overflow-wrap: anywhere; }
+.annex-signed { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding-top: 12px; }
+@media (max-width: 640px) { .annex-panel { padding: 16px; } .annex-fields { padding: 14px; } .annex-grid { grid-template-columns: minmax(0, 1fr); } }

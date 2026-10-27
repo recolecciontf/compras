@@ -45,6 +45,8 @@ import { ActivityLogPanel } from "./components/ActivityLogPanel";
 import { CertificateControlPanel } from "./components/CertificateControlPanel";
 import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurchasePanel";
 import { PurchaseFields } from "./components/PurchaseFields";
+import { ContractAnnexPanel } from "./components/ContractAnnexPanel";
+import { ANNEX_TEMPLATE_NAMES } from "./lib/contractAnnexData";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS, certificationSelection } from "./lib/catalog";
@@ -378,7 +380,7 @@ export default function App() {
           setRows(workbookRows);
           setOfflineSession(false);
           await cacheOfflineSession(user, workbookRows);
-          void nextClient.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES).catch(() => undefined);
+          void nextClient.prepareContractTemplates([...CONTRACT_TEMPLATE_NAMES, ...ANNEX_TEMPLATE_NAMES]).catch(() => undefined);
           setLastSyncedAt(new Date());
           setSelectedIndex((current) => current ?? workbookRows[0]?.tableIndex ?? null);
         } else if (!navigator.onLine && nextClient.hasStoredSession()) {
@@ -791,7 +793,7 @@ export default function App() {
       setProfile(user);
       await storeRowsLocally(workbookRows);
       await cacheOfflineSession(user, workbookRows);
-      void client.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES).catch(() => undefined);
+      void client.prepareContractTemplates([...CONTRACT_TEMPLATE_NAMES, ...ANNEX_TEMPLATE_NAMES]).catch(() => undefined);
       setOfflineSession(false);
       setSelectedIndex(workbookRows[0]?.tableIndex ?? null);
       setLastSyncedAt(new Date());
@@ -1521,7 +1523,7 @@ export default function App() {
     setError("");
     try {
       if (profile) await cacheOfflineSession(profile, rows);
-      await client.prepareContractTemplates(CONTRACT_TEMPLATE_NAMES);
+      await client.prepareContractTemplates([...CONTRACT_TEMPLATE_NAMES, ...ANNEX_TEMPLATE_NAMES]);
       if ("serviceWorker" in navigator) {
         const registration = await navigator.serviceWorker.ready;
         registration.active?.postMessage({ type: "CACHE_APP_SHELL" });
@@ -1794,6 +1796,8 @@ export default function App() {
             <section className={`review-pane ${view === "records" ? "mobile-hidden" : ""}`}>
               {view === "review" && selected && review && purchase ? (
                 <ReviewPanel
+                  annexClient={client}
+                  annexDemo={demoMode}
                   row={selected}
                   purchase={purchase}
                   review={review}
@@ -2103,6 +2107,8 @@ function RecordManagementPanel({
 }
 
 function ReviewPanel({
+  annexClient,
+  annexDemo,
   row,
   purchase,
   review,
@@ -2125,6 +2131,8 @@ function ReviewPanel({
   onRestoreBackup,
   onBack,
 }: {
+  annexClient: WorkbookClient | null;
+  annexDemo: boolean;
   row: ControlRow;
   purchase: PurchaseForm;
   review: ReviewForm;
@@ -2284,6 +2292,8 @@ function ReviewPanel({
           </div>
         ) : null}
       </div>
+
+      <ContractAnnexPanel key={row.id} row={row} purchase={purchase} client={annexClient} demo={annexDemo} readOnly={readOnly} disabled={saving || cancelled || ["pending", "saving", "error"].includes(autoSaveStatus)} />
 
       {purchase.contractDetails.previousContractArchiveId && (
         <div className="previous-contract-reference">

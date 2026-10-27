@@ -1005,7 +1005,7 @@ function reamModuleUrl() {
   ).href;
 }
 
-async function convertDocxToPdf(docx: Blob) {
+export async function convertDocxToPdf(docx: Blob) {
   try {
     const module = await import(/* @vite-ignore */ reamModuleUrl()) as ReamModule;
     const source = new Uint8Array(await docx.arrayBuffer());

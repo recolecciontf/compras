@@ -1,4 +1,5 @@
 import { canonicalMaterial, materialSummary } from "./catalog";
+import type { AnnexFields, ContractAnnex } from "./contractAnnexData";
 import type {
   AppConfig,
   AuditEvent,
@@ -546,6 +547,29 @@ export class WorkbookClient {
       throw new Error(detail.error || "No se ha podido sustituir el contrato firmado.");
     }
     return response.json() as Promise<{ ok: true; archiveFilename: string; revision: string }>;
+  }
+
+  async contractAnnexes(row: ControlRow) {
+    const result = await this.request<{ annexes: ContractAnnex[] }>(`/api/rows/${row.tableIndex}/annexes?expectedId=${encodeURIComponent(row.id)}`);
+    return result.annexes;
+  }
+
+  async saveContractAnnex(row: ControlRow, id: string, fields: AnnexFields, file: Blob, filename: string, signed = false) {
+    const form = new FormData();
+    form.set("file", file, filename);
+    form.set("expectedId", row.id);
+    form.set("expectedRevision", row.revision);
+    form.set("annexId", id);
+    form.set("fields", JSON.stringify(fields));
+    const response = await fetch(this.endpoint(`/api/rows/${row.tableIndex}/annexes${signed ? `/${id}/signed` : ""}`), {
+      method: "POST", cache: "no-store", headers: this.token ? { Authorization: `Bearer ${this.token}` } : {}, body: form,
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({})) as ApiError;
+      if (response.status === 409) throw new RevisionConflictError(detail.error);
+      throw new Error(detail.error || "No se ha podido archivar el anexo. Conserva los datos y vuelve a intentarlo.");
+    }
+    return (await response.json() as { annex: ContractAnnex }).annex;
   }
 
   async deleteRecord(row: ControlRow, reason: string, confirmation: string, acknowledgement: string) {
