@@ -34,11 +34,12 @@ for (const mode of ["generated", "unsigned", "editing", "existing"]) {
     assert.deepEqual(headings, ["Agricultor y finca", "Materia prima", "Recolección",
       ...(mode === "existing" ? ["Contrato firmado existente"] : ["Precio y pago", "Datos de firma"]),
       "Información complementaria"]);
-    for (const label of ["Inicio del contrato", "Fin del contrato", "DNI del representante", "Cortes (limpia o número de corte)"]) {
+    for (const label of ["Inicio del contrato", "Fin del contrato", "DNI del representante", "Cortes (limpia o número de corte)", "Domicilio de la empresa / vendedor"]) {
       assert.equal(html.split(`<span>${label}</span>`).length - 1, 1, label);
     }
     assert.ok(html.indexOf("Agricultor / razón social") < html.indexOf("Representante del vendedor"));
     assert.ok(html.indexOf("Representante del vendedor") < html.indexOf("Materia prima</strong>"));
+    assert.ok(html.indexOf("Domicilio de la empresa / vendedor") < html.indexOf("Representante del vendedor"));
     for (const label of ["Mínimo (mm)", "Máximo (mm)"]) {
       const input = html.split(`<span>${label}</span>`)[1].split("/>")[0];
       assert.ok(!/\brequired=/.test(input), `${label} debe seguir siendo opcional`);

@@ -92,7 +92,7 @@ const ACCEPTED_TYPES = new Set([
 
 function fold(value: string) {
   return value
-    .normalize("NFD")
+    .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[’‘]/g, "'")
     .replace(/\s+/g, " ")
@@ -102,6 +102,7 @@ function fold(value: string) {
 
 function clean(value = "") {
   return value
+    .normalize("NFKC")
     .replace(/[□☐☑✓]/g, " ")
     .replace(/_{2,}/g, " ")
     .replace(/\s+/g, " ")
@@ -176,6 +177,22 @@ function textFromElement(element: Element) {
     .trim();
 }
 
+function parcelHeaderLabel(value: string) {
+  const compact = fold(value).replace(/[^a-z0-9]/g, "");
+  const aliases: Record<string, string[]> = {
+    variedad: ["variedad", "variedades"],
+    situacion: ["situacion"],
+    termino: ["termino", "terminomunicipal", "municipio"],
+    paraje: ["paraje"],
+    poligono: ["poligono", "poligonos"],
+    parcela: ["parcela", "parcelas"],
+    ha: ["ha", "has", "hectarea", "hectareas", "superficieha"],
+  };
+  for (const [label, variants] of Object.entries(aliases)) if (variants.includes(compact)) return label;
+  if (/^(?:kgs?|kilos?|kilogramos?)(?:(?:aproximados?|aprox|previstos?|contratados?|netos?|encampo|totales?))?$/.test(compact)) return "kg";
+  return "";
+}
+
 function headerColumns(
   items: Array<{ x: number; value: string }>,
   labels: string[],
@@ -188,11 +205,12 @@ function headerColumns(
       let candidate = "";
       for (let end = index; end < Math.min(items.length, index + 5); end += 1) {
         candidate += fold(items[end].value).replace(/[^a-z0-9]/g, "");
-        if (candidate === label) {
+        if (candidate === label || parcelHeaderLabel(candidate) === label) {
           found = index;
           break;
         }
-        if (!label.startsWith(candidate)) break;
+        // A header can be split over several PDF text items, or include a
+        // unit description such as «Kg aproximados» or «Término municipal».
       }
     }
     if (found < 0) return [];
@@ -365,12 +383,14 @@ async function extractPdf(
       positionedLines.forEach((headerLine, headerIndex) => {
         const headerText = fold(headerLine.items.map((item) => item.value).join(" "));
         const compactHeaderText = headerText.replace(/[^a-z0-9]/g, "");
-        const isParcelHeader = compactHeaderText.includes("variedad") && compactHeaderText.includes("paraje") && compactHeaderText.includes("parcela") && compactHeaderText.includes("kg");
+        const isParcelHeader = compactHeaderText.includes("variedad") && compactHeaderText.includes("paraje") && compactHeaderText.includes("parcela") && /kg|kilo/.test(compactHeaderText);
         const isCutsHeader = compactHeaderText.includes("cortes") && compactHeaderText.includes("inicio") && (compactHeaderText.includes("terminacion") || compactHeaderText.includes("finalizacion"));
         if (!isParcelHeader && !isCutsHeader) return;
         const rawHeaderItems = headerLine.items.filter((item) => item.value.trim());
         const parcelLabels = ["variedad", "situacion", "termino", "paraje", "poligono", "parcela", "ha", "kg"]
-          .filter((label) => ["variedad", "paraje", "parcela", "kg"].includes(label) || compactHeaderText.includes(label));
+          .filter((label) => ["variedad", "paraje", "parcela", "kg"].includes(label)
+            || compactHeaderText.includes(label)
+            || rawHeaderItems.some(item => parcelHeaderLabel(item.value) === label));
         const cutsLabels = [
           "cortes",
           "inicio",
@@ -534,10 +554,11 @@ function tableMaterials(tables: string[][][], fallbackCrop: string) {
   for (const rows of tables) {
     const headerIndex = rows.findIndex((row) => {
       const joined = fold(row.join(" "));
-      return joined.includes("variedad") && joined.includes("paraje") && joined.includes("parcela") && joined.includes("kg");
+      const labels = row.map(parcelHeaderLabel);
+      return joined.includes("variedad") && joined.includes("paraje") && joined.includes("parcela") && labels.includes("kg");
     });
     if (headerIndex < 0) continue;
-    const headers = rows[headerIndex].map(fold);
+    const headers = rows[headerIndex].map(value => parcelHeaderLabel(value) || fold(value));
     const indexOf = (label: string) => headers.findIndex((header) => header === label || header.includes(label));
     const columns = {
       variety: indexOf("variedad"),
@@ -686,7 +707,10 @@ export async function importPurchaseFromContract(
   basePurchase: PurchaseForm,
   onProgress?: (progress: ContractImportProgress) => void,
 ): Promise<ContractImportReport> {
-  const { text, tables, usedOcr = false } = await extractDocument(file, onProgress);
+  const { text: extractedText, tables, usedOcr = false } = await extractDocument(file, onProgress);
+  // Word and some PDF producers retain ligatures (ﬁ/ﬂ) and non-breaking
+  // spaces. Normalize only the extracted copy, never the original document.
+  const text = extractedText.normalize("NFKC");
   const warnings: string[] = [];
   const detectedFields: string[] = [];
   const next = structuredClone(basePurchase);
@@ -708,12 +732,18 @@ export async function importPurchaseFromContract(
     /VENDEDOR\s*:\s*(?:D(?:ON|OÑA|ÑA)?\s*[.ªº]?\s*)?([\s\S]+?)(?=,?\s*(?:con\s+)?(?:D\s*\.?\s*N\s*\.?\s*I\.?|N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
   ]);
   const representativeDni = cleanTaxId(findMatch(sellerBlock, [/(?:D\s*\.?\s*N\s*\.?\s*I\.?|N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)\s*[:.]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]));
-  const representedCompany = findMatch(sellerBlock, [
+  const representedCompanyMatch = [
     /poderes\s+suficientes(?:\s+de|\s+del|\s+de\s+la)\s+([\s\S]+?)(?=,\s*con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
     /en\s+representaci[óo]n(?:\s+de|\s+del|\s+de\s+la)\s+([\s\S]+?)(?=,\s*con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
-  ]);
+  ].map(pattern => sellerBlock.match(pattern)).find(match => match?.[1]);
+  const representedCompany = clean(representedCompanyMatch?.[1] || "");
+  // Keep the raw match's offset: the displayed company name has normalized
+  // spaces, so indexOf(name) fails when its name wraps onto another PDF line.
+  const representedCompanyOffset = representedCompanyMatch
+    ? representedCompanyMatch.index! + representedCompanyMatch[0].lastIndexOf(representedCompanyMatch[1])
+    : 0;
   const representedBlock = representedCompany
-    ? sellerBlock.slice(Math.max(0, sellerBlock.indexOf(representedCompany)))
+    ? sellerBlock.slice(representedCompanyOffset)
     : "";
   const companyTaxId = representedCompany
     ? cleanTaxId(findMatch(representedBlock, [/(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)\s*[:.]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]))
@@ -726,13 +756,13 @@ export async function importPurchaseFromContract(
   next.contractDetails.sellerRepresentative = representedCompany ? representative : "";
   next.contractDetails.sellerDni = representedCompany ? representativeDni : "";
   next.contractDetails.sellerRepresentativeAddress = representedCompany
-    ? findMatch(sellerBlock.slice(0, Math.max(0, sellerBlock.indexOf(representedCompany))), [
+    ? findMatch(sellerBlock.slice(0, representedCompanyOffset), [
       /domicilio\s+en\s+([\s\S]+?)(?=,\s*en\s+representaci[óo]n)/i,
     ])
     : "";
   next.contractDetails.sellerAddress = representedCompany
     ? findMatch(representedBlock, [
-      /domiciliad[ao]\s+en\s+([\s\S]+?)(?=,\s*en\s+adelante|\.\s*(?:Con\s+n[úu]mero|$))/i,
+      /(?:domiciliad[ao]|(?:con\s+)?domicilio(?:\s+social)?)\s+en\s+([\s\S]+?)(?=,?\s+en\s+adelante\b|\.\s*(?:Con\s+n[úu]mero|$))/i,
     ])
     : findMatch(sellerBlock, [
       /domicilio\s+en\s+([\s\S]+?)(?=\s+con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)|,\s*(?:en\s+representaci[óo]n|en\s+adelante|con\s+n[úu]mero)|\.\s*(?:Con\s+n[úu]mero|$))/i,
@@ -747,6 +777,7 @@ export async function importPurchaseFromContract(
   else if (next.contractDetails.sellerRepresentative) warnings.push("Se ha reconocido el representante, pero no su DNI. Complétalo antes de generar el contrato.");
   if (next.contractDetails.sellerRepresentativeAddress) detectedFields.push("Domicilio del representante");
   if (next.contractDetails.sellerAddress) detectedFields.push("Domicilio");
+  else warnings.push("No se ha reconocido el domicilio del vendedor. Revísalo en Agricultor y finca.");
   if (next.contractDetails.sellerEmail) detectedFields.push("Correo del agricultor");
 
   next.contractDetails.organicOperatorCode = findMatch(sellerBlock || text, [
