@@ -126,6 +126,16 @@ function findMatch(text: string, patterns: RegExp[]) {
   return "";
 }
 
+function partyAddress(block: string) {
+  const start = block.match(/\b(?:domiciliad[ao]|(?:con\s+)?domicilio(?:\s+social)?)\s+en\s*:?\s*/i);
+  if (!start) return "";
+  const remainder = block.slice(start.index! + start[0].length);
+  // Commas are unreliable in PDF/OCR text. The legal transition itself marks
+  // the end of a postal address, not the punctuation immediately before it.
+  const boundary = remainder.search(/\b(?:(?:y\s+)?en\s+representaci[óo]n|(?:y\s+)?con\s+(?:poderes|facultades)|(?:y\s+)?(?:actuando|representando)|en\s+su\s+condici[óo]n|en\s+adelante|(?:con\s+)?n[úu]mero\s+de\s+operador|c[óo]digo\s+(?:de\s+)?(?:registro|operador)|certificad[oa]\s+por|(?:con\s+)?(?:D\s*\.?\s*N\s*\.?\s*I\.?|N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)\b|(?:y\s+)?de\s+(?:la\s+)?otra\s+parte|comprador\s*:)/i);
+  return clean(boundary >= 0 ? remainder.slice(0, boundary) : remainder);
+}
+
 function isoDate(day: string, month: string, year: string) {
   const numericMonth = /^\d+$/.test(month) ? Number(month) : SPANISH_MONTHS[fold(month)];
   if (!numericMonth) return "";
@@ -733,8 +743,7 @@ export async function importPurchaseFromContract(
   ]);
   const representativeDni = cleanTaxId(findMatch(sellerBlock, [/(?:D\s*\.?\s*N\s*\.?\s*I\.?|N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)\s*[:.]?\s*(?:n[º°o]?\s*)?([A-Z]?[-\s]?\d[\d.\s]{5,12}-?[A-Z0-9]?)/i]));
   const representedCompanyMatch = [
-    /poderes\s+suficientes(?:\s+de|\s+del|\s+de\s+la)\s+([\s\S]+?)(?=,\s*con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
-    /en\s+representaci[óo]n(?:\s+de|\s+del|\s+de\s+la)\s+([\s\S]+?)(?=,\s*con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
+    /(?:en\s+representaci[óo]n(?:\s+y\s+con\s+poderes(?:\s+suficientes)?)?|poderes(?:\s+suficientes)?)\s+(?:de\s+la|del|de)\s+([\s\S]+?)(?=,?\s+(?:con\s+)?(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?))/i,
   ].map(pattern => sellerBlock.match(pattern)).find(match => match?.[1]);
   const representedCompany = clean(representedCompanyMatch?.[1] || "");
   // Keep the raw match's offset: the displayed company name has normalized
@@ -756,17 +765,11 @@ export async function importPurchaseFromContract(
   next.contractDetails.sellerRepresentative = representedCompany ? representative : "";
   next.contractDetails.sellerDni = representedCompany ? representativeDni : "";
   next.contractDetails.sellerRepresentativeAddress = representedCompany
-    ? findMatch(sellerBlock.slice(0, representedCompanyOffset), [
-      /domicilio\s+en\s+([\s\S]+?)(?=,\s*en\s+representaci[óo]n)/i,
-    ])
+    ? partyAddress(sellerBlock.slice(0, representedCompanyOffset))
     : "";
   next.contractDetails.sellerAddress = representedCompany
-    ? findMatch(representedBlock, [
-      /(?:domiciliad[ao]|(?:con\s+)?domicilio(?:\s+social)?)\s+en\s+([\s\S]+?)(?=,?\s+en\s+adelante\b|\.\s*(?:Con\s+n[úu]mero|$))/i,
-    ])
-    : findMatch(sellerBlock, [
-      /domicilio\s+en\s+([\s\S]+?)(?=\s+con\s+(?:N\s*\.?\s*I\s*\.?\s*F\.?|C\s*\.?\s*I\s*\.?\s*F\.?)|,\s*(?:en\s+representaci[óo]n|en\s+adelante|con\s+n[úu]mero)|\.\s*(?:Con\s+n[úu]mero|$))/i,
-    ]);
+    ? partyAddress(representedBlock)
+    : partyAddress(sellerBlock);
   next.contractDetails.sellerEmail = findMatch(sellerBlock, [/\b([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})\b/i]);
   if (next.provider) detectedFields.push("Agricultor / razón social");
   else warnings.push("No se ha reconocido el agricultor o la razón social.");
