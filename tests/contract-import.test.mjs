@@ -12,7 +12,10 @@ await mkdir(compiled, { recursive: true });
 globalThis.DOMParser = DOMParser; globalThis.XMLSerializer = XMLSerializer;
 const prototype = Object.getPrototypeOf(new DOMParser().parseFromString("<root/>", "application/xml").documentElement);
 if (!("children" in prototype)) Object.defineProperty(prototype, "children", { get() { return [...this.childNodes].filter(node => node.nodeType === 1); } });
-for (const name of ["catalog", "PurchaseFields", "contractImport"]) {
+if (!("remove" in prototype)) prototype.remove = function () { this.parentNode?.removeChild(this); };
+if (!("append" in prototype)) prototype.append = function (...nodes) { nodes.forEach(node => this.appendChild(node)); };
+if (!("prepend" in prototype)) prototype.prepend = function (...nodes) { nodes.slice().reverse().forEach(node => this.insertBefore(node, this.firstChild)); };
+for (const name of ["catalog", "PurchaseFields", "contractImport", "purchaseReference", "contractGenerator"]) {
   const path = name === "PurchaseFields" ? "src/components" : "src/lib";
   let source = await readFile(join(root, `${path}/${name}.${name === "PurchaseFields" ? "tsx" : "ts"}`), "utf8");
   source = source.replace('"../lib/catalog"', '"./catalog.mjs"').replace('"./catalog"', '"./catalog.mjs"');
@@ -23,6 +26,8 @@ for (const name of ["catalog", "PurchaseFields", "contractImport"]) {
 }
 const { importPurchaseFromContract } = await import(pathToFileURL(join(compiled, "contractImport.mjs")));
 const { EMPTY_PURCHASE } = await import(pathToFileURL(join(compiled, "PurchaseFields.mjs")));
+const { withNewPurchaseReference } = await import(pathToFileURL(join(compiled, "purchaseReference.mjs")));
+const { generateContractPackage } = await import(pathToFileURL(join(compiled, "contractGenerator.mjs")));
 const seller = "Vendedor: Dña. Representante de Prueba, con DNI 00000000T, mayor de edad, con domicilio en Avenida del Representante 1, en representación y con poderes suﬁcientes de SOCIEDAD DE\nPRUEBA SL, con NIF B00000000, domiciliada en Calle del Vendedor 2, en adelante vendedor. Con número de operador ecológico: TEST-001.";
 const buyer = "Comprador: D. Comprador de Prueba, con DNI 11111111H, en representación de MR. Orgánica, S.L., con NIF B73894065 domiciliada en Avenida del Comprador 3, en adelante comprador.";
 const text = `CONTRATO DE COMPRAVENTA DE LIMONES ECOLÓGICOS\n${seller}\n${buyer}\nOPCIÓN 2: X 90000 kilogramos de limones procedentes de campo de las fincas que se relacionan:`;
@@ -112,3 +117,61 @@ test("PDF: no prolonga la dirección cuando el texto pierde las comas y la palab
   assert.equal(result.purchase.materials.length, 2);
   assert.equal(result.purchase.expectedKg, "90000");
 });
+
+for (const fileType of ["PDF", "Word"]) {
+  for (const [company, originalNumber, nextNumber] of [
+    ["MR. ORGÁNICA, S.L.", "MR-01", "MR-07"],
+    ["TOÑIFRUIT, S.L.", "TN-02", "TN-10"],
+  ]) {
+    for (const mode of ["generated", "unsigned"]) {
+      test(`${fileType}: una compra nueva ${mode} usa ${nextNumber}, no el número importado ${originalNumber}`, async () => {
+        const body = `${text}\nNº CONTRATO: ${originalNumber}`;
+        const report = fileType === "PDF" ? await pdfImport(headers, [row1, row2], false, body) : await importTextAsWord(body);
+        report.purchase.contractDetails.buyerCompany = company;
+        assert.equal(report.purchase.contractDetails.contractNumber, originalNumber);
+        const original = structuredClone(report.purchase);
+        const next = withNewPurchaseReference(report.purchase, nextNumber, mode);
+        assert.equal(next.id, nextNumber);
+        assert.equal(next.contractDetails.contractNumber, nextNumber);
+        assert.deepEqual(next.materials, original.materials);
+        assert.equal(next.contractDetails.sellerAddress, original.contractDetails.sellerAddress);
+        assert.deepEqual(report.purchase, original, "no altera el contrato importado");
+      });
+    }
+    test(`${fileType}: archivar el firmado conserva ${originalNumber} sin cambiar el expediente ${nextNumber}`, async () => {
+      const body = `${text}\nNº CONTRATO: ${originalNumber}`;
+      const report = fileType === "PDF" ? await pdfImport(headers, [row1, row2], false, body) : await importTextAsWord(body);
+      const archived = withNewPurchaseReference(report.purchase, nextNumber, "existing");
+      assert.equal(archived.id, nextNumber);
+      assert.equal(archived.contractDetails.contractNumber, originalNumber);
+    });
+  }
+}
+
+for (const [company, nextNumber] of [["MR. ORGÁNICA, S.L.", "MR-07"], ["TOÑIFRUIT, S.L.", "TN-10"]]) {
+  test(`exporta ${nextNumber} en el texto, metadatos y nombre Word sin reutilizar MR-01`, async () => {
+    const report = await importTextAsWord(`${text}\nNº CONTRATO: MR-01`);
+    Object.assign(report.purchase, { contractStart: "2026-10-01", contractEnd: "2026-12-31" });
+    Object.assign(report.purchase.contractDetails, {
+      buyerCompany: company, sellerRepresentative: "", sellerDni: "", contractOrigin: "generated",
+      signatureDate: "2026-10-29", modality: "A KILOS", collectionBy: "Comprador", transportBy: "Comprador",
+      priceAgreement: "IMPORTE", pricePerKg: "0.45", paymentDays: "30", applyDestrio: "No",
+    });
+    const purchase = withNewPurchaseReference(report.purchase, nextNumber, "unsigned");
+    const p = content => `<w:p><w:r><w:t>${content}</w:t></w:r></w:p>`;
+    const table = (height, width) => `<w:tbl>${Array.from({ length: height }, () => `<w:tr>${Array.from({ length: width }, () => `<w:tc>${p("")}</w:tc>`).join("")}</w:tr>`).join("")}</w:tbl>`;
+    const fixture = new JSZip();
+    fixture.file("docProps/core.xml", '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"/>');
+    fixture.file("word/document.xml", `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${p("En Librilla (Murcia)")}${p("Cláusula fija de prueba: no modificar.")}${table(2, 8)}${table(2, 1)}${table(2, 6)}${table(5, 3)}</w:body></w:document>`);
+    const output = await generateContractPackage(purchase, async () => fixture.generateAsync({ type: "arraybuffer" }), undefined, "docx");
+    assert.match(output.filename, new RegExp(`-${nextNumber}-`));
+    assert.doesNotMatch(output.filename, /MR-01/);
+    const zip = await JSZip.loadAsync(await output.blob.arrayBuffer());
+    const document = await zip.file("word/document.xml").async("string");
+    assert.match(document, new RegExp(`Nº CONTRATO: ${nextNumber}`));
+    assert.doesNotMatch(document, /MR-01/);
+    assert.match(document, /Cláusula fija de prueba: no modificar\./);
+    assert.match(await zip.file("docProps/core.xml").async("string"), new RegExp(nextNumber));
+    assert.equal(report.purchase.contractDetails.contractNumber, "MR-01");
+  });
+}

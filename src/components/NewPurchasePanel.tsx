@@ -248,6 +248,9 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
       contractDetails: {
         ...current.contractDetails,
         contractOrigin: existing ? "existing" : "generated",
+        contractNumber: existing
+          ? importReport?.purchase.contractDetails.contractNumber || current.contractDetails.contractNumber
+          : "",
         signatureMethod: existing ? "uploaded" : "",
         sellerSignedAt: "",
         buyerSignedAt: "",

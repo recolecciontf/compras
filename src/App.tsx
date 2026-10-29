@@ -50,6 +50,7 @@ import { ANNEX_TEMPLATE_NAMES } from "./lib/contractAnnexData";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
 import { CERTIFICATIONS, certificationSelection } from "./lib/catalog";
+import { withNewPurchaseReference } from "./lib/purchaseReference";
 import { CONTRACT_TEMPLATE_NAMES, downloadContracts, generateContractPackage, triggerDownload } from "./lib/contractGenerator";
 import {
   cacheOfflineRows,
@@ -933,14 +934,7 @@ export default function App() {
     let offlineContractArtifact: OfflineContractArtifact | undefined;
     try {
       const assignedId = nextPurchase.id || nextPurchaseId(rows, nextPurchase.contractDetails.buyerCompany);
-      let identifiedPurchase: PurchaseForm = {
-        ...nextPurchase,
-        id: assignedId,
-        contractDetails: {
-          ...nextPurchase.contractDetails,
-          contractNumber: nextPurchase.contractDetails.contractNumber || assignedId,
-        },
-      };
+      let identifiedPurchase = withNewPurchaseReference(nextPurchase, assignedId, contractSubmission.mode);
       let preparedPurchase = identifiedPurchase;
       const previousReference = contractSubmission.previousContract;
       if (previousReference.mode !== "none") {

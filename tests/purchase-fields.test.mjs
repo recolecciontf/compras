@@ -67,6 +67,23 @@ test("cortes admite limpia, números o texto libre sin valor automático", () =>
   }
 });
 
+test("una compra nueva muestra numeración automática y no la referencia del contrato importado", () => {
+  const value = structuredClone(EMPTY_PURCHASE);
+  value.contractDetails.contractNumber = "MR-01";
+  for (const mode of ["generated", "unsigned"]) {
+    const input = render(value, mode).split("<span>N.º de contrato</span>")[1].split("/>")[0];
+    assert.match(input, /readOnly=""/);
+    assert.match(input, /Número automático/);
+    assert.match(input, /siguiente referencia MR o TN/);
+    assert.doesNotMatch(input, /value="MR-01"/);
+  }
+  for (const mode of ["existing", "editing"]) {
+    const input = render(value, mode).split("<span>N.º de contrato</span>")[1].split("/>")[0];
+    assert.match(input, /value="MR-01"/);
+    assert.doesNotMatch(input, /readOnly=""/);
+  }
+});
+
 test("por tanto conserva el corte y las fechas, y muestra precio total", () => {
   const value = structuredClone(EMPTY_PURCHASE);
   Object.assign(value.contractDetails, { modality: "POR TANTO", cutDescription: "Limpia", totalPrice: "10000" });
