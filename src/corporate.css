@@ -2444,3 +2444,17 @@ h3,
 .annex-list small { display: block; color: #647168; line-height: 1.5; margin-top: 5px; overflow-wrap: anywhere; }
 .annex-signed { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding-top: 12px; }
 @media (max-width: 640px) { .annex-panel { padding: 16px; } .annex-fields { padding: 14px; } .annex-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.external-annex-page { width: 100%; max-width: 1080px; margin: 0 auto; min-width: 0; }
+.external-annex-page { padding: 24px 20px 100px; box-sizing: border-box; }
+.bottom-nav { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.external-annex-page h2 { color: #17472d; font-size: 1.1rem; }
+.external-annex-page details { margin: 16px 0; color: #4e6255; overflow-wrap: anywhere; }
+.external-annex-page summary { cursor: pointer; font-weight: 700; }
+.external-annex-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0; }
+.external-annex-choices button { justify-content: flex-start; text-align: left; padding: 20px; min-width: 0; white-space: normal; }
+.external-annex-choices button.selected { border-color: #81ad54; background: #edf6e5; box-shadow: 0 0 0 1px #81ad54; }
+.external-annex-choices button span { display: grid; gap: 5px; }
+.external-annex-choices small { color: #5b6a62; font-weight: 400; line-height: 1.4; }
+.external-annex-page .contract-upload-button { display: inline-flex; width: fit-content; }
+@media (max-width: 640px) { .external-annex-choices { grid-template-columns: minmax(0, 1fr); } }

@@ -1,5 +1,6 @@
 import { canonicalMaterial, materialSummary } from "./catalog";
 import type { AnnexFields, ContractAnnex } from "./contractAnnexData";
+import type { ExternalContract, ExternalContractData } from "./externalContract";
 import type {
   AppConfig,
   AuditEvent,
@@ -554,14 +555,37 @@ export class WorkbookClient {
     return result.annexes;
   }
 
-  async saveContractAnnex(row: ControlRow, id: string, fields: AnnexFields, file: Blob, filename: string, signed = false) {
+  async externalContracts() {
+    return (await this.request<{ contracts: ExternalContract[] }>("/api/external-contracts")).contracts;
+  }
+
+  async saveExternalContract(data: ExternalContractData, file: File | null) {
+    const form = new FormData();
+    form.set("data", JSON.stringify(data));
+    if (file) form.set("file", file, file.name);
+    const response = await fetch(this.endpoint("/api/external-contracts"), {
+      method: "POST", cache: "no-store", headers: this.token ? { Authorization: `Bearer ${this.token}` } : {}, body: form,
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({})) as ApiError;
+      throw new Error(detail.error || "No se ha podido guardar el contrato externo. Conserva los datos y vuelve a intentarlo.");
+    }
+    return (await response.json() as { contract: ExternalContract }).contract;
+  }
+
+  async externalContractAnnexes(record: ExternalContract) {
+    return (await this.request<{ annexes: ContractAnnex[] }>(`/api/external-contracts/${record.id}/annexes`)).annexes;
+  }
+
+  async saveContractAnnex(row: Pick<ControlRow, "id" | "revision"> & { tableIndex?: number }, id: string, fields: AnnexFields, file: Blob, filename: string, signed = false) {
     const form = new FormData();
     form.set("file", file, filename);
     form.set("expectedId", row.id);
     form.set("expectedRevision", row.revision);
     form.set("annexId", id);
     form.set("fields", JSON.stringify(fields));
-    const response = await fetch(this.endpoint(`/api/rows/${row.tableIndex}/annexes${signed ? `/${id}/signed` : ""}`), {
+    const path = row.tableIndex === undefined ? `/api/external-contracts/${encodeURIComponent(row.id)}` : `/api/rows/${row.tableIndex}`;
+    const response = await fetch(this.endpoint(`${path}/annexes${signed ? `/${id}/signed` : ""}`), {
       method: "POST", cache: "no-store", headers: this.token ? { Authorization: `Bearer ${this.token}` } : {}, body: form,
     });
     if (!response.ok) {

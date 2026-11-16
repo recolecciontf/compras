@@ -5,23 +5,25 @@ import type { WorkbookClient } from "../lib/workbook";
 import { annexTemplateName, generateContractAnnex, convertAnnexToPdf } from "../lib/contractAnnex";
 import { ANNEX_LABELS, validateAnnexFields, type AnnexFields, type ContractAnnex } from "../lib/contractAnnexData";
 import { triggerDownload } from "../lib/contractGenerator";
+import type { ExternalContract } from "../lib/externalContract";
 
-function initialFields(purchase: PurchaseForm): AnnexFields {
+function initialFields(purchase: PurchaseForm, externalContract?: ExternalContract): AnnexFields {
   const today = new Date();
   const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   return {
     kind: "price", place: "Librilla (Murcia)", date, originalDate: purchase.contractDetails.signatureDate || "", aicaReference: "",
-    product: purchase.materials.map(item => [item.expectedKg ? `${item.expectedKg} kg` : "", item.crop, item.variety].filter(Boolean).join(" ")).join("; ") || [purchase.crop, purchase.variety].filter(Boolean).join(" "),
+    product: externalContract?.data.product || purchase.materials.map(item => [item.expectedKg ? `${item.expectedKg} kg` : "", item.crop, item.variety].filter(Boolean).join(" ")).join("; ") || [purchase.crop, purchase.variety].filter(Boolean).join(" "),
     priceMode: "fixed", price: "", unit: "kg", vat: "excluded", priceFormula: "", removedVariety: "", remainingVarietiesConfirmed: false,
   };
 }
 
-export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, demo }: {
-  row: ControlRow; purchase: PurchaseForm; client: WorkbookClient | null; disabled: boolean; readOnly: boolean; demo: boolean;
-}) {
+export function ContractAnnexPanel({ row, externalContract, purchase, client, disabled, readOnly, demo, autoOpen = false }: {
+  purchase: PurchaseForm; client: WorkbookClient | null; disabled: boolean; readOnly: boolean; demo: boolean; autoOpen?: boolean;
+} & ({ row: ControlRow; externalContract?: never } | { row?: never; externalContract: ExternalContract })) {
+  const target = externalContract || row;
   const [annexes, setAnnexes] = useState<ContractAnnex[]>([]);
-  const [open, setOpen] = useState(false);
-  const [fields, setFields] = useState(() => initialFields(purchase));
+  const [open, setOpen] = useState(autoOpen);
+  const [fields, setFields] = useState(() => initialFields(purchase, externalContract));
   const [id, setId] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,11 +35,15 @@ export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, 
     let active = true;
     if (readOnly || demo || !client) return;
     setLoading(true);
-    void client.contractAnnexes(row).then(result => { if (active) setAnnexes(result); })
+    const request = externalContract ? client.externalContractAnnexes(externalContract) : client.contractAnnexes(row!);
+    void request.then(result => { if (active) {
+      setAnnexes(result);
+      if (result[0]?.fields.aicaReference) setFields(current => ({ ...current, aicaReference: current.aicaReference || result[0].fields.aicaReference }));
+    } })
       .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "No se han podido cargar los anexos."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [client, row.id, row.tableIndex, readOnly, demo]);
+  }, [client, target.id, readOnly, demo]);
 
   function update<K extends keyof AnnexFields>(key: K, value: AnnexFields[K]) {
     setFields(current => ({ ...current, [key]: value }));
@@ -46,7 +52,7 @@ export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, 
   async function refresh() {
     if (!client || demo) return;
     setLoading(true); setError("");
-    try { setAnnexes(await client.contractAnnexes(row)); }
+    try { setAnnexes(externalContract ? await client.externalContractAnnexes(externalContract) : await client.contractAnnexes(row!)); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "No se han podido cargar los anexos."); }
     finally { setLoading(false); }
   }
@@ -61,7 +67,7 @@ export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, 
       const template = await client.contractTemplate(annexTemplateName(purchase.contractDetails.buyerCompany, checked));
       const generated = await generateContractAnnex(template, purchase, checked, "docx");
       const download = format === "pdf" ? await convertAnnexToPdf(generated.blob) : generated.blob;
-      const saved = await client.saveContractAnnex(row, id, checked, generated.blob, generated.filename);
+      const saved = await client.saveContractAnnex(target, id, checked, generated.blob, generated.filename);
       setAnnexes(current => [saved, ...current.filter(item => item.id !== saved.id)]);
       setNotice("Anexo guardado en el archivo central. El contrato original no ha cambiado. Está pendiente de firma e inscripción de la modificación en AICA.");
       triggerDownload(download, generated.filename.replace(/\.docx$/, `.${format}`));
@@ -85,7 +91,7 @@ export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, 
     if (!/\.pdf$/i.test(file.name) || file.size > 10 * 1024 * 1024) { setError("Adjunta un PDF de hasta 10 MB."); return; }
     setBusy(true); setError(""); setNotice("");
     try {
-      const saved = await client.saveContractAnnex(row, annex.id, annex.fields, file, file.name, true);
+      const saved = await client.saveContractAnnex(target, annex.id, annex.fields, file, file.name, true);
       setAnnexes(current => current.map(item => item.id === saved.id ? saved : item));
       setNotice("Copia firmada del anexo guardada. No se ha sustituido el contrato original ni se ha marcado el anexo como inscrito en AICA.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No se ha podido adjuntar el anexo firmado."); }
@@ -94,7 +100,7 @@ export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, 
 
   return <section className="annex-panel" aria-label="Anexos del contrato">
     <div className="annex-heading"><div><h3>Anexos del contrato</h3><p>Cambio de precio o anulación de una variedad, sin sustituir el contrato original.</p></div>
-      {!readOnly && <button type="button" className="secondary-button" disabled={disabled || busy} onClick={() => { setOpen(!open); setFields(initialFields(purchase)); setConfirmed(false); setError(""); setId(crypto.randomUUID()); }}><FilePlus2 size={18} /> {open ? "Cerrar" : "Crear anexo"}</button>}
+      {!readOnly && <button type="button" className="secondary-button" disabled={disabled || busy} onClick={() => { setOpen(!open); setFields({ ...initialFields(purchase, externalContract), aicaReference: annexes[0]?.fields.aicaReference || "" }); setConfirmed(false); setError(""); setId(crypto.randomUUID()); }}><FilePlus2 size={18} /> {open ? "Cerrar" : "Crear anexo"}</button>}
     </div>
     {readOnly ? <p>Documentación contractual confidencial. Acceso restringido a usuarios autorizados.</p> : <>
       {disabled && <p className="annex-hint">Guarda los cambios de la compra antes de crear o adjuntar un anexo. Los expedientes anulados no admiten nuevos anexos.</p>}
@@ -102,12 +108,12 @@ export function ContractAnnexPanel({ row, purchase, client, disabled, readOnly, 
       {notice && <div role="status" className="annex-notice">{notice}</div>}
       {open && <fieldset className="annex-fields" disabled={busy || disabled}>
         <legend>Datos del anexo</legend>
-        <p><strong>{purchase.contractDetails.buyerCompany || "Empresa pendiente"}</strong> · Contrato {purchase.contractDetails.contractNumber || row.id} · {purchase.provider}</p>
+        <p><strong>{purchase.contractDetails.buyerCompany || "Empresa pendiente"}</strong> · Contrato {purchase.contractDetails.contractNumber || target.id} · {purchase.provider}</p>
         <div className="annex-grid">
           <label>Tipo de anexo<select value={fields.kind} onChange={e => update("kind", e.target.value as AnnexFields["kind"])}><option value="price">Cambio de precio</option><option value="partial_cancellation">Anulación parcial</option></select></label>
           <label>Lugar<input value={fields.place} maxLength={180} onChange={e => update("place", e.target.value)} /></label>
           <label>Fecha del anexo<input type="date" value={fields.date} onChange={e => update("date", e.target.value)} /></label>
-          <label>Fecha del contrato original<input type="date" value={fields.originalDate} onChange={e => update("originalDate", e.target.value)} /></label>
+          <label>Fecha del contrato original<input type="date" readOnly={Boolean(externalContract)} value={fields.originalDate} onChange={e => update("originalDate", e.target.value)} /></label>
           <label className="annex-wide">Número de inscripción del contrato original en AICA<input value={fields.aicaReference} maxLength={180} placeholder="Número real del RCA, no la referencia MR/TN" onChange={e => update("aicaReference", e.target.value)} /></label>
           <label className="annex-wide">{fields.kind === "price" ? "Producto al que se aplica el precio" : "Productos y kilos del contrato original"}<textarea rows={3} value={fields.product} maxLength={500} onChange={e => update("product", e.target.value)} /></label>
           {fields.kind === "price" ? <>

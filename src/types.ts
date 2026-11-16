@@ -271,5 +271,5 @@ export type ControlCatalogData = {
   storedDocuments: number;
 };
 
-export type AppView = "records" | "review" | "new" | "harvest" | "certificates" | "activity";
+export type AppView = "records" | "review" | "new" | "harvest" | "certificates" | "activity" | "annexes";
 export type RecordFilter = "all" | "blocked" | "authorized" | "documented" | "expired" | "cancelled";

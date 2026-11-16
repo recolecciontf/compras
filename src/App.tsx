@@ -46,6 +46,7 @@ import { CertificateControlPanel } from "./components/CertificateControlPanel";
 import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurchasePanel";
 import { PurchaseFields } from "./components/PurchaseFields";
 import { ContractAnnexPanel } from "./components/ContractAnnexPanel";
+import { ExternalContractAnnexPanel } from "./components/ExternalContractAnnexPanel";
 import { ANNEX_TEMPLATE_NAMES } from "./lib/contractAnnexData";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
@@ -1551,6 +1552,7 @@ export default function App() {
           <nav className="desktop-nav" aria-label="Navegación principal">
             <button className={view === "records" || view === "review" ? "active" : ""} onClick={() => setView("records")}><ListChecks size={17} /> Expedientes</button>
             {canEdit && <button className={view === "new" ? "active" : ""} onClick={() => setView("new")}><Plus size={17} /> Nueva compra</button>}
+            {canEdit && <button className={view === "annexes" ? "active" : ""} onClick={() => setView("annexes")}><FileText size={17} /> Anexos</button>}
             <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}><PackageCheck size={17} /> Cortes</button>
             <button className={view === "certificates" ? "active" : ""} onClick={() => setView("certificates")}><FileCheck2 size={17} /> Certificados</button>
             {isAdmin && <button className={view === "activity" ? "active" : ""} onClick={() => setView("activity")}><History size={17} /> Actividad</button>}
@@ -1620,8 +1622,10 @@ export default function App() {
             onDemo={startDemo}
           />
         ) : (
-          <div className={`workspace ${view === "certificates" ? "catalog-workspace" : view === "activity" ? "activity-workspace" : ""}`}>
-            {view === "activity" && isAdmin ? (
+          <div className={`workspace ${view === "certificates" ? "catalog-workspace" : view === "activity" || view === "annexes" ? "activity-workspace" : ""}`}>
+            {view === "annexes" && canEdit ? (
+              <ExternalContractAnnexPanel client={client} demo={demoMode} onBack={() => setView("records")} />
+            ) : view === "activity" && isAdmin ? (
               <ActivityLogPanel onLoad={loadAuditEvents} onBack={() => setView("records")} />
             ) : view === "certificates" ? (
               <CertificateControlPanel
@@ -1655,6 +1659,7 @@ export default function App() {
 
               <div className="quick-actions">
                 {canEdit && <button className="action-card action-card-primary" onClick={() => setView("new")}><span className="action-icon"><Plus size={20} /></span><span><strong>Nueva compra</strong><small>Agricultor, fruta y contrato</small></span><ChevronRight size={19} /></button>}
+                {canEdit && <button className="action-card" onClick={() => setView("annexes")}><span className="action-icon"><FileText size={20} /></span><span><strong>Crear anexo</strong><small>Importar contrato o introducir datos</small></span><ChevronRight size={19} /></button>}
                 <button className="action-card" onClick={() => setView("harvest")}><span className="action-icon"><PackageCheck size={20} /></span><span><strong>Cortes y kilos</strong><small>Seguimiento de recolección</small></span><ChevronRight size={19} /></button>
                 <button className="action-card" onClick={() => setView("certificates")}><span className="action-icon"><FileCheck2 size={20} /></span><span><strong>{isAdmin ? "Certificados y OPFH" : "Certificados"}</strong><small>{isAdmin ? "Vigencias, socios y fincas" : "Vigencias de agricultores"}</small></span><ChevronRight size={19} /></button>
                 {isAdmin && <button className="action-card" onClick={() => setView("activity")}><span className="action-icon"><History size={20} /></span><span><strong>Registro de actividad</strong><small>Usuarios, fechas y cambios</small></span><ChevronRight size={19} /></button>}
@@ -1848,6 +1853,7 @@ export default function App() {
           {canEdit && <button className={view === "new" ? "active" : ""} onClick={() => setView("new")}>
             <Plus size={21} /><span>Nueva</span>
           </button>}
+          {canEdit && <button className={view === "annexes" ? "active" : ""} onClick={() => setView("annexes")}><FileText size={21} /><span>Anexos</span></button>}
           <button className={view === "harvest" ? "active" : ""} onClick={() => setView("harvest")}>
             <PackageCheck size={21} /><span>Cortes</span>
           </button>

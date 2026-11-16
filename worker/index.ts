@@ -10,6 +10,7 @@ import { CONTRACT_DOCUMENTS } from "./data/documentLibrary.generated";
 import { SUPPORT_SUMMARIES } from "./data/supportCatalog.generated";
 import { certificationSelection } from "../src/lib/catalog";
 import { validateAnnexFields, type ContractAnnex, type AnnexFile } from "../src/lib/contractAnnexData";
+import { validateExternalContractData, type ExternalContract } from "../src/lib/externalContract";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type ContractObject = {
@@ -854,12 +855,22 @@ async function archiveAnnex(env: Env, session: Session, row: number, form: FormD
   const details = parseJsonRecord(values[34]);
   const company = String(details.buyerCompany || "");
   if (!["MR. ORGÁNICA, S.L.", "TOÑIFRUIT, S.L."].includes(company)) throw new InputError("Completa y guarda la empresa del contrato original.");
+  return archiveAnnexForContract(env, session, form, {
+    purchaseId, company, contractReference: String(details.contractNumber || purchaseId), provider: String(values[1] || ""),
+  }, signedId);
+}
+
+async function archiveAnnexForContract(env: Env, session: Session, form: FormData, context: {
+  purchaseId: string; company: string; contractReference: string; provider: string; originalDate?: string;
+}, signedId?: string) {
+  const { purchaseId, company, contractReference, provider } = context;
   const id = signedId || String(form.get("annexId") || "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) throw new InputError("La referencia del anexo no es válida.");
   const existing = await readAnnex(env, purchaseId, id);
   let fields;
   try { fields = validateAnnexFields(JSON.parse(String(form.get("fields") || "{}"))); }
   catch (error) { throw new InputError(error instanceof Error ? error.message : "Revisa los datos del anexo."); }
+  if (context.originalDate && fields.originalDate !== context.originalDate) throw new InputError("La fecha debe coincidir con la del contrato original guardado.");
   if (signedId && !existing) throw new InputError("No se encuentra el anexo original.");
   if (existing && existing.company !== company) throw new InputError("La empresa actual no coincide con la del anexo.");
   // A stable client UUID makes a retried draft upload idempotent.
@@ -874,14 +885,14 @@ async function archiveAnnex(env: Env, session: Session, row: number, form: FormD
   const magic = new Uint8Array(await file.slice(0, 5).arrayBuffer());
   if (signedId ? String.fromCharCode(...magic) !== "%PDF-" : magic[0] !== 0x50 || magic[1] !== 0x4b) throw new InputError("El archivo no tiene un formato PDF o Word válido.");
   // Server-side identity: never trust a supplied company/provider or send emails implicitly.
-  form.set("provider", String(values[1] || ""));
+  form.set("provider", provider);
   form.set("buyerCompany", company);
-  form.set("contractNumber", String(details.contractNumber || purchaseId));
+  form.set("contractNumber", contractReference);
   form.set("sellerEmail", ""); form.set("companyEmail", ""); form.set("sendCopies", "false");
   form.set("documentKind", signedId ? "signed_annex" : "generated_annex");
   const archived = await storeContract(form, env);
   const annex: ContractAnnex = existing || {
-    id, purchaseId, company, contractReference: String(details.contractNumber || purchaseId), fields,
+    id, purchaseId, company, contractReference, fields,
     createdAt: archived.archivedAt, createdBy: profileFor(session).displayName, draft: archived, signedCopies: [],
   };
   if (signedId) {
@@ -891,6 +902,58 @@ async function archiveAnnex(env: Env, session: Session, row: number, form: FormD
     annex.signedCopies.push(signed);
   } else await writeAnnex(env, annex);
   return annex;
+}
+
+async function readExternalContract(env: Env, id: string): Promise<ExternalContract> {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const object = await env.CONTRACT_FILES.get(`external-contracts/${id}.json`);
+  if (!object) throw new InputError("No se encuentra el contrato externo. Actualiza la lista.");
+  const record = await new Response(object.body).json() as ExternalContract;
+  if (record.id !== id) throw new InputError("La referencia del contrato externo no coincide.");
+  return record;
+}
+
+async function listExternalContracts(env: Env) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  const records: ExternalContract[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.CONTRACT_FILES.list({ prefix: "external-contracts/", cursor, limit: 1000 });
+    for (const item of page.objects) {
+      const match = item.key.match(/^external-contracts\/(EXT-[a-f0-9]{32})\.json$/);
+      if (match) records.push(await readExternalContract(env, match[1]));
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return records.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+async function storeExternalContract(env: Env, session: Session, form: FormData) {
+  if (!env.CONTRACT_FILES) throw new Error("El archivo central de contratos no está configurado.");
+  let data;
+  try { data = validateExternalContractData(JSON.parse(String(form.get("data") || "{}"))); }
+  catch (cause) { throw new InputError(cause instanceof Error ? cause.message : "Revisa los datos del contrato original."); }
+  const identity = [data.buyerCompany, data.taxId, data.contractNumber, data.originalDate].map(value => value.trim().toUpperCase());
+  const id = `EXT-${(await sha256Hex(JSON.stringify(identity))).slice(0, 32)}`;
+  const revision = await sha256Hex(JSON.stringify(data));
+  const existing = await env.CONTRACT_FILES.get(`external-contracts/${id}.json`);
+  if (existing) {
+    const record = await new Response(existing.body).json() as ExternalContract;
+    if (record.revision !== revision) throw new ConflictError("Este contrato externo ya está guardado con otros datos. Selecciónalo en Contratos guardados; no se ha sobrescrito.");
+    return record;
+  }
+  const file = form.get("file");
+  let source: AnnexFile | null = null;
+  if (file instanceof File) {
+    const magic = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+    if (/\.pdf$/i.test(file.name) ? String.fromCharCode(...magic) !== "%PDF-" : !/\.docx$/i.test(file.name) || magic[0] !== 0x50 || magic[1] !== 0x4b) throw new InputError("Adjunta un contrato PDF o Word válido.");
+    form.set("provider", data.provider); form.set("buyerCompany", data.buyerCompany); form.set("contractNumber", data.contractNumber);
+    form.set("sellerEmail", ""); form.set("companyEmail", ""); form.set("sendCopies", "false"); form.set("documentKind", "external_contract_original");
+    source = await storeContract(form, env);
+  }
+  const record: ExternalContract = { id, revision, data, source, createdAt: new Date().toISOString(), createdBy: profileFor(session).displayName };
+  await env.CONTRACT_FILES.put(`external-contracts/${id}.json`, new TextEncoder().encode(JSON.stringify(record)).buffer, { httpMetadata: { contentType: "application/json" } });
+  return record;
 }
 
 function contentTypeForLibraryDocument(filename: string, supplied: string) {
@@ -1946,6 +2009,37 @@ async function handleApi(request: Request, env: Env) {
       row,
     }, () => updateRecordStatus(env, row, body, session));
     return json(request, env, { ok: true, ...result });
+  }
+
+  if (url.pathname === "/api/external-contracts" && ["GET", "POST"].includes(request.method)) {
+    if (!canEdit(session)) return json(request, env, { error: "Los contratos externos son documentación confidencial de usuarios autorizados." }, 403);
+    if (request.method === "GET") return json(request, env, { contracts: await listExternalContracts(env) });
+    const form = await request.formData();
+    const record = await runAuditedChange(env, session, {
+      action: "contract.external.create", area: "contracts", summary: "Contrato externo guardado para crear anexos",
+    }, () => storeExternalContract(env, session, form));
+    return json(request, env, { contract: record }, 201);
+  }
+
+  const externalAnnexMatch = url.pathname.match(/^\/api\/external-contracts\/(EXT-[a-f0-9]{32})\/annexes(?:\/([0-9a-f-]{36})\/signed)?$/);
+  if (externalAnnexMatch && ["GET", "POST"].includes(request.method)) {
+    if (!canEdit(session)) return json(request, env, { error: "Los anexos contractuales están restringidos a usuarios autorizados." }, 403);
+    const record = await readExternalContract(env, externalAnnexMatch[1]);
+    if (request.method === "GET" && !externalAnnexMatch[2]) return json(request, env, { annexes: await listAnnexes(env, record.id) });
+    if (request.method === "POST") {
+      const form = await request.formData();
+      if (String(form.get("expectedId") || "") !== record.id) throw new InputError("La referencia no coincide con el contrato externo.");
+      if (String(form.get("expectedRevision") || "") !== record.revision) throw new ConflictError("Actualiza los datos del contrato externo antes de archivar el anexo.");
+      const annex = await runAuditedChange(env, session, {
+        action: externalAnnexMatch[2] ? "contract.annex.signed" : "contract.annex.create",
+        area: "contracts", recordId: record.id,
+        summary: externalAnnexMatch[2] ? "Copia firmada de anexo externo adjuntada" : "Anexo de contrato externo creado",
+      }, () => archiveAnnexForContract(env, session, form, {
+        purchaseId: record.id, company: record.data.buyerCompany, provider: record.data.provider,
+        contractReference: record.data.contractNumber, originalDate: record.data.originalDate,
+      }, externalAnnexMatch[2]));
+      return json(request, env, { annex }, 201);
+    }
   }
 
   const annexMatch = url.pathname.match(/^\/api\/rows\/(\d+)\/annexes(?:\/([0-9a-f-]{36})\/signed)?$/i);
