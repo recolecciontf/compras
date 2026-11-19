@@ -6,6 +6,7 @@ import { EMPTY_EXTERNAL_CONTRACT, externalContractPurchase, externalDataFromPurc
 import { triggerDownload } from "../lib/contractGenerator";
 import { EMPTY_PURCHASE } from "./PurchaseFields";
 import { ContractAnnexPanel } from "./ContractAnnexPanel";
+import { SavedContractPicker } from "./SavedContractPicker";
 
 export function ExternalContractAnnexPanel({ client, demo, onBack }: { client: WorkbookClient | null; demo: boolean; onBack: () => void }) {
   const [records, setRecords] = useState<ExternalContract[]>([]);
@@ -93,7 +94,13 @@ export function ExternalContractAnnexPanel({ client, demo, onBack }: { client: W
     <section className="annex-panel">
       <div className="annex-heading"><h2>Contratos guardados</h2><button type="button" className="text-button" onClick={() => void refresh()} disabled={loading || busy || demo}><RefreshCw size={16} /> Actualizar</button></div>
       <div className="annex-grid">
-        <label className="annex-wide">Contrato externo<select disabled={busy} value={selected?.id || ""} onChange={event => { const record = records.find(item => item.id === event.target.value); setSelected(record || null); setError(""); setNotice(""); }}><option value="">{loading ? "Cargando contratos…" : "Seleccionar un contrato guardado"}</option>{records.map(record => <option value={record.id} key={record.id}>{record.data.contractNumber} · {record.data.provider} · {record.data.buyerCompany}</option>)}</select></label>
+        <div className="annex-wide"><SavedContractPicker label="Contrato externo" disabled={busy || loading}
+          value={selected?.id || ""} onChange={value => { const record = records.find(item => item.id === value); setSelected(record || null); setError(""); setNotice(""); }}
+          placeholder={loading ? "Cargando contratos…" : "Seleccionar un contrato guardado"} searchPlaceholder="Agricultor, referencia o producto"
+          options={records.map(record => ({ value: record.id,
+            label: `${record.data.contractNumber} · ${record.data.provider} · ${record.data.buyerCompany}`,
+            searchText: [record.data.taxId, record.data.campaign, record.data.originalDate, record.data.product, record.source?.archiveFilename || ""].join(" "),
+          }))} /></div>
       </div>
       <p className="annex-hint">Los datos y anexos guardados están disponibles en los demás dispositivos autorizados.</p>
     </section>

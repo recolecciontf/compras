@@ -47,6 +47,7 @@ import { NewPurchasePanel, type ContractSubmission } from "./components/NewPurch
 import { PurchaseFields } from "./components/PurchaseFields";
 import { ContractAnnexPanel } from "./components/ContractAnnexPanel";
 import { ExternalContractAnnexPanel } from "./components/ExternalContractAnnexPanel";
+import { CopyReferenceButton } from "./components/CopyReferenceButton";
 import { ANNEX_TEMPLATE_NAMES } from "./lib/contractAnnexData";
 import { DEMO_ROWS } from "./demo";
 import { isConfigured, loadConfig } from "./lib/config";
@@ -1726,6 +1727,11 @@ export default function App() {
                 <button className={filter === "cancelled" ? "active" : ""} onClick={() => setFilter("cancelled")}>Anulados</button>
               </div>
 
+              <div className="record-filter-actions">
+                <span role="status">{visibleRows.length} expediente{visibleRows.length === 1 ? "" : "s"} en la lista</span>
+                {(query.trim() || certificationFilter !== "all" || filter !== "all") && <button type="button" className="text-button" onClick={() => applySummaryFilter("all")}><X size={16} /> Restablecer filtros</button>}
+              </div>
+
               <div className="records-list">
                 {loading && !rows.length ? (
                   <div className="list-loading"><div className="loading-ring" /><p>Consultando Google Sheets…</p></div>
@@ -1746,6 +1752,7 @@ export default function App() {
                     >
                       <span className={`record-stripe ${isCancelled(row) ? "stripe-cancelled" : filter === "expired" ? "stripe-expired" : authorized(row) ? "stripe-ok" : "stripe-blocked"}`} />
                       <span className="record-content">
+                        {row.id && <span className="record-reference">{row.id}</span>}
                         <span className="record-heading">
                           <strong>{row.provider}</strong>
                           {isCancelled(row)
@@ -2193,6 +2200,7 @@ function ReviewPanel({
         <div className="review-title-row">
           <div>
             <span className="eyebrow">{row.id || "Expediente"}</span>
+            <CopyReferenceButton value={row.id} />
             <h2>{purchase.provider}</h2>
             <p>{purchase.crop || "Especie sin indicar"}{purchase.variety ? ` · ${purchase.variety}` : ""} · {purchase.farm || "Finca sin indicar"}</p>
           </div>

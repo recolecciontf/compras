@@ -2457,4 +2457,21 @@ h3,
 .external-annex-choices button span { display: grid; gap: 5px; }
 .external-annex-choices small { color: #5b6a62; font-weight: 400; line-height: 1.4; }
 .external-annex-page .contract-upload-button { display: inline-flex; width: fit-content; }
+.saved-contract-picker { display: grid; gap: 12px; margin: 16px 0; min-width: 0; }
+.saved-contract-picker .field { margin: 0; min-width: 0; }
+.saved-contract-picker .field > label { color: #234b32; font-size: .875rem; font-weight: 700; }
+.saved-contract-search-control, .saved-contract-select-control { position: relative; display: flex; align-items: center; min-width: 0; }
+.saved-contract-search-control > svg { position: absolute; left: 14px; color: #56715f; pointer-events: none; }
+.saved-contract-picker .saved-contract-search-control input { width: 100%; min-height: 48px; padding: 12px 42px; border: 1px solid #cbd6cd; border-radius: 10px; background: #fff; font: inherit; font-size: 1rem; box-sizing: border-box; }
+.saved-contract-search-control input::-webkit-search-cancel-button { display: none; }
+.saved-contract-search-control button { position: absolute; right: 3px; display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 8px; background: transparent; color: #46644e; cursor: pointer; }
+.saved-contract-picker .saved-contract-select-control select { width: 100%; min-height: 48px; padding: 12px 42px 12px 14px; appearance: none; -webkit-appearance: none; font-size: 1rem; }
+.saved-contract-select-control > svg { position: absolute; right: 14px; color: #46644e; pointer-events: none; }
+.saved-contract-picker > small { color: #56715f; font-size: .8125rem; }
+.record-filter-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 10px 0 14px; color: #56715f; font-size: .875rem; }
+.record-reference { align-self: flex-start; color: #215738; font-size: .875rem; font-weight: 800; }
+.copy-reference-control { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-left: 12px; vertical-align: middle; font-size: .875rem; }
+.copy-reference-control .text-button { font-size: .875rem; }
+.copy-reference-status { color: #215738; }
+.copy-reference-control > small { color: #a63221; }
 @media (max-width: 640px) { .external-annex-choices { grid-template-columns: minmax(0, 1fr); } }

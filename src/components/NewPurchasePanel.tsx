@@ -5,6 +5,8 @@ import { purchaseFromRow } from "../lib/workbook";
 import type { ContractOutputFormat, ContractSignatures, ControlRow, PurchaseForm } from "../types";
 import { EMPTY_PURCHASE, PurchaseFields } from "./PurchaseFields";
 import { SignaturePad } from "./SignaturePad";
+import { SavedContractPicker } from "./SavedContractPicker";
+import { purchaseContractOption } from "../lib/savedContractSearch";
 
 export type PreviousContractReference =
   | { mode: "none" }
@@ -524,15 +526,10 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
               </div>
             </div>}
             {importPurchaseSource === "saved" && <>
-              <label className="field required-field">
-                <span>Compra de {importBuyerCompany === "TOÑIFRUIT, S.L." ? "Toñifruit" : "Mr. Orgánica"} que quieres importar</span>
-                <select required value={selectedImportedRow} onChange={(event) => importPurchase(event.target.value)}>
-                  <option value="">Seleccionar compra anterior</option>
-                  {companyImportablePurchases.map(({ row, purchase: previous }) => (
-                    <option key={row.tableIndex} value={row.tableIndex}>{previous.id} · {previous.provider} · {previous.crop}{previous.variety ? ` / ${previous.variety}` : ""}</option>
-                  ))}
-                </select>
-              </label>
+              <SavedContractPicker key={importBuyerCompany} required disabled={saving}
+                label={`Compra de ${importBuyerCompany === "TOÑIFRUIT, S.L." ? "Toñifruit" : "Mr. Orgánica"} que quieres importar`}
+                placeholder="Seleccionar compra anterior" options={companyImportablePurchases.map(purchaseContractOption)}
+                value={selectedImportedRow} onChange={importPurchase} />
               {!companyImportablePurchases.length && <div className="contract-send-warning"><AlertTriangle size={18} /><span><strong>No hay compras de esta empresa</strong><small>Puedes subir un contrato anterior o crear la compra desde cero.</small></span></div>}
               {selectedImportedPurchase && <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Datos importados de {selectedImportedPurchase.purchase.id}</strong><small>Se copian finca, fruta, kilos, fechas, precio, acuerdos y datos del contrato. El nuevo expediente tendrá otro identificador, nuevas firmas y AICA pendiente.</small></span></div>}
             </>}
@@ -609,15 +606,8 @@ export function NewPurchasePanel({ saving, rows, onCreate, onPreviousContractDow
             </div>
             {previousSource === "saved" && (
               <div className="previous-contract-picker">
-                <label className="field required-field">
-                  <span>Contrato anterior guardado</span>
-                  <select required value={selectedPreviousRow} onChange={(event) => applySavedContract(event.target.value)}>
-                    <option value="">Seleccionar contrato</option>
-                    {savedContracts.map(({ row, purchase: previous }) => (
-                      <option key={row.tableIndex} value={row.tableIndex}>{previous.id} · {previous.provider} · {previous.crop}{previous.variety ? ` / ${previous.variety}` : ""}</option>
-                    ))}
-                  </select>
-                </label>
+                <SavedContractPicker required disabled={saving} label="Contrato anterior guardado" placeholder="Seleccionar contrato"
+                  options={savedContracts.map(purchaseContractOption)} value={selectedPreviousRow} onChange={applySavedContract} />
                 {!savedContracts.length && <div className="contract-send-warning"><AlertTriangle size={18} /><span><strong>No hay contratos archivados</strong><small>Elige “No está guardado” para subir el PDF anterior.</small></span></div>}
                 {selectedSavedContract && <div className="reuse-confirmation"><CheckCircle2 size={18} /><span><strong>Datos recuperados de {selectedSavedContract.purchase.id}</strong><small>Revisa los campos antes de generar el contrato nuevo.</small></span><button className="text-button" type="button" disabled={saving} onClick={() => void onPreviousContractDownload(selectedSavedContract.purchase.contractDetails.archiveId)}><Download size={16} /> Revisar PDF</button></div>}
               </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "compras-de-campo-offline-v21-anexos-contratos-externos";
+const CACHE_NAME = "compras-de-campo-offline-v22-buscador-contratos-guardados";
 const CACHE_PREFIX = "compras-de-campo-";
 const APP_SHELL = [
   "./",
